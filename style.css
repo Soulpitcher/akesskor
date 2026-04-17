@@ -1,330 +1,128 @@
-/* ===== RESET & BASE ===== */
+/*
+ * ┌──────────────────────────────────────────────────────────────┐
+ * │   ÅKES SKOR — DESIGN TOKENS                                  │
+ * │                                                              │
+ * │   Allt som styr utseendet på sidan finns här.                │
+ * │   Ändra ett värde → slår igenom på hela sidan.               │
+ * │   Ingenting hårdkodat i HTML.                                │
+ * └──────────────────────────────────────────────────────────────┘
+ */
+
+
+/* ════════════════════════════════════════════
+   RESET
+   ════════════════════════════════════════════ */
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html    { scroll-behavior: smooth; }
+img     { display: block; max-width: 100%; }
+a       { color: inherit; text-decoration: none; }
+address { font-style: normal; }
+
+
+/* ════════════════════════════════════════════
+   DESIGN TOKENS
+   ════════════════════════════════════════════
+
+   Färger lagras som "R G B"-kanaler utan parentes.
+   Det möjliggör Tailwind-klasser med opacity, t.ex:
+     bg-primary/80   →  rgba(22, 52, 38, 0.8)
+     text-primary/50 →  rgba(22, 52, 38, 0.5)
+
+   ════════════════════════════════════════════ */
 
 :root {
-  --charcoal: #1a1a1a;
-  --warm-white: #faf8f5;
-  --sand: #e8e0d4;
-  --gold: #b8975a;
-  --gold-light: #d4b483;
-  --text: #2c2c2c;
-  --text-muted: #6b6460;
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* ── FÄRGER ─────────────────────────────── */
+
+  /* Primär — skogsgrönt (varumärkets huvudfärg) */
+  --primary-ch:           22  52  38;   /* #163426 */
+  --primary-dark-ch:      45  75  59;   /* #2d4b3b  hover / djupare ton */
+  --on-primary-ch:       255 255 255;   /* #ffffff  text på grön bakgr. */
+  --on-primary-alt-ch:   153 186 166;   /* #99baa6  ljusgrön i gröna ktnrs */
+
+  /* Sekundär — burgundy (accenter, kampanjer) */
+  --secondary-ch:        164  57  70;   /* #a43946 */
+  --on-secondary-ch:     255 255 255;   /* #ffffff */
+
+  /* Accent — guld (1931-bricka, overlines) */
+  --accent-ch:           203 167  47;   /* #cba72f */
+  --on-accent-ch:         78  61   0;   /* #4e3d00  text på guld */
+
+  /* Ytor — varm kräm-hierarki (aldrig ren vit) */
+  --surface-ch:          252 249 244;   /* #fcf9f4  baslagret */
+  --surface-low-ch:      246 243 238;   /* #f6f3ee  sektionsbakgrunder */
+  --surface-mid-ch:      240 237 232;   /* #f0ede8  kort, containers */
+  --surface-high-ch:     235 232 227;   /* #ebe8e3  bildcontainers */
+  --surface-highest-ch:  229 226 221;   /* #e5e2dd  högst kontrast */
+
+  /* Text */
+  --on-surface-ch:        28  28  25;   /* #1c1c19  huvudtext (aldrig ren svart) */
+  --on-surface-muted-ch:  66  72  68;   /* #424844  sekundär text */
+  --outline-ch:          114 121 115;   /* #727973  bildtexter, etiketter */
+  --outline-dim-ch:      194 200 194;   /* #c2c8c2  subtila avdelare */
+
+
+  /* ── TYPOGRAFI ──────────────────────────── */
+
+  --font-serif: 'Newsreader', Georgia, serif;          /* Rubriker — historiens röst   */
+  --font-sans:  'Manrope',    system-ui, sans-serif;   /* Bröd & etiketter — modern    */
+
+
+  /* ── SKUGGOR (ambient — aldrig hårda dropp-skuggor) ── */
+
+  --shadow-badge: 0 8px 32px rgb(var(--accent-ch)  / 0.25);
+  --shadow-card:  0 2px 24px rgb(var(--primary-ch) / 0.06);
+
+
+  /* ── HERO-GRADIENT ──────────────────────── */
+
+  --hero-gradient: linear-gradient(
+    to bottom,
+    rgb(var(--primary-ch) / 0.35),
+    rgb(var(--primary-ch) / 0.85)
+  );
 }
 
-html { scroll-behavior: smooth; }
+
+/* ════════════════════════════════════════════
+   BAS-ELEMENT
+   ════════════════════════════════════════════ */
 
 body {
   font-family: var(--font-sans);
-  color: var(--text);
-  background: var(--warm-white);
+  background-color: rgb(var(--surface-ch));
+  color: rgb(var(--on-surface-ch));
   line-height: 1.6;
 }
 
-a { color: inherit; text-decoration: none; }
-img { display: block; width: 100%; object-fit: cover; }
-address { font-style: normal; }
-
-.container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 2rem;
-}
-
-/* ===== TYPOGRAPHY ===== */
-h1, h2 {
+/* Alla rubriker använder seriftypsnittet automatiskt */
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-serif);
-  font-weight: 700;
-  line-height: 1.15;
 }
 
-h1 { font-size: clamp(2.8rem, 6vw, 5rem); }
-h2 { font-size: clamp(2rem, 4vw, 3rem); }
-
-.label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 1rem;
+/* Material Symbols fininställning */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* ===== BUTTONS ===== */
-.btn {
-  display: inline-block;
-  padding: 0.9rem 2.2rem;
-  background: var(--gold);
-  color: #fff;
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  transition: background 0.2s;
-  border: none;
-  cursor: pointer;
+
+/* ════════════════════════════════════════════
+   HJÄLPKLASSER
+   (Saker som inte kan uttryckas som Tailwind-klasser)
+   ════════════════════════════════════════════ */
+
+/* Heroens mörka gradient-overlay */
+.hero-gradient {
+  background: var(--hero-gradient);
 }
 
-.btn:hover { background: var(--gold-light); }
-
-.btn-outline {
-  background: transparent;
-  border: 1.5px solid var(--charcoal);
-  color: var(--charcoal);
-  margin-top: 1.5rem;
+/* Guld-skugga på 1931-brickan */
+.shadow-badge {
+  box-shadow: var(--shadow-badge);
 }
 
-.btn-outline:hover { background: var(--charcoal); color: #fff; }
-
-/* ===== HERO ===== */
-.hero {
-  position: relative;
-  height: 100svh;
-  min-height: 600px;
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
-}
-
-.hero-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 40%;
-}
-
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(10,8,6,0.85) 0%,
-    rgba(10,8,6,0.4) 50%,
-    rgba(10,8,6,0.15) 100%
-  );
-  z-index: 1;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 2;
-  padding: 4rem 3rem;
-  max-width: 700px;
-  color: #fff;
-}
-
-.hero-eyebrow {
-  font-size: 0.8rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--gold-light);
-  margin-bottom: 1.2rem;
-}
-
-.hero-content h1 {
-  color: #fff;
-  margin-bottom: 1.2rem;
-}
-
-.hero-sub {
-  font-size: 1.1rem;
-  font-weight: 300;
-  color: rgba(255,255,255,0.82);
-  max-width: 480px;
-  margin-bottom: 2.5rem;
-}
-
-/* ===== ABOUT ===== */
-.about {
-  padding: 6rem 0;
-  background: var(--warm-white);
-}
-
-.about-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5rem;
-  align-items: center;
-}
-
-.about-text h2 { margin-bottom: 1.5rem; }
-
-.about-text p {
-  color: var(--text-muted);
-  margin-bottom: 1rem;
-  font-size: 1.05rem;
-}
-
-.about-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
-}
-
-.stat { border-left: 2px solid var(--gold); padding-left: 1.5rem; }
-
-.stat-num {
-  display: block;
-  font-family: var(--font-serif);
-  font-size: 2.8rem;
-  color: var(--charcoal);
-  line-height: 1;
-  margin-bottom: 0.3rem;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-/* ===== GALLERY ===== */
-.gallery { background: var(--sand); padding: 0; }
-
-.gallery-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 280px 280px;
-  gap: 4px;
-}
-
-.gallery-item { overflow: hidden; }
-.gallery-item img { height: 100%; transition: transform 0.5s ease; }
-.gallery-item:hover img { transform: scale(1.04); }
-
-.gallery-item.tall {
-  grid-row: 1 / 3;
-}
-
-/* ===== INSTAGRAM ===== */
-.instagram {
-  padding: 6rem 0;
-  text-align: center;
-  background: var(--warm-white);
-}
-
-.instagram h2 { margin-bottom: 1rem; }
-
-.section-sub {
-  color: var(--text-muted);
-  font-size: 1.05rem;
-  margin-bottom: 3rem;
-}
-
-.section-sub a {
-  color: var(--gold);
-  border-bottom: 1px solid var(--gold-light);
-}
-
-.instagram-widget-placeholder {
-  display: inline-block;
-  border: 1.5px solid var(--sand);
-  padding: 2rem 3rem;
-  border-radius: 2px;
-}
-
-.insta-link {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  font-size: 1rem;
-  color: var(--text-muted);
-  transition: color 0.2s;
-}
-
-.insta-link:hover { color: var(--gold); }
-.insta-link svg { width: 28px; height: 28px; flex-shrink: 0; }
-
-/* ===== KONTAKT ===== */
-.kontakt {
-  padding: 6rem 0;
-  background: var(--charcoal);
-  color: #fff;
-}
-
-.kontakt .label { color: var(--gold-light); }
-.kontakt h2 { color: #fff; margin-bottom: 1.5rem; }
-
-.kontakt-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5rem;
-  align-items: start;
-}
-
-.kontakt address p {
-  color: rgba(255,255,255,0.7);
-  margin-bottom: 0.8rem;
-  font-size: 1.05rem;
-}
-
-.kontakt address a { color: var(--gold-light); }
-.kontakt address a:hover { color: #fff; }
-
-.hours-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-
-.hours-table td {
-  padding: 0.8rem 0;
-  color: rgba(255,255,255,0.75);
-  font-size: 0.95rem;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-
-.hours-table td:last-child { text-align: right; }
-.hours-table tr.closed td { color: rgba(255,255,255,0.3); }
-
-/* ===== FOOTER ===== */
-footer {
-  background: #111;
-  padding: 2rem 0;
-}
-
-.footer-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.footer-brand {
-  font-family: var(--font-serif);
-  font-size: 1.2rem;
-  color: #fff;
-}
-
-.footer-copy {
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.35);
-}
-
-footer a { color: rgba(255,255,255,0.5); transition: color 0.2s; }
-footer a:hover { color: var(--gold-light); }
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-  .hero-content { padding: 3rem 1.5rem; }
-
-  .about-grid,
-  .kontakt-grid { grid-template-columns: 1fr; gap: 3rem; }
-
-  .about-stats { flex-direction: row; flex-wrap: wrap; }
-
-  .gallery-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: 260px 220px 220px;
-  }
-
-  .gallery-item.tall { grid-row: auto; }
-
-  .footer-inner { flex-direction: column; text-align: center; }
+/* Subtil avdelare ovan statistikraden */
+.stat-divider {
+  border-top: 1px solid rgb(var(--outline-dim-ch) / 0.4);
 }

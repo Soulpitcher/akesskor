@@ -3,70 +3,79 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO -->
   <title>Åkes Skor – Din personliga skobutik i Katrineholm sedan 1931</title>
   <meta name="description" content="Åkes Skor i Katrineholm är din personliga skoaffär sedan 1931. Stort sortiment från budget till premium – skor för alla. Besök oss på Köpmangatan 9." />
   <meta name="keywords" content="skor Katrineholm, skoaffär Katrineholm, Åkes Skor, köpa skor, skobutik" />
-  <meta property="og:title" content="Åkes Skor – Katrineholm" />
+
+  <!-- Open Graph -->
+  <meta property="og:title"       content="Åkes Skor – Katrineholm" />
   <meta property="og:description" content="Din personliga skobutik sedan 1931. Stort urval, personlig service." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://www.akesskor.se" />
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://www.akesskor.se" />
 
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <!-- Typsnitt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 
-  <script id="tailwind-config">
+  <!-- Design tokens (alla designbeslut finns i style.css) -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Tailwind CDN — mappar token-namnen till CSS-variablerna i style.css -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script>
     tailwind.config = {
       theme: {
         extend: {
+          /* ── FÄRGER ────────────────────────────────────────────────────
+             Alla värden pekar på CSS-variabler i style.css.
+             <alpha-value> är Tailwinds platshållare för opacity-klasser,
+             t.ex. bg-primary/80, text-secondary/50.
+             ─────────────────────────────────────────────────────────── */
           colors: {
-            "surface-container-low":      "#f6f3ee",
-            "outline":                    "#727973",
-            "on-surface-variant":         "#424844",
-            "outline-variant":            "#c2c8c2",
-            "surface-container-highest":  "#e5e2dd",
-            "on-surface":                 "#1c1c19",
-            "surface-container-high":     "#ebe8e3",
-            "primary":                    "#163426",
-            "background":                 "#fcf9f4",
-            "primary-container":          "#2d4b3b",
-            "tertiary-container":         "#cba72f",
-            "on-tertiary-container":      "#4e3d00",
-            "surface-container-lowest":   "#ffffff",
-            "on-primary":                 "#ffffff",
-            "on-primary-container":       "#99baa6",
-            "secondary":                  "#a43946",
-            "on-secondary":               "#ffffff",
-            "surface":                    "#fcf9f4",
-            "on-background":              "#1c1c19",
-            "surface-container":          "#f0ede8",
+            'primary':           'rgb(var(--primary-ch)          / <alpha-value>)',
+            'primary-dark':      'rgb(var(--primary-dark-ch)     / <alpha-value>)',
+            'on-primary':        'rgb(var(--on-primary-ch)       / <alpha-value>)',
+            'on-primary-alt':    'rgb(var(--on-primary-alt-ch)   / <alpha-value>)',
+            'secondary':         'rgb(var(--secondary-ch)        / <alpha-value>)',
+            'on-secondary':      'rgb(var(--on-secondary-ch)     / <alpha-value>)',
+            'accent':            'rgb(var(--accent-ch)           / <alpha-value>)',
+            'on-accent':         'rgb(var(--on-accent-ch)        / <alpha-value>)',
+            'surface':           'rgb(var(--surface-ch)          / <alpha-value>)',
+            'surface-low':       'rgb(var(--surface-low-ch)      / <alpha-value>)',
+            'surface-mid':       'rgb(var(--surface-mid-ch)      / <alpha-value>)',
+            'surface-high':      'rgb(var(--surface-high-ch)     / <alpha-value>)',
+            'surface-highest':   'rgb(var(--surface-highest-ch)  / <alpha-value>)',
+            'on-surface':        'rgb(var(--on-surface-ch)       / <alpha-value>)',
+            'on-surface-muted':  'rgb(var(--on-surface-muted-ch) / <alpha-value>)',
+            'outline':           'rgb(var(--outline-ch)          / <alpha-value>)',
+            'outline-dim':       'rgb(var(--outline-dim-ch)      / <alpha-value>)',
           },
-          borderRadius: {
-            "DEFAULT": "0.25rem",
-            "lg":      "0.5rem",
-            "xl":      "0.75rem",
-            "full":    "9999px"
-          },
+
+          /* ── TYPSNITT ──────────────────────────────────────────────── */
           fontFamily: {
-            "headline": ["Newsreader", "serif"],
-            "body":     ["Manrope", "sans-serif"],
-            "label":    ["Manrope", "sans-serif"]
-          }
-        }
-      }
+            headline: ['var(--font-serif)'],
+            body:     ['var(--font-sans)'],
+            label:    ['var(--font-sans)'],
+          },
+
+          /* ── STORLEKAR ─────────────────────────────────────────────── */
+          fontSize: {
+            '2xs': ['0.625rem', { lineHeight: '1' }],        /* 10px — badge-text    */
+            'hero': ['clamp(3.5rem, 8vw, 6rem)', { lineHeight: '0.9' }], /* fluid hero */
+          },
+
+          /* ── BOKSTAVSAVSTÅND ───────────────────────────────────────── */
+          letterSpacing: {
+            overline: '0.15em',   /* etiketter, knappar, nav-länkar */
+          },
+        },
+      },
     }
   </script>
-
-  <style>
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-    body { font-family: 'Manrope', sans-serif; background-color: #fcf9f4; }
-    h1, h2, h3 { font-family: 'Newsreader', serif; }
-    .hero-gradient {
-      background: linear-gradient(to bottom, rgba(22,52,38,0.35), rgba(22,52,38,0.85));
-    }
-  </style>
 
   <!-- Strukturerad data för Google och AI-sökmotorer -->
   <script type="application/ld+json">
@@ -102,233 +111,333 @@
   }
   </script>
 </head>
+
 <body class="text-on-surface selection:bg-secondary/30">
 
-<!-- Navigation -->
-<nav class="fixed top-0 w-full z-50 bg-[#fcf9f4]/80 backdrop-blur-xl">
-  <div class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
-    <a class="text-2xl font-headline text-[#163426] tracking-tight" href="#">Åkes Skor</a>
-    <div class="hidden md:flex items-center space-x-12">
-      <a class="font-label text-xs tracking-widest uppercase text-[#1c1c19]/70 hover:text-[#a43946] transition-colors duration-300" href="#historia">Historia</a>
-      <a class="font-label text-xs tracking-widest uppercase text-[#1c1c19]/70 hover:text-[#a43946] transition-colors duration-300" href="#instagram">Instagram</a>
-      <a class="font-label text-xs tracking-widest uppercase text-[#163426] border-b border-[#163426] pb-1 hover:text-[#a43946] hover:border-[#a43946] transition-colors duration-300" href="#besok">Besök oss</a>
-    </div>
-  </div>
-</nav>
+  <!-- ════════════════════════════════════════
+       NAVIGATION
+       ════════════════════════════════════════ -->
+  <nav class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl">
+    <div class="flex justify-between items-center px-8 py-3 max-w-7xl mx-auto">
 
-<main>
+      <!-- Logotyp -->
+      <a href="#" aria-label="Åkes Skor — startsidan">
+        <img
+          src="logo.png"
+          alt="Åkes Skor"
+          class="h-10 w-auto"
+        />
+      </a>
 
-  <!-- HERO -->
-  <section class="relative h-screen flex items-center overflow-hidden">
-    <div class="absolute inset-0 z-0">
-      <img
-        class="w-full h-full object-cover"
-        src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1600&q=80&auto=format&fit=crop"
-        alt="Skor från Åkes Skor i Katrineholm"
-      />
-      <div class="absolute inset-0 hero-gradient"></div>
-    </div>
-    <div class="relative z-10 max-w-7xl mx-auto px-8 w-full">
-      <div class="max-w-3xl">
-        <span class="text-[#cba72f] font-label text-xs tracking-[0.2em] uppercase mb-6 block">Katrineholm · Sedan 1931</span>
-        <h1 class="text-6xl md:text-8xl text-white font-headline leading-[0.9] mb-8">Din personliga<br/>skobutik.</h1>
-        <p class="text-xl text-white/80 font-body max-w-xl mb-10 leading-relaxed">
-          Skor för alla — från vardagliga favoriter till årets festskor. Vi hittar rätt par för just dig.
-        </p>
-        <a class="inline-flex items-center bg-[#163426] text-white px-8 py-4 rounded-md font-label text-xs tracking-widest uppercase hover:bg-[#2d4b3b] transition-all group" href="#besok">
-          Hitta oss
-          <span class="material-symbols-outlined ml-3 text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+      <!-- Navigationslänkar (skrivbord) -->
+      <div class="hidden md:flex items-center space-x-12">
+        <a href="#historia"
+           class="font-label text-xs tracking-overline uppercase text-on-surface/70 hover:text-secondary transition-colors duration-300">
+          Historia
+        </a>
+        <a href="#instagram"
+           class="font-label text-xs tracking-overline uppercase text-on-surface/70 hover:text-secondary transition-colors duration-300">
+          Instagram
+        </a>
+        <a href="#besok"
+           class="font-label text-xs tracking-overline uppercase text-primary border-b border-primary pb-1 hover:text-secondary hover:border-secondary transition-colors duration-300">
+          Besök oss
         </a>
       </div>
+
     </div>
-  </section>
+  </nav>
 
-  <!-- HISTORIA / OM BUTIKEN -->
-  <section class="py-32 bg-surface" id="historia">
-    <div class="max-w-7xl mx-auto px-8">
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-16 items-center">
 
-        <div class="md:col-span-5 relative">
-          <div class="bg-surface-container-high aspect-[4/5] rounded-xl overflow-hidden relative z-10 translate-x-4 -translate-y-4">
-            <img
-              class="w-full h-full object-cover"
-              src="https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=800&q=80&auto=format&fit=crop"
-              alt="Skor i Åkes Skor, Katrineholm"
-            />
-          </div>
-          <div class="absolute inset-0 bg-[#735c00]/10 rounded-xl -z-10 -translate-x-[10px] translate-y-[10px]"></div>
-          <!-- Heritage Badge -->
-          <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-[#cba72f] rounded-full flex flex-col items-center justify-center text-[#4e3d00] z-20" style="box-shadow: 0 8px 32px rgba(115,92,0,0.25);">
-            <span class="font-headline text-2xl font-bold leading-none">1931</span>
-            <span class="font-label text-[10px] uppercase tracking-tighter">Grundat</span>
-          </div>
-        </div>
+  <main>
 
-        <div class="md:col-span-7 pl-0 md:pl-12">
-          <span class="font-label text-xs tracking-widest uppercase text-[#a43946] mb-4 block">Vår historia</span>
-          <h2 class="text-5xl md:text-6xl font-headline text-primary mb-8 leading-tight">Inte en kedja.<br/>En skobutik på riktigt.</h2>
-          <div class="space-y-6 text-on-surface-variant text-lg leading-relaxed font-body">
-            <p>Åkes Skor är ingen kedja med färdiga sortiment och centrala beslut. Vi väljer själva vilka skor vi tar in — vilket betyder att du hittar allt från prisvärda vardagsskor till exklusivare märkesskor under samma tak.</p>
-            <p>Det är därför kunder kommer till oss från Stockholm, Örebro och Eskilstuna. Inte för att vi är närmast — utan för att vi har det ingen annan har.</p>
-          </div>
-          <div class="mt-12 grid grid-cols-3 gap-8 pt-12" style="border-top: 1px solid rgba(194,200,194,0.4);">
-            <div>
-              <h4 class="font-headline text-3xl text-primary">1931</h4>
-              <p class="text-sm font-label uppercase tracking-widest text-outline mt-1">Grundat</p>
-            </div>
-            <div>
-              <h4 class="font-headline text-3xl text-primary">95+</h4>
-              <p class="text-sm font-label uppercase tracking-widest text-outline mt-1">Års erfarenhet</p>
-            </div>
-            <div>
-              <h4 class="font-headline text-3xl text-primary">100%</h4>
-              <p class="text-sm font-label uppercase tracking-widest text-outline mt-1">Personlig service</p>
-            </div>
-          </div>
-        </div>
+    <!-- ════════════════════════════════════════
+         HERO
+         ════════════════════════════════════════ -->
+    <section class="relative h-screen flex items-center overflow-hidden">
 
+      <div class="absolute inset-0 z-0">
+        <img
+          class="w-full h-full object-cover"
+          src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1600&q=80&auto=format&fit=crop"
+          alt="Skor från Åkes Skor i Katrineholm"
+        />
+        <div class="absolute inset-0 hero-gradient"></div>
       </div>
-    </div>
-  </section>
 
-  <!-- INSTAGRAM -->
-  <section class="py-24 bg-surface-container-low" id="instagram">
-    <div class="max-w-7xl mx-auto px-8">
-      <div class="flex justify-between items-end mb-16">
-        <div>
-          <span class="text-secondary font-label text-xs tracking-widest uppercase mb-2 block">@akesskor</span>
-          <h2 class="text-5xl font-headline text-primary">Nyheter från butiken.</h2>
+      <div class="relative z-10 max-w-7xl mx-auto px-8 w-full">
+        <div class="max-w-3xl">
+          <span class="text-accent font-label text-xs tracking-overline uppercase mb-6 block">
+            Katrineholm · Sedan 1931
+          </span>
+          <h1 class="text-hero text-on-primary font-headline mb-8">
+            Din personliga<br/>skobutik.
+          </h1>
+          <p class="text-xl text-on-primary/80 font-body max-w-xl mb-10 leading-relaxed">
+            Skor för alla — från vardagliga favoriter till årets festskor.
+            Vi hittar rätt par för just dig.
+          </p>
+          <a href="#besok"
+             class="inline-flex items-center gap-3 bg-primary text-on-primary px-8 py-4 rounded-md font-label text-xs tracking-overline uppercase hover:bg-primary-dark transition-colors duration-300 group">
+            Hitta oss
+            <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform duration-300">arrow_forward</span>
+          </a>
         </div>
-        <a class="font-label text-xs tracking-widest uppercase text-primary pb-1 hover:text-secondary transition-all" style="border-bottom: 1px solid rgba(22,52,38,0.2);" href="https://www.instagram.com/akesskor/" target="_blank" rel="noopener">Följ oss</a>
       </div>
-      <!-- Instagram-widget placeholder — byts ut mot riktigt flöde -->
-      <div class="flex flex-col items-center justify-center py-20 rounded-xl bg-surface-container text-center">
-        <svg class="w-14 h-14 mb-6" style="color: rgba(22,52,38,0.25);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-          <rect x="2" y="2" width="20" height="20" rx="5"/>
-          <circle cx="12" cy="12" r="4"/>
-          <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
-        </svg>
-        <p class="font-body text-on-surface-variant mb-6 text-lg">Vi lägger upp nya skor löpande på Instagram.</p>
-        <a href="https://www.instagram.com/akesskor/" target="_blank" rel="noopener"
-           class="inline-flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-md font-label text-xs tracking-widest uppercase hover:bg-primary-container transition-all">
-          <span class="material-symbols-outlined text-sm">open_in_new</span>
-          Följ @akesskor
-        </a>
-      </div>
-    </div>
-  </section>
 
-  <!-- BESÖK OSS -->
-  <section class="py-32 bg-surface" id="besok">
-    <div class="max-w-7xl mx-auto px-8">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+    </section>
 
-        <div>
-          <h2 class="text-5xl md:text-7xl font-headline text-primary mb-12">Välkommen in!</h2>
-          <div class="space-y-12">
 
-            <div class="flex gap-6">
-              <div class="w-12 h-12 bg-primary-container rounded-full flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-on-primary-container">location_on</span>
+    <!-- ════════════════════════════════════════
+         HISTORIA / OM BUTIKEN
+         ════════════════════════════════════════ -->
+    <section class="py-32 bg-surface" id="historia">
+      <div class="max-w-7xl mx-auto px-8">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-16 items-center">
+
+          <!-- Bild med Heritage-bricka -->
+          <div class="md:col-span-5 relative">
+            <div class="bg-surface-high aspect-[4/5] rounded-xl overflow-hidden relative z-10 translate-x-4 -translate-y-4">
+              <img
+                class="w-full h-full object-cover"
+                src="https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=800&q=80&auto=format&fit=crop"
+                alt="Skor i Åkes Skor, Katrineholm"
+              />
+            </div>
+            <!-- Skuggram bakom bilden -->
+            <div class="absolute inset-0 bg-accent/10 rounded-xl -z-10 -translate-x-[10px] translate-y-[10px]"></div>
+            <!-- Heritage Badge -->
+            <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-accent rounded-full flex flex-col items-center justify-center text-on-accent z-20 shadow-badge">
+              <span class="font-headline text-2xl font-bold leading-none">1931</span>
+              <span class="font-label text-2xs uppercase tracking-tight">Grundat</span>
+            </div>
+          </div>
+
+          <!-- Text -->
+          <div class="md:col-span-7 pl-0 md:pl-12">
+            <span class="font-label text-xs tracking-overline uppercase text-secondary mb-4 block">
+              Vår historia
+            </span>
+            <h2 class="text-5xl md:text-6xl font-headline text-primary mb-8 leading-tight">
+              Inte en kedja.<br/>En skobutik på riktigt.
+            </h2>
+            <div class="space-y-6 text-on-surface-muted text-lg leading-relaxed font-body">
+              <p>
+                Åkes Skor är ingen kedja med färdiga sortiment och centrala beslut.
+                Vi väljer själva vilka skor vi tar in — vilket betyder att du hittar allt
+                från prisvärda vardagsskor till exklusivare märkesskor under samma tak.
+              </p>
+              <p>
+                Det är därför kunder kommer till oss från Stockholm, Örebro och Eskilstuna.
+                Inte för att vi är närmast — utan för att vi har det ingen annan har.
+              </p>
+            </div>
+
+            <!-- Statistikrad -->
+            <div class="mt-12 grid grid-cols-3 gap-8 pt-12 stat-divider">
+              <div>
+                <h4 class="font-headline text-3xl text-primary">1931</h4>
+                <p class="text-sm font-label uppercase tracking-overline text-outline mt-1">Grundat</p>
               </div>
               <div>
-                <h3 class="font-headline text-2xl mb-1">Adress</h3>
-                <p class="text-on-surface-variant font-body">Köpmangatan 9<br/>641 30 Katrineholm</p>
-              </div>
-            </div>
-
-            <div class="flex gap-6">
-              <div class="w-12 h-12 bg-primary-container rounded-full flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-on-primary-container">schedule</span>
+                <h4 class="font-headline text-3xl text-primary">95+</h4>
+                <p class="text-sm font-label uppercase tracking-overline text-outline mt-1">Års erfarenhet</p>
               </div>
               <div>
-                <h3 class="font-headline text-2xl mb-1">Öppettider</h3>
-                <ul class="text-on-surface-variant space-y-1 text-sm font-body">
-                  <li class="flex justify-between w-56"><span>Måndag – Fredag</span><span>10:00 – 18:00</span></li>
-                  <li class="flex justify-between w-56"><span>Lördag</span><span>10:00 – 14:00</span></li>
-                  <li class="flex justify-between w-56 text-outline"><span>Söndag</span><span>Stängt</span></li>
-                </ul>
+                <h4 class="font-headline text-3xl text-primary">100%</h4>
+                <p class="text-sm font-label uppercase tracking-overline text-outline mt-1">Personlig service</p>
               </div>
             </div>
-
-            <div class="flex gap-6">
-              <div class="w-12 h-12 bg-primary-container rounded-full flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-on-primary-container">call</span>
-              </div>
-              <div>
-                <h3 class="font-headline text-2xl mb-1">Kontakt</h3>
-                <p class="text-on-surface-variant font-body">
-                  <a href="tel:+46734608645" class="hover:text-secondary transition-colors">073-460 86 45</a>
-                </p>
-              </div>
-            </div>
-
           </div>
 
-          <div class="mt-12">
-            <a href="https://maps.google.com/?q=Köpmangatan+9+Katrineholm" target="_blank" rel="noopener"
-               class="inline-flex items-center gap-3 text-primary px-8 py-4 rounded-md font-label text-xs tracking-widest uppercase transition-all hover:bg-primary hover:text-white"
-               style="border: 1px solid rgba(22,52,38,0.3);">
-              <span class="material-symbols-outlined text-sm">map</span>
-              Visa på karta
-            </a>
-          </div>
         </div>
+      </div>
+    </section>
 
-        <!-- Karta-placeholder -->
-        <div class="rounded-2xl overflow-hidden relative bg-surface-container-highest flex flex-col items-center justify-center min-h-[500px] text-center p-12">
-          <div class="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mb-6" style="box-shadow: 0 0 0 12px rgba(164,57,70,0.15);">
-            <span class="material-symbols-outlined text-white text-2xl">location_on</span>
+
+    <!-- ════════════════════════════════════════
+         INSTAGRAM
+         ════════════════════════════════════════ -->
+    <section class="py-24 bg-surface-low" id="instagram">
+      <div class="max-w-7xl mx-auto px-8">
+
+        <div class="flex justify-between items-end mb-16">
+          <div>
+            <span class="text-secondary font-label text-xs tracking-overline uppercase mb-2 block">@akesskor</span>
+            <h2 class="text-5xl font-headline text-primary">Nyheter från butiken.</h2>
           </div>
-          <h3 class="font-headline text-3xl text-primary mb-2">Åkes Skor</h3>
-          <p class="font-body text-on-surface-variant mb-8">Köpmangatan 9, 641 30 Katrineholm</p>
-          <a href="https://maps.google.com/?q=Köpmangatan+9+Katrineholm" target="_blank" rel="noopener"
-             class="inline-flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-md font-label text-xs tracking-widest uppercase hover:bg-primary-container transition-all">
-            <span class="material-symbols-outlined text-sm">open_in_new</span>
-            Öppna i Google Maps
+          <a href="https://www.instagram.com/akesskor/" target="_blank" rel="noopener"
+             class="font-label text-xs tracking-overline uppercase text-primary border-b border-primary/20 pb-1 hover:text-secondary hover:border-secondary transition-colors duration-300">
+            Följ oss
           </a>
         </div>
 
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<!-- FOOTER -->
-<footer class="bg-surface-container-low w-full py-12 px-8" style="border-top: 1px solid rgba(22,52,38,0.1);">
-  <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-    <div class="space-y-4">
-      <span class="font-headline text-2xl text-[#163426]">Åkes Skor</span>
-      <p class="font-body text-sm text-[#1c1c19]/60 max-w-xs leading-relaxed">
-        Personlig skobutik i hjärtat av Katrineholm sedan 1931.
-      </p>
-    </div>
-    <div class="flex flex-col space-y-2">
-      <span class="font-headline text-sm mb-2 text-[#163426]">Öppettider</span>
-      <span class="text-[#1c1c19]/60 font-body text-sm">Mån–Fre: 10:00–18:00</span>
-      <span class="text-[#1c1c19]/60 font-body text-sm">Lördag: 10:00–14:00</span>
-      <span class="text-[#1c1c19]/60 font-body text-sm">Söndag: Stängt</span>
-    </div>
-    <div>
-      <p class="font-body text-sm text-[#1c1c19]/60 mb-6">
-        © 2025 Åkes Skor, Katrineholm. Grundat 1931.
-      </p>
-      <div class="flex space-x-4">
-        <a href="https://www.instagram.com/akesskor/" target="_blank" rel="noopener" aria-label="Instagram @akesskor" class="text-primary hover:text-secondary transition-colors">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="24" height="24">
+        <!-- Instagram-widget placeholder — byts ut mot riktigt flöde -->
+        <div class="flex flex-col items-center justify-center py-20 rounded-xl bg-surface-mid text-center">
+          <svg class="w-14 h-14 text-primary/25 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
             <rect x="2" y="2" width="20" height="20" rx="5"/>
             <circle cx="12" cy="12" r="4"/>
             <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
           </svg>
-        </a>
-        <a href="tel:+46734608645" aria-label="Ring Åkes Skor" class="text-primary hover:text-secondary transition-colors">
-          <span class="material-symbols-outlined">call</span>
-        </a>
+          <p class="font-body text-on-surface-muted mb-6 text-lg">
+            Vi lägger upp nya skor löpande på Instagram.
+          </p>
+          <a href="https://www.instagram.com/akesskor/" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-2 bg-primary text-on-primary px-8 py-4 rounded-md font-label text-xs tracking-overline uppercase hover:bg-primary-dark transition-colors duration-300">
+            <span class="material-symbols-outlined text-sm">open_in_new</span>
+            Följ @akesskor
+          </a>
+        </div>
+
       </div>
+    </section>
+
+
+    <!-- ════════════════════════════════════════
+         BESÖK OSS
+         ════════════════════════════════════════ -->
+    <section class="py-32 bg-surface" id="besok">
+      <div class="max-w-7xl mx-auto px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+
+          <!-- Kontaktinfo -->
+          <div>
+            <h2 class="text-5xl md:text-7xl font-headline text-primary mb-12">
+              Välkommen in!
+            </h2>
+
+            <div class="space-y-12">
+
+              <!-- Adress -->
+              <div class="flex gap-6">
+                <div class="w-12 h-12 bg-primary-dark rounded-full flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-on-primary-alt">location_on</span>
+                </div>
+                <div>
+                  <h3 class="font-headline text-2xl mb-1">Adress</h3>
+                  <p class="text-on-surface-muted font-body">
+                    Köpmangatan 9<br/>641 30 Katrineholm
+                  </p>
+                </div>
+              </div>
+
+              <!-- Öppettider -->
+              <div class="flex gap-6">
+                <div class="w-12 h-12 bg-primary-dark rounded-full flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-on-primary-alt">schedule</span>
+                </div>
+                <div>
+                  <h3 class="font-headline text-2xl mb-1">Öppettider</h3>
+                  <ul class="text-on-surface-muted space-y-1 text-sm font-body">
+                    <li class="flex justify-between w-56">
+                      <span>Måndag – Fredag</span><span>10:00 – 18:00</span>
+                    </li>
+                    <li class="flex justify-between w-56">
+                      <span>Lördag</span><span>10:00 – 14:00</span>
+                    </li>
+                    <li class="flex justify-between w-56 text-outline">
+                      <span>Söndag</span><span>Stängt</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Telefon -->
+              <div class="flex gap-6">
+                <div class="w-12 h-12 bg-primary-dark rounded-full flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-on-primary-alt">call</span>
+                </div>
+                <div>
+                  <h3 class="font-headline text-2xl mb-1">Kontakt</h3>
+                  <p class="text-on-surface-muted font-body">
+                    <a href="tel:+46734608645" class="hover:text-secondary transition-colors duration-300">
+                      073-460 86 45
+                    </a>
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="mt-12">
+              <a href="https://maps.google.com/?q=Köpmangatan+9+Katrineholm" target="_blank" rel="noopener"
+                 class="inline-flex items-center gap-3 border border-primary/30 text-primary px-8 py-4 rounded-md font-label text-xs tracking-overline uppercase hover:bg-primary hover:text-on-primary hover:border-transparent transition-all duration-300">
+                <span class="material-symbols-outlined text-sm">map</span>
+                Visa på karta
+              </a>
+            </div>
+          </div>
+
+          <!-- Kartplacering -->
+          <div class="rounded-2xl bg-surface-highest flex flex-col items-center justify-center min-h-[500px] text-center p-12">
+            <div class="relative w-16 h-16 flex items-center justify-center mb-6">
+              <div class="absolute inset-0 bg-secondary/20 rounded-full animate-ping"></div>
+              <div class="w-16 h-16 bg-secondary rounded-full flex items-center justify-center relative">
+                <span class="material-symbols-outlined text-on-secondary text-2xl">location_on</span>
+              </div>
+            </div>
+            <h3 class="font-headline text-3xl text-primary mb-2">Åkes Skor</h3>
+            <p class="font-body text-on-surface-muted mb-8">
+              Köpmangatan 9, 641 30 Katrineholm
+            </p>
+            <a href="https://maps.google.com/?q=Köpmangatan+9+Katrineholm" target="_blank" rel="noopener"
+               class="inline-flex items-center gap-2 bg-primary text-on-primary px-8 py-4 rounded-md font-label text-xs tracking-overline uppercase hover:bg-primary-dark transition-colors duration-300">
+              <span class="material-symbols-outlined text-sm">open_in_new</span>
+              Öppna i Google Maps
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- ════════════════════════════════════════
+       FOOTER
+       ════════════════════════════════════════ -->
+  <footer class="bg-surface-low w-full py-12 px-8 border-t border-primary/10">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+
+      <div class="space-y-4">
+        <img src="logo.png" alt="Åkes Skor" class="h-8 w-auto" />
+        <p class="font-body text-sm text-on-surface/60 max-w-xs leading-relaxed">
+          Personlig skobutik i hjärtat av Katrineholm sedan 1931.
+        </p>
+      </div>
+
+      <div class="flex flex-col space-y-2">
+        <span class="font-headline text-sm mb-2 text-primary">Öppettider</span>
+        <span class="text-on-surface/60 font-body text-sm">Mån–Fre: 10:00–18:00</span>
+        <span class="text-on-surface/60 font-body text-sm">Lördag: 10:00–14:00</span>
+        <span class="text-on-surface/60 font-body text-sm">Söndag: Stängt</span>
+      </div>
+
+      <div>
+        <p class="font-body text-sm text-on-surface/60 mb-6">
+          © 2025 Åkes Skor, Katrineholm. Grundat 1931.
+        </p>
+        <div class="flex gap-4">
+          <a href="https://www.instagram.com/akesskor/" target="_blank" rel="noopener"
+             aria-label="Instagram @akesskor"
+             class="text-primary hover:text-secondary transition-colors duration-300">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="24" height="24">
+              <rect x="2" y="2" width="20" height="20" rx="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+            </svg>
+          </a>
+          <a href="tel:+46734608645"
+             aria-label="Ring Åkes Skor"
+             class="text-primary hover:text-secondary transition-colors duration-300">
+            <span class="material-symbols-outlined">call</span>
+          </a>
+        </div>
+      </div>
+
     </div>
-  </div>
-</footer>
+  </footer>
 
 </body>
 </html>
