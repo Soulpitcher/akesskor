@@ -272,8 +272,19 @@
           </a>
         </div>
 
-        <!-- Instagram-widget placeholder — byts ut mot riktigt flöde -->
-        <div class="flex flex-col items-center justify-center py-20 rounded-xl bg-surface-mid text-center">
+        <!-- Instagram-flöde — laddas dynamiskt via /api/instagram -->
+        <div id="ig-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+          <!-- Laddningsskelett — visas tills API svarar -->
+          <div class="ig-skeleton aspect-square rounded-lg bg-surface-high animate-pulse"></div>
+          <div class="ig-skeleton aspect-square rounded-lg bg-surface-high animate-pulse"></div>
+          <div class="ig-skeleton aspect-square rounded-lg bg-surface-high animate-pulse"></div>
+          <div class="ig-skeleton aspect-square rounded-lg bg-surface-high animate-pulse sm:block hidden"></div>
+          <div class="ig-skeleton aspect-square rounded-lg bg-surface-high animate-pulse sm:block hidden"></div>
+          <div class="ig-skeleton aspect-square rounded-lg bg-surface-high animate-pulse sm:block hidden"></div>
+        </div>
+
+        <!-- Fallback-knapp — visas om API ej konfigurerat eller fel uppstår -->
+        <div id="ig-fallback" class="hidden flex flex-col items-center justify-center py-20 rounded-xl bg-surface-mid text-center">
           <svg class="w-14 h-14 text-primary/25 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
             <rect x="2" y="2" width="20" height="20" rx="5"/>
             <circle cx="12" cy="12" r="4"/>
@@ -438,6 +449,69 @@
 
     </div>
   </footer>
+
+  <!-- ════════════════════════════════════════
+       INSTAGRAM FEED — dynamisk rendering
+       ════════════════════════════════════════ -->
+  <script>
+  (async () => {
+    const grid     = document.getElementById('ig-grid');
+    const fallback = document.getElementById('ig-fallback');
+
+    try {
+      const res  = await fetch('/api/instagram');
+      const json = await res.json();
+
+      // Rensa skelettet
+      grid.innerHTML = '';
+
+      if (!json.configured || !json.posts || json.posts.length === 0) {
+        // API ej konfigurerat ännu → visa fallback-knapp
+        grid.classList.add('hidden');
+        fallback.classList.remove('hidden');
+        fallback.classList.add('flex');
+        return;
+      }
+
+      // Rendera inläggen
+      json.posts.forEach(post => {
+        const a = document.createElement('a');
+        a.href   = post.url;
+        a.target = '_blank';
+        a.rel    = 'noopener noreferrer';
+        a.className = 'group relative block aspect-square overflow-hidden rounded-lg bg-surface-high';
+        a.setAttribute('aria-label', post.caption || 'Instagram-inlägg från @akesskor');
+
+        // Bild
+        const img = document.createElement('img');
+        img.src     = post.image;
+        img.alt     = post.caption || 'Åkes Skor';
+        img.loading = 'lazy';
+        img.className = 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-105';
+
+        // Hover-overlay med caption
+        const overlay = document.createElement('div');
+        overlay.className = 'absolute inset-0 bg-primary/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4';
+
+        const caption = document.createElement('p');
+        caption.className = 'font-body text-on-primary text-sm leading-snug line-clamp-3';
+        caption.textContent = post.caption || '';
+
+        overlay.appendChild(caption);
+        a.appendChild(img);
+        a.appendChild(overlay);
+        grid.appendChild(a);
+      });
+
+    } catch (err) {
+      // Nätverksfel (t.ex. lokalt utan API) → visa fallback
+      console.warn('Instagram-flöde kunde inte laddas:', err);
+      grid.classList.add('hidden');
+      fallback.classList.remove('hidden');
+      fallback.classList.add('flex');
+    }
+  })();
+  </script>
 
 </body>
 </html>

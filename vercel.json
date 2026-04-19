@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/instagram.js": {
+      "runtime": "nodejs20.x"
+    }
+  }
+}
