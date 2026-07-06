@@ -7,19 +7,30 @@
   <!-- SEO -->
   <title>Åkes Skor – Din personliga skobutik i Katrineholm sedan 1931</title>
   <meta name="description" content="Åkes Skor i Katrineholm är din personliga skoaffär sedan 1931. Stort sortiment från budget till premium – skor för alla. Besök oss på Köpmangatan 9." />
-  <meta name="keywords" content="skor Katrineholm, skoaffär Katrineholm, Åkes Skor, köpa skor, skobutik" />
+  <link rel="canonical" href="https://www.akesskor.se/" />
+  <meta name="theme-color" content="#163426" />
 
-  <!-- Open Graph -->
-  <meta property="og:title"       content="Åkes Skor – Katrineholm" />
-  <meta property="og:description" content="Din personliga skobutik sedan 1931. Stort urval, personlig service." />
-  <meta property="og:type"        content="website" />
-  <meta property="og:url"         content="https://www.akesskor.se" />
+  <!-- Open Graph / delning -->
+  <meta property="og:title"        content="Åkes Skor – Katrineholm" />
+  <meta property="og:description"  content="Din personliga skobutik sedan 1931. Stort urval, personlig service." />
+  <meta property="og:type"         content="website" />
+  <meta property="og:url"          content="https://www.akesskor.se/" />
+  <meta property="og:site_name"    content="Åkes Skor" />
+  <meta property="og:locale"       content="sv_SE" />
+  <meta property="og:image"        content="https://www.akesskor.se/og-image.jpg" />
+  <meta property="og:image:width"  content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt"    content="Skor från Åkes Skor i Katrineholm" />
+  <meta name="twitter:card"        content="summary_large_image" />
 
-  <!-- Typsnitt -->
+  <!-- Typsnitt (Material Symbols subsettad till de ikoner sidan använder) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&icon_names=arrow_forward,call,location_on,map,open_in_new,schedule&display=block" rel="stylesheet" />
+
+  <!-- Ladda hero-bilden tidigt — den är sidans LCP-element -->
+  <link rel="preload" as="image" href="hero-bild.webp" fetchpriority="high" />
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="32x32"  href="favicon-32.png" />
@@ -29,68 +40,23 @@
   <!-- Design tokens (alla designbeslut finns i style.css) -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Tailwind CDN — mappar token-namnen till CSS-variablerna i style.css -->
-  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          /* ── FÄRGER ────────────────────────────────────────────────────
-             Alla värden pekar på CSS-variabler i style.css.
-             <alpha-value> är Tailwinds platshållare för opacity-klasser,
-             t.ex. bg-primary/80, text-secondary/50.
-             ─────────────────────────────────────────────────────────── */
-          colors: {
-            'primary':           'rgb(var(--primary-ch)          / <alpha-value>)',
-            'primary-dark':      'rgb(var(--primary-dark-ch)     / <alpha-value>)',
-            'on-primary':        'rgb(var(--on-primary-ch)       / <alpha-value>)',
-            'on-primary-alt':    'rgb(var(--on-primary-alt-ch)   / <alpha-value>)',
-            'secondary':         'rgb(var(--secondary-ch)        / <alpha-value>)',
-            'on-secondary':      'rgb(var(--on-secondary-ch)     / <alpha-value>)',
-            'accent':            'rgb(var(--accent-ch)           / <alpha-value>)',
-            'on-accent':         'rgb(var(--on-accent-ch)        / <alpha-value>)',
-            'surface':           'rgb(var(--surface-ch)          / <alpha-value>)',
-            'surface-low':       'rgb(var(--surface-low-ch)      / <alpha-value>)',
-            'surface-mid':       'rgb(var(--surface-mid-ch)      / <alpha-value>)',
-            'surface-high':      'rgb(var(--surface-high-ch)     / <alpha-value>)',
-            'surface-highest':   'rgb(var(--surface-highest-ch)  / <alpha-value>)',
-            'on-surface':        'rgb(var(--on-surface-ch)       / <alpha-value>)',
-            'on-surface-muted':  'rgb(var(--on-surface-muted-ch) / <alpha-value>)',
-            'outline':           'rgb(var(--outline-ch)          / <alpha-value>)',
-            'outline-dim':       'rgb(var(--outline-dim-ch)      / <alpha-value>)',
-          },
-
-          /* ── TYPSNITT ──────────────────────────────────────────────── */
-          fontFamily: {
-            headline: ['var(--font-serif)'],
-            body:     ['var(--font-sans)'],
-            label:    ['var(--font-sans)'],
-          },
-
-          /* ── STORLEKAR ─────────────────────────────────────────────── */
-          fontSize: {
-            '2xs': ['0.625rem', { lineHeight: '1' }],        /* 10px — badge-text    */
-            'hero': ['clamp(3.5rem, 8vw, 6rem)', { lineHeight: '0.9' }], /* fluid hero */
-          },
-
-          /* ── BOKSTAVSAVSTÅND ───────────────────────────────────────── */
-          letterSpacing: {
-            overline: '0.15em',   /* etiketter, knappar, nav-länkar */
-          },
-        },
-      },
-    }
-  </script>
+  <!-- Förkompilerad Tailwind — byggs om via kommandot i tailwind.config.js -->
+  <link rel="stylesheet" href="tailwind.css" />
 
   <!-- Strukturerad data för Google och AI-sökmotorer -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "ShoeStore",
+    "@id": "https://www.akesskor.se/#butik",
     "name": "Åkes Skor",
     "description": "Personlig skobutik i Katrineholm sedan 1931 med stort sortiment i alla prisklasser.",
-    "url": "https://www.akesskor.se",
-    "telephone": "073-460 86 45",
+    "url": "https://www.akesskor.se/",
+    "telephone": "+46734608645",
+    "image": "https://www.akesskor.se/og-image.jpg",
+    "logo": "https://www.akesskor.se/logo.png",
+    "priceRange": "$$",
+    "foundingDate": "1931",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "Köpmangatan 9",
@@ -98,6 +64,12 @@
       "postalCode": "641 30",
       "addressCountry": "SE"
     },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 58.9959,
+      "longitude": 16.2072
+    },
+    "hasMap": "https://maps.google.com/?q=K%C3%B6pmangatan+9+Katrineholm",
     "openingHoursSpecification": [
       {
         "@type": "OpeningHoursSpecification",
@@ -150,6 +122,37 @@
         </a>
       </div>
 
+      <!-- Menyknapp (mobil) -->
+      <button id="mobile-menu-btn" type="button"
+              class="md:hidden text-primary p-2 -mr-2"
+              aria-label="Öppna menyn" aria-expanded="false" aria-controls="mobile-menu">
+        <svg id="menu-icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="24" height="24">
+          <line x1="4" y1="7"  x2="20" y2="7"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="17" x2="20" y2="17"/>
+        </svg>
+        <svg id="menu-icon-close" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="24" height="24">
+          <line x1="6" y1="6" x2="18" y2="18"/>
+          <line x1="18" y1="6" x2="6" y2="18"/>
+        </svg>
+      </button>
+
+    </div>
+
+    <!-- Meny (mobil) -->
+    <div id="mobile-menu" class="hidden md:hidden flex-col px-8 pb-6 pt-2 space-y-5 bg-surface/95 border-t border-primary/10">
+      <a href="#historia"
+         class="font-label text-xs tracking-overline uppercase text-on-surface/70 hover:text-secondary transition-colors duration-300">
+        Historia
+      </a>
+      <a href="#instagram"
+         class="font-label text-xs tracking-overline uppercase text-on-surface/70 hover:text-secondary transition-colors duration-300">
+        Instagram
+      </a>
+      <a href="#besok"
+         class="font-label text-xs tracking-overline uppercase text-primary hover:text-secondary transition-colors duration-300">
+        Besök oss
+      </a>
     </div>
   </nav>
 
@@ -164,8 +167,10 @@
       <div class="absolute inset-0 z-0">
         <img
           class="w-full h-full object-cover"
-          src="hero-bild.png"
+          src="hero-bild.webp"
           alt="Skor från Åkes Skor i Katrineholm"
+          width="1602" height="1480"
+          fetchpriority="high"
         />
         <div class="absolute inset-0 hero-gradient"></div>
       </div>
@@ -205,8 +210,10 @@
             <div class="bg-surface-high aspect-[4/5] rounded-xl overflow-hidden relative z-10 translate-x-4 -translate-y-4">
               <img
                 class="w-full h-full object-cover"
-                src="butik-bild.png"
+                src="butik-bild.webp"
                 alt="Sneakers och väska från Åkes Skor i Katrineholm"
+                width="1596" height="1592"
+                loading="lazy"
               />
             </div>
             <!-- Skuggram bakom bilden -->
@@ -432,7 +439,7 @@
 
       <div>
         <p class="font-body text-sm text-on-surface/60 mb-6">
-          © 2025 Åkes Skor, Katrineholm. Grundat 1931.
+          © <span id="footer-year">2026</span> Åkes Skor, Katrineholm. Grundat 1931.
         </p>
         <div class="flex gap-4">
           <a href="https://www.instagram.com/akesskor/" target="_blank" rel="noopener"
@@ -454,6 +461,36 @@
 
     </div>
   </footer>
+
+  <!-- ════════════════════════════════════════
+       MOBILMENY + FOOTER-ÅRTAL
+       ════════════════════════════════════════ -->
+  <script>
+  (() => {
+    document.getElementById('footer-year').textContent = new Date().getFullYear();
+
+    const btn       = document.getElementById('mobile-menu-btn');
+    const menu      = document.getElementById('mobile-menu');
+    const iconOpen  = document.getElementById('menu-icon-open');
+    const iconClose = document.getElementById('menu-icon-close');
+
+    const setOpen = (open) => {
+      menu.classList.toggle('hidden', !open);
+      menu.classList.toggle('flex',   open);
+      iconOpen.classList.toggle('hidden',  open);
+      iconClose.classList.toggle('hidden', !open);
+      btn.setAttribute('aria-expanded', String(open));
+      btn.setAttribute('aria-label', open ? 'Stäng menyn' : 'Öppna menyn');
+    };
+
+    btn.addEventListener('click', () => setOpen(menu.classList.contains('hidden')));
+
+    // Stäng menyn när en länk klickas
+    menu.querySelectorAll('a').forEach(a =>
+      a.addEventListener('click', () => setOpen(false))
+    );
+  })();
+  </script>
 
   <!-- ════════════════════════════════════════
        INSTAGRAM FEED — dynamisk rendering

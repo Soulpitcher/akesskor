@@ -1,0 +1,4 @@
+/* Källfil för Tailwind-bygget — se tailwind.config.js för byggkommandot. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
