@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghost Nation — Merch Studio</title>
+  <meta name="description" content="Gör tryckfärdiga t-shirtdesigns av Ghost Nations omslag, loggor och bilder. Exportera tryckfil i 300 DPI och mockup." />
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="#0d0d0f" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ══════════════════════════════════════════════════════════
+       GHOST NATION — MERCH STUDIO
+       Fristående. Inga beroenden. Allt sker lokalt i webbläsaren.
+       ══════════════════════════════════════════════════════════ */
+    :root {
+      --bg:        #0d0d0f;
+      --surface:   #161619;
+      --surface-2: #1e1e23;
+      --surface-3: #26262c;
+      --line:      #2e2e35;
+      --text:      #ececf0;
+      --muted:     #9a9aa4;
+      --red:       #e11d2a;
+      --red-dark:  #b3141f;
+      --bone:      #f5f5f0;
+      --radius:    12px;
+      --gap:       0.85rem;
+      --font-disp: 'Oswald', system-ui, sans-serif;
+      --font-ui:   'Inter', system-ui, sans-serif;
+    }
+    * , *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    img { display: block; max-width: 100%; }
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── TOPPRAD ─────────────────────────────── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 0.85rem 1.25rem;
+      background: #0a0a0b;
+      border-bottom: 1px solid var(--line);
+      position: sticky; top: 0; z-index: 30;
+    }
+    .topbar .brand { display: flex; align-items: center; gap: 0.85rem; }
+    .topbar .brand .logo { height: 26px; width: auto; }
+    .topbar .brand .tag {
+      font-family: var(--font-disp); text-transform: uppercase;
+      letter-spacing: 0.22em; font-size: 0.62rem; font-weight: 500;
+      color: var(--muted); border-left: 1px solid var(--line);
+      padding-left: 0.85rem;
+    }
+    .topbar .tag b { color: var(--red); font-weight: 700; }
+    .topbar-actions { display: flex; gap: 0.55rem; flex-wrap: wrap; }
+
+    /* ── KNAPPAR ─────────────────────────────── */
+    .btn {
+      font-family: var(--font-ui); font-weight: 600; font-size: 0.78rem;
+      letter-spacing: 0.02em; border: 1px solid transparent; border-radius: 999px;
+      padding: 0.6rem 1.05rem; cursor: pointer; line-height: 1;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      transition: background .15s, border-color .15s, transform .08s, color .15s;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-red { background: var(--red); color: #fff; }
+    .btn-red:hover { background: var(--red-dark); }
+    .btn-ghost { background: transparent; color: var(--text); border-color: var(--line); }
+    .btn-ghost:hover { background: var(--surface-2); border-color: var(--muted); }
+    .btn-outline { background: var(--surface-2); color: var(--text); border-color: var(--line); }
+    .btn-outline:hover { border-color: var(--red); }
+    .btn-block { width: 100%; justify-content: center; }
+    .btn-sm { font-size: 0.72rem; padding: 0.45rem 0.7rem; }
+
+    /* ── LAYOUT ──────────────────────────────── */
+    .shell {
+      display: grid; grid-template-columns: 320px minmax(0,1fr) 300px;
+      gap: var(--gap); padding: var(--gap);
+      max-width: 1520px; margin: 0 auto; align-items: start;
+    }
+    @media (max-width: 1080px) { .shell { grid-template-columns: 1fr; } }
+
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+    .panel + .panel { margin-top: var(--gap); }
+    .panel-body { padding: 1rem; }
+    .panel-title {
+      font-family: var(--font-disp); font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.16em; font-size: 0.7rem; color: var(--muted);
+      margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .panel-title .num {
+      display: inline-grid; place-items: center; width: 19px; height: 19px;
+      border-radius: 50%; background: var(--red); color: #fff;
+      font-size: 0.62rem; font-weight: 700; font-family: var(--font-ui);
+    }
+
+    /* ── PLAGGFÄRGER ─────────────────────────── */
+    .swatch-row { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+    .swatch {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid var(--surface-3); cursor: pointer; transition: transform .1s;
+    }
+    .swatch:hover { transform: scale(1.08); }
+    .swatch[aria-pressed="true"] { border-color: var(--red); box-shadow: 0 0 0 3px rgba(225,29,42,.3); }
+
+    /* ── ASSET-GALLERI ───────────────────────── */
+    .asset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    .asset-thumb {
+      aspect-ratio: 1; border-radius: 8px; border: 1px solid var(--line);
+      background: var(--surface-2); overflow: hidden; cursor: pointer;
+      display: grid; place-items: center; transition: border-color .12s, transform .1s;
+      position: relative;
+    }
+    .asset-thumb:hover { border-color: var(--red); transform: translateY(-1px); }
+    .asset-thumb img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
+    .asset-thumb .cap {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      font-size: 0.55rem; text-align: center; padding: 2px;
+      background: rgba(0,0,0,.55); color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    .field { margin-bottom: 0.8rem; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--muted); margin-bottom: 0.35rem; }
+    .field input[type=text], .field select {
+      width: 100%; font-family: var(--font-ui); font-size: 0.85rem;
+      padding: 0.55rem 0.65rem; border: 1px solid var(--line); border-radius: 8px;
+      background: var(--surface-2); color: var(--text);
+    }
+    .field input:focus, .field select:focus { outline: 2px solid rgba(225,29,42,.4); border-color: var(--red); }
+    .field select option { background: var(--surface-2); }
+
+    input[type=range] { width: 100%; accent-color: var(--red); }
+    .range-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.2rem; }
+    .range-row span:last-child { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.72rem; }
+
+    .color-row { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+    .color-chip { width: 26px; height: 26px; border-radius: 6px; border: 2px solid var(--surface-3); cursor: pointer; }
+    .color-chip[aria-pressed="true"] { border-color: var(--bone); box-shadow: 0 0 0 2px rgba(245,245,240,.25); }
+
+    /* ── SCEN ────────────────────────────────── */
+    .stage-panel { padding: 0; overflow: hidden; }
+    .stage-wrap {
+      position: relative; display: grid; place-items: center; padding: 1rem; min-height: 440px;
+      background: radial-gradient(circle at 50% 34%, #212127, #0d0d0f 72%);
+    }
+    #stage { width: 100%; max-width: 640px; height: auto; touch-action: none; cursor: grab; }
+    #stage.dragging { cursor: grabbing; }
+    .stage-hint { text-align: center; font-size: 0.72rem; color: var(--muted); padding: 0.6rem 1rem 0.9rem; }
+    .view-toggle {
+      position: absolute; top: 0.8rem; left: 50%; transform: translateX(-50%);
+      display: flex; background: rgba(13,13,15,.85); border: 1px solid var(--line);
+      border-radius: 999px; padding: 3px; backdrop-filter: blur(6px);
+    }
+    .view-toggle button {
+      border: none; background: transparent; cursor: pointer;
+      font-family: var(--font-disp); font-size: 0.72rem; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 0.35rem 0.85rem; border-radius: 999px; color: var(--muted);
+    }
+    .view-toggle button[aria-pressed="true"] { background: var(--red); color: #fff; }
+
+    /* ── LAGER ───────────────────────────────── */
+    .layer-list { display: flex; flex-direction: column; gap: 0.4rem; }
+    .layer-item {
+      display: flex; align-items: center; gap: 0.55rem; padding: 0.5rem 0.6rem;
+      border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2);
+      cursor: pointer; font-size: 0.8rem;
+    }
+    .layer-item[aria-selected="true"] { border-color: var(--red); background: rgba(225,29,42,.08); }
+    .layer-item .thumb {
+      width: 30px; height: 30px; border-radius: 5px; flex: none; overflow: hidden;
+      background: var(--surface-3); display: grid; place-items: center;
+      font-family: var(--font-disp); font-size: 0.85rem; border: 1px solid var(--line);
+    }
+    .layer-item .thumb img { width: 100%; height: 100%; object-fit: contain; }
+    .layer-item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .layer-item .mini { border: none; background: transparent; cursor: pointer; font-size: 0.95rem; color: var(--muted); padding: 2px 5px; border-radius: 4px; }
+    .layer-item .mini:hover { background: var(--surface-3); color: var(--text); }
+    .empty-note { font-size: 0.78rem; color: var(--muted); text-align: center; padding: 1rem 0.5rem; line-height: 1.5; }
+    .selected-controls[hidden] { display: none; }
+    .divider { height: 1px; background: var(--line); margin: 1rem 0; }
+    .helper-text { font-size: 0.72rem; color: var(--muted); line-height: 1.5; margin-top: 0.5rem; }
+    .file-input { display: none; }
+    .tip {
+      background: rgba(225,29,42,.1); border: 1px solid rgba(225,29,42,.35);
+      border-radius: 8px; padding: 0.65rem 0.75rem; font-size: 0.74rem; color: var(--text); line-height: 1.55;
+    }
+    .tip a { color: var(--red); font-weight: 700; }
+    footer.foot { text-align: center; padding: 1.5rem 1rem 2.5rem; color: var(--muted); font-size: 0.74rem; }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="logo-text-white.svg" alt="Ghost Nation" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'GHOST NATION',style:'font-family:var(--font-disp);letter-spacing:.2em;font-weight:700'}))" />
+      <span class="tag">Merch <b>Studio</b></span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-red" id="btn-export-print">↓ Tryckfil · 300 DPI</button>
+      <button class="btn btn-ghost" id="btn-export-mockup">↓ Mockup</button>
+    </div>
+  </header>
+
+  <div class="shell">
+
+    <!-- VÄNSTER -->
+    <div class="col-left">
+      <div class="panel"><div class="panel-body">
+        <div class="panel-title"><span class="num">1</span> Plaggfärg</div>
+        <div class="swatch-row" id="garment-swatches"></div>
+      </div></div>
+
+      <div class="panel"><div class="panel-body">
+        <div class="panel-title"><span class="num">2</span> Lägg till motiv</div>
+        <div class="asset-grid" id="asset-grid"></div>
+        <div class="divider"></div>
+        <button class="btn btn-outline btn-block btn-sm" id="btn-upload">⬆ Ladda upp omslag / bild</button>
+        <input type="file" accept="image/*" class="file-input" id="file-upload" />
+        <p class="helper-text">Dra in vilket omslag eller vilken bild som helst. PNG med transparent bakgrund ger renast tryck.</p>
+      </div></div>
+
+      <div class="panel"><div class="panel-body">
+        <div class="panel-title"><span class="num">3</span> Lägg till text</div>
+        <div class="field"><input type="text" id="text-input" placeholder="t.ex. GHOST NATION" /></div>
+        <div class="field">
+          <label>Typsnitt</label>
+          <select id="text-font">
+            <option value="'Anton', sans-serif">Anton (fet display)</option>
+            <option value="'Oswald', sans-serif">Oswald (kondenserad)</option>
+            <option value="'Inter', sans-serif">Inter (ren sans)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Textfärg</label>
+          <div class="color-row" id="text-colors"></div>
+        </div>
+        <button class="btn btn-red btn-block btn-sm" id="btn-add-text">+ Lägg till text</button>
+      </div></div>
+    </div>
+
+    <!-- MITTEN -->
+    <div class="col-center">
+      <div class="panel stage-panel">
+        <div class="stage-wrap">
+          <div class="view-toggle" role="group" aria-label="Vy">
+            <button id="view-front" aria-pressed="true">Framsida</button>
+            <button id="view-back" aria-pressed="false">Baksida</button>
+          </div>
+          <canvas id="stage" width="900" height="1000"></canvas>
+        </div>
+        <p class="stage-hint">Dra motivet för att flytta det. Streckade rutan = tryckyta (30 × 40 cm).</p>
+      </div>
+    </div>
+
+    <!-- HÖGER -->
+    <div class="col-right">
+      <div class="panel"><div class="panel-body">
+        <div class="panel-title">Lager</div>
+        <div class="layer-list" id="layer-list">
+          <p class="empty-note">Inga motiv än.<br>Lägg till ett omslag eller text från vänster.</p>
+        </div>
+      </div></div>
+
+      <div class="panel selected-controls" id="selected-panel" hidden><div class="panel-body">
+        <div class="panel-title">Justera markerat lager</div>
+        <div class="field">
+          <div class="range-row"><label>Storlek</label><span id="val-scale">100%</span></div>
+          <input type="range" id="ctl-scale" min="10" max="300" value="100" />
+        </div>
+        <div class="field">
+          <div class="range-row"><label>Rotation</label><span id="val-rot">0°</span></div>
+          <input type="range" id="ctl-rot" min="-180" max="180" value="0" />
+        </div>
+        <div class="field">
+          <div class="range-row"><label>Genomskinlighet</label><span id="val-op">100%</span></div>
+          <input type="range" id="ctl-op" min="10" max="100" value="100" />
+        </div>
+        <div class="divider"></div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button class="btn btn-outline btn-sm" id="btn-center">⊹ Centrera</button>
+          <button class="btn btn-outline btn-sm" id="btn-forward">↑ Fram</button>
+          <button class="btn btn-outline btn-sm" id="btn-back">↓ Bak</button>
+          <button class="btn btn-outline btn-sm" id="btn-delete" style="color:var(--red);border-color:rgba(225,29,42,.5)">🗑 Ta bort</button>
+        </div>
+      </div></div>
+
+      <div class="panel"><div class="panel-body">
+        <div class="tip">
+          <strong>Redo att trycka?</strong> Ladda ner tryckfilen och skicka till <a href="https://www.gelato.com/sv" target="_blank" rel="noopener">Gelato</a> (tryck-on-demand, svensk frakt) — eller ge den till ert tryckeri. Mockupen använder ni för godkännande och sociala medier.
+        </div>
+      </div></div>
+    </div>
+
+  </div>
+
+  <footer class="foot">
+    Ghost Nation · Merch Studio — allt sker lokalt i din webbläsare, inga bilder laddas upp någonstans.
+  </footer>
+
+  <script>
+  /* ══════════════════════════════════════════════════════════
+     GHOST NATION — MERCH STUDIO  ·  vanilla JS + Canvas
+     ══════════════════════════════════════════════════════════ */
+  const CANVAS_W = 900, CANVAS_H = 1000;
+
+  /* Plaggfärger — band-standard */
+  const GARMENTS = [
+    { name: 'Svart',    fill: '#111113', dark: false },
+    { name: 'Vit',      fill: '#f5f5f0', dark: true  },
+    { name: 'Kolgrå',   fill: '#3a3a3f', dark: false },
+    { name: 'Vinröd',   fill: '#5a1f24', dark: false },
+    { name: 'Oliv',     fill: '#4b4a3d', dark: false },
+    { name: 'Sand',     fill: '#d8cbb3', dark: true  },
+    { name: 'Röd',      fill: '#b3141f', dark: false },
+  ];
+
+  const TEXT_COLORS = ['#f5f5f0', '#e11d2a', '#111113', '#d8cbb3', '#9a9aa4', '#ffffff'];
+
+  /* Förvalda motiv. Loggorna är inbakade (vektor).
+     Lägg till omslag genom att droppa filer i mappen och fylla på listan här,
+     eller använd uppladdningsknappen direkt. w/h = intrinsic mått för SVG. */
+  const ASSETS = [
+    { label: 'Logo · vit',  src: 'logo-text-white.svg', w: 566, h: 61 },
+    { label: 'Logo · röd',  src: 'logo-text-red.svg',   w: 566, h: 61 },
+    { label: 'Logo · svart', src: 'logo-text.svg',      w: 566, h: 61 },
+    // { label: 'Unholy',   src: 'covers/unholy.jpg' },
+    // { label: 'Surrender', src: 'covers/surrender.jpg' },
+  ];
+
+  const PRINT = { x: 300, y: 330, w: 300, h: 400 };
+  const PRINT_CM_W = 30, EXPORT_DPI = 300;
+  const PRINT_PX_W = Math.round(PRINT_CM_W / 2.54 * EXPORT_DPI); // ~3543 px
+
+  let state = { garment: 0, view: 'front', textColor: '#f5f5f0', layers: [], selected: null, nextId: 1 };
+
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+
+  /* ── T-SHIRT-SILUETT ─────────────────────── */
+  function tshirtPath(back) {
+    const p = new Path2D();
+    const neckDip = back ? 22 : 58;
+    p.moveTo(300, 168);
+    p.lineTo(388, 176);
+    p.quadraticCurveTo(450, 176 + neckDip, 512, 176);
+    p.lineTo(600, 168);
+    p.quadraticCurveTo(690, 205, 726, 296);
+    p.lineTo(648, 348);
+    p.quadraticCurveTo(618, 322, 606, 356);
+    p.lineTo(624, 872);
+    p.quadraticCurveTo(450, 902, 276, 872);
+    p.lineTo(294, 356);
+    p.quadraticCurveTo(282, 322, 252, 348);
+    p.lineTo(174, 296);
+    p.quadraticCurveTo(210, 205, 300, 168);
+    p.closePath();
+    return p;
+  }
+
+  function drawShirt() {
+    const g = GARMENTS[state.garment];
+    const path = tshirtPath(state.view === 'back');
+    ctx.save();
+    ctx.fillStyle = g.fill;
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 45; ctx.shadowOffsetY = 18;
+    ctx.fill(path);
+    ctx.restore();
+
+    ctx.save(); ctx.clip(path);
+    const shade = ctx.createRadialGradient(450, 420, 120, 450, 520, 470);
+    shade.addColorStop(0, 'rgba(0,0,0,0)');
+    shade.addColorStop(1, g.dark ? 'rgba(0,0,0,0.20)' : 'rgba(0,0,0,0.34)');
+    ctx.fillStyle = shade; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    const hi = ctx.createLinearGradient(300, 0, 600, 0);
+    hi.addColorStop(0, 'rgba(255,255,255,0)');
+    hi.addColorStop(0.5, g.dark ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.05)');
+    hi.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = hi; ctx.fillRect(300, 150, 300, 750);
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = g.dark ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.14)';
+    ctx.lineWidth = 8; ctx.beginPath();
+    const nd = state.view === 'back' ? 22 : 58;
+    ctx.moveTo(388, 182); ctx.quadraticCurveTo(450, 182 + nd, 512, 182); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawPrintGuide() {
+    ctx.save();
+    ctx.setLineDash([10, 8]); ctx.lineWidth = 2;
+    ctx.strokeStyle = GARMENTS[state.garment].dark ? 'rgba(17,17,19,0.35)' : 'rgba(255,255,255,0.45)';
+    ctx.strokeRect(PRINT.x, PRINT.y, PRINT.w, PRINT.h);
+    ctx.restore();
+  }
+
+  function drawLayer(layer, exportMode) {
+    ctx.save();
+    ctx.globalAlpha = layer.opacity;
+    ctx.translate(layer.x, layer.y);
+    ctx.rotate(layer.rot * Math.PI / 180);
+    if (layer.type === 'image') {
+      const w = layer.natW * layer.scale, h = layer.natH * layer.scale;
+      ctx.drawImage(layer.img, -w / 2, -h / 2, w, h);
+    } else {
+      ctx.font = `700 ${Math.round(64 * layer.scale)}px ${layer.font}`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = layer.color;
+      ctx.fillText(layer.text, 0, 0);
+    }
+    ctx.restore();
+    if (!exportMode && state.selected === layer.id) {
+      const b = layerBounds(layer);
+      ctx.save();
+      ctx.strokeStyle = '#e11d2a'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+      ctx.strokeRect(b.x, b.y, b.w, b.h);
+      ctx.restore();
+    }
+  }
+
+  function layerBounds(layer) {
+    let w, h;
+    if (layer.type === 'image') { w = layer.natW * layer.scale; h = layer.natH * layer.scale; }
+    else {
+      ctx.font = `700 ${Math.round(64 * layer.scale)}px ${layer.font}`;
+      w = ctx.measureText(layer.text).width; h = 64 * layer.scale * 1.2;
+    }
+    return { x: layer.x - w / 2, y: layer.y - h / 2, w, h, hw: w / 2, hh: h / 2 };
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+    drawShirt();
+    drawPrintGuide();
+    ctx.save();
+    ctx.beginPath(); ctx.rect(PRINT.x - 2, PRINT.y - 2, PRINT.w + 4, PRINT.h + 4); ctx.clip();
+    state.layers.forEach(l => drawLayer(l, false));
+    ctx.restore();
+  }
+
+  /* ── UI ──────────────────────────────────── */
+  const swatchWrap = document.getElementById('garment-swatches');
+  GARMENTS.forEach((g, i) => {
+    const b = document.createElement('button');
+    b.className = 'swatch'; b.style.background = g.fill; b.title = g.name;
+    b.setAttribute('aria-pressed', i === state.garment);
+    b.onclick = () => { state.garment = i; [...swatchWrap.children].forEach((c, j) => c.setAttribute('aria-pressed', j === i)); render(); };
+    swatchWrap.appendChild(b);
+  });
+
+  const colorWrap = document.getElementById('text-colors');
+  TEXT_COLORS.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'color-chip'; b.style.background = c; b.dataset.color = c;
+    b.setAttribute('aria-pressed', c === state.textColor);
+    b.onclick = () => { state.textColor = c; [...colorWrap.children].forEach(ch => ch.setAttribute('aria-pressed', ch.dataset.color === c)); };
+    colorWrap.appendChild(b);
+  });
+
+  const assetGrid = document.getElementById('asset-grid');
+  ASSETS.forEach(a => {
+    const d = document.createElement('button');
+    d.className = 'asset-thumb'; d.title = 'Lägg till: ' + a.label;
+    const im = document.createElement('img'); im.src = a.src; im.alt = a.label; im.loading = 'lazy';
+    const cap = document.createElement('span'); cap.className = 'cap'; cap.textContent = a.label;
+    d.append(im, cap);
+    d.onclick = () => addImageLayer(a.src, a.label, a.w, a.h);
+    assetGrid.appendChild(d);
+  });
+
+  function addImageLayer(src, label, forceW, forceH) {
+    const img = new Image();
+    img.onload = () => {
+      let nw = img.naturalWidth || forceW || 300;
+      let nh = img.naturalHeight || forceH || 300;
+      if (forceW && forceH) { nw = forceW; nh = forceH; }   // SVG: använd känd viewBox
+      const maxW = PRINT.w * 0.72, maxH = PRINT.h * 0.72;
+      const scale = Math.min(maxW / nw, maxH / nh, 1);
+      state.layers.push({
+        id: state.nextId++, type: 'image', img, label, natW: nw, natH: nh,
+        x: PRINT.x + PRINT.w / 2, y: PRINT.y + PRINT.h / 2, scale, rot: 0, opacity: 1,
+      });
+      state.selected = state.layers[state.layers.length - 1].id;
+      refreshLayers(); render();
+    };
+    img.onerror = () => alert('Kunde inte ladda: ' + src);
+    img.src = src;
+  }
+
+  document.getElementById('btn-add-text').onclick = () => {
+    const input = document.getElementById('text-input');
+    const val = input.value.trim();
+    if (!val) { input.focus(); return; }
+    state.layers.push({
+      id: state.nextId++, type: 'text', text: val,
+      font: document.getElementById('text-font').value, color: state.textColor,
+      x: PRINT.x + PRINT.w / 2, y: PRINT.y + PRINT.h / 2, scale: 1, rot: 0, opacity: 1,
+    });
+    state.selected = state.layers[state.layers.length - 1].id;
+    input.value = '';
+    refreshLayers(); render();
+  };
+
+  document.getElementById('btn-upload').onclick = () => document.getElementById('file-upload').click();
+  document.getElementById('file-upload').onchange = e => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => addImageLayer(ev.target.result, file.name.replace(/\.[^.]+$/, ''));
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  /* ── LAGERLISTA ──────────────────────────── */
+  const layerList = document.getElementById('layer-list');
+  function refreshLayers() {
+    layerList.innerHTML = '';
+    if (!state.layers.length) {
+      layerList.innerHTML = '<p class="empty-note">Inga motiv än.<br>Lägg till ett omslag eller text från vänster.</p>';
+      updateSelectedPanel(); return;
+    }
+    [...state.layers].reverse().forEach(l => {
+      const row = document.createElement('div');
+      row.className = 'layer-item'; row.setAttribute('aria-selected', state.selected === l.id);
+      const thumb = document.createElement('div'); thumb.className = 'thumb';
+      if (l.type === 'image') { const im = document.createElement('img'); im.src = l.img.src; thumb.appendChild(im); }
+      else thumb.textContent = 'T';
+      const name = document.createElement('div'); name.className = 'name';
+      name.textContent = l.type === 'image' ? (l.label || 'Bild') : '“' + l.text + '”';
+      const del = document.createElement('button'); del.className = 'mini'; del.title = 'Ta bort'; del.textContent = '×';
+      del.onclick = ev => { ev.stopPropagation(); removeLayer(l.id); };
+      row.append(thumb, name, del);
+      row.onclick = () => { state.selected = l.id; refreshLayers(); render(); };
+      layerList.appendChild(row);
+    });
+    updateSelectedPanel();
+  }
+  function removeLayer(id) {
+    state.layers = state.layers.filter(l => l.id !== id);
+    if (state.selected === id) state.selected = state.layers.length ? state.layers[state.layers.length - 1].id : null;
+    refreshLayers(); render();
+  }
+  function currentLayer() { return state.layers.find(l => l.id === state.selected) || null; }
+
+  /* ── JUSTERING ───────────────────────────── */
+  const selPanel = document.getElementById('selected-panel');
+  const ctlScale = document.getElementById('ctl-scale'), ctlRot = document.getElementById('ctl-rot'), ctlOp = document.getElementById('ctl-op');
+  function baseScale(l) { if (l._base == null) l._base = l.scale; return l._base; }
+  function updateSelectedPanel() {
+    const l = currentLayer();
+    if (!l) { selPanel.hidden = true; return; }
+    selPanel.hidden = false;
+    const pct = l.type === 'image' ? Math.round(l.scale / baseScale(l) * 100) : Math.round(l.scale * 100);
+    ctlScale.value = Math.max(10, Math.min(300, pct));
+    document.getElementById('val-scale').textContent = ctlScale.value + '%';
+    ctlRot.value = l.rot; document.getElementById('val-rot').textContent = Math.round(l.rot) + '°';
+    ctlOp.value = Math.round(l.opacity * 100); document.getElementById('val-op').textContent = ctlOp.value + '%';
+  }
+  ctlScale.oninput = () => { const l = currentLayer(); if (!l) return; const pct = +ctlScale.value; document.getElementById('val-scale').textContent = pct + '%'; l.scale = l.type === 'image' ? baseScale(l) * pct / 100 : pct / 100; render(); };
+  ctlRot.oninput = () => { const l = currentLayer(); if (!l) return; l.rot = +ctlRot.value; document.getElementById('val-rot').textContent = l.rot + '°'; render(); };
+  ctlOp.oninput = () => { const l = currentLayer(); if (!l) return; l.opacity = +ctlOp.value / 100; document.getElementById('val-op').textContent = ctlOp.value + '%'; render(); };
+  document.getElementById('btn-center').onclick = () => { const l = currentLayer(); if (!l) return; l.x = PRINT.x + PRINT.w / 2; l.y = PRINT.y + PRINT.h / 2; render(); };
+  document.getElementById('btn-delete').onclick = () => { const l = currentLayer(); if (l) removeLayer(l.id); };
+  document.getElementById('btn-forward').onclick = () => moveLayer(1);
+  document.getElementById('btn-back').onclick = () => moveLayer(-1);
+  function moveLayer(dir) {
+    const i = state.layers.findIndex(l => l.id === state.selected); if (i < 0) return;
+    const j = i + dir; if (j < 0 || j >= state.layers.length) return;
+    [state.layers[i], state.layers[j]] = [state.layers[j], state.layers[i]];
+    refreshLayers(); render();
+  }
+
+  /* ── DRA FÖR ATT FLYTTA ──────────────────── */
+  let drag = null;
+  function canvasPoint(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: (e.clientX - r.left) / r.width * CANVAS_W, y: (e.clientY - r.top) / r.height * CANVAS_H };
+  }
+  function hitLayer(pt) {
+    for (let i = state.layers.length - 1; i >= 0; i--) {
+      const l = state.layers[i], b = layerBounds(l);
+      const a = -l.rot * Math.PI / 180, dx = pt.x - l.x, dy = pt.y - l.y;
+      const rx = dx * Math.cos(a) - dy * Math.sin(a), ry = dx * Math.sin(a) + dy * Math.cos(a);
+      if (Math.abs(rx) <= b.hw && Math.abs(ry) <= b.hh) return l;
+    }
+    return null;
+  }
+  canvas.addEventListener('pointerdown', e => {
+    const pt = canvasPoint(e), l = hitLayer(pt);
+    if (l) {
+      state.selected = l.id; drag = { id: l.id, dx: pt.x - l.x, dy: pt.y - l.y };
+      canvas.classList.add('dragging'); canvas.setPointerCapture(e.pointerId);
+      refreshLayers(); render();
+    } else if (state.selected !== null) { state.selected = null; refreshLayers(); render(); }
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const pt = canvasPoint(e), l = state.layers.find(x => x.id === drag.id); if (!l) return;
+    l.x = pt.x - drag.dx; l.y = pt.y - drag.dy; render();
+  });
+  const endDrag = () => { drag = null; canvas.classList.remove('dragging'); };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  /* ── VY ──────────────────────────────────── */
+  document.getElementById('view-front').onclick = () => setView('front');
+  document.getElementById('view-back').onclick = () => setView('back');
+  function setView(v) {
+    state.view = v;
+    document.getElementById('view-front').setAttribute('aria-pressed', v === 'front');
+    document.getElementById('view-back').setAttribute('aria-pressed', v === 'back');
+    render();
+  }
+
+  /* ── EXPORT ──────────────────────────────── */
+  function exportPrint() {
+    if (!state.layers.length) { alert('Lägg till minst ett motiv först.'); return; }
+    const scale = PRINT_PX_W / PRINT.w;
+    const off = document.createElement('canvas');
+    off.width = Math.round(PRINT.w * scale); off.height = Math.round(PRINT.h * scale);
+    const o = off.getContext('2d');
+    o.save(); o.translate(-PRINT.x * scale, -PRINT.y * scale); o.scale(scale, scale);
+    state.layers.forEach(l => {
+      o.save(); o.globalAlpha = l.opacity; o.translate(l.x, l.y); o.rotate(l.rot * Math.PI / 180);
+      if (l.type === 'image') { const w = l.natW * l.scale, h = l.natH * l.scale; o.drawImage(l.img, -w / 2, -h / 2, w, h); }
+      else { o.font = `700 ${Math.round(64 * l.scale)}px ${l.font}`; o.textAlign = 'center'; o.textBaseline = 'middle'; o.fillStyle = l.color; o.fillText(l.text, 0, 0); }
+      o.restore();
+    });
+    o.restore();
+    downloadCanvas(off, `ghost-nation-tryckfil-${state.view}-${PRINT_PX_W}px.png`);
+  }
+  function exportMockup() {
+    const prevSel = state.selected; state.selected = null;
+    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+    drawShirt();
+    ctx.save(); ctx.beginPath(); ctx.rect(PRINT.x - 2, PRINT.y - 2, PRINT.w + 4, PRINT.h + 4); ctx.clip();
+    state.layers.forEach(l => drawLayer(l, true)); ctx.restore();
+    downloadCanvas(canvas, `ghost-nation-mockup-${GARMENTS[state.garment].name.toLowerCase()}-${state.view}.png`);
+    state.selected = prevSel; render();
+  }
+  function downloadCanvas(cv, filename) {
+    cv.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, 'image/png');
+  }
+  document.getElementById('btn-export-print').onclick = exportPrint;
+  document.getElementById('btn-export-mockup').onclick = exportMockup;
+
+  /* ── START ───────────────────────────────── */
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(render);
+  render(); refreshLayers();
+  </script>
+</body>
+</html>
