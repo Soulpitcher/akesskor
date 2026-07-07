@@ -470,15 +470,27 @@
   });
 
   const assetGrid = document.getElementById('asset-grid');
-  ASSETS.forEach(a => {
+  function addAssetThumb(a) {
     const d = document.createElement('button');
     d.className = 'asset-thumb'; d.title = 'Lägg till: ' + a.label;
     const im = document.createElement('img'); im.src = a.src; im.alt = a.label; im.loading = 'lazy';
+    // Dölj automatiskt förval vars fil saknas (t.ex. omslag som inte lagts in än)
+    im.onerror = () => d.remove();
     const cap = document.createElement('span'); cap.className = 'cap'; cap.textContent = a.label;
     d.append(im, cap);
     d.onclick = () => addImageLayer(a.src, a.label, a.w, a.h);
     assetGrid.appendChild(d);
-  });
+  }
+  ASSETS.forEach(addAssetThumb);
+
+  /* Ladda omslag automatiskt från covers/manifest.json om det finns.
+     Manifestet listar hela biblioteket; saknade filer döljs automatiskt (im.onerror).
+     Bygg om manifestet med:  node gn/build-covers.mjs  */
+  fetch('covers/manifest.json')
+    .then(r => r.ok ? r.json() : [])
+    .then(list => (Array.isArray(list) ? list : []).forEach(c =>
+      addAssetThumb({ label: c.label || c.file, src: 'covers/' + c.file })))
+    .catch(() => {});
 
   function addImageLayer(src, label, forceW, forceH) {
     const img = new Image();
