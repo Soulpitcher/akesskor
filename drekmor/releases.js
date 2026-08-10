@@ -57,7 +57,7 @@ const RELEASES = [
     title: "Blacked Out Beacon",
     type: "song",
     status: "available",
-    accent: "#c0392b",
+    accent: "#2bb6c9",              // turkos – matchar omslaget
     featured: true,
     releaseDate: "2026-05-01",
     duration: "3:42",
@@ -91,7 +91,7 @@ Skriv refrängen här ...`
     title: "Midnight Call",
     type: "song",
     status: "coming",
-    accent: "#2e6f9e",
+    accent: "#a12bd0",              // lila/magenta – matchar omslaget
     featured: true,
     releaseDate: "",
     duration: "",
