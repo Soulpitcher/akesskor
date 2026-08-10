@@ -28,8 +28,13 @@
    audio        Sökväg/URL till ljudfilen ("assets/d01.mp3") ELLER en
                 streaminglänk. Lämna null så spelar en platshållar-signal
                 (så att mätaren och rullarna lever redan innan låten finns).
-   cover        Bild-URL till omslaget ("assets/d01-cover.jpg") eller null.
-                Är den null ritas ett snyggt färgomslag av accent-färgen.
+   cover        Fyrkantig omslagsbild (1:1), t.ex. "assets/d01-cover.jpg",
+                eller null. Med bild blir kassetten en "picture-kassett" (bilden
+                trycks på skalet, centrerad beskärning) och hela den fyrkantiga
+                bilden visas i omslaget/modalen. Är den null ritas ett snyggt
+                färgomslag av accent-färgen istället.
+                REKOMMENDERAT FORMAT: kvadrat, minst 1000×1000 px (gärna 1500),
+                JPG. Håll motivet mot mitten så beskärningen på kassetten blir bra.
    links        Länkar som visas i omslaget. Tomma fält döljs automatiskt.
    notes        Kort blänkare överst i omslaget (1–2 meningar).
    credits      Lista med { role, name } – visas som credits i omslaget.
@@ -57,7 +62,7 @@ const RELEASES = [
     releaseDate: "2026-05-01",
     duration: "3:42",
     audio: null,                    // <- lägg in "assets/d01.mp3" när filen finns
-    cover: null,
+    cover: "assets/d01-cover.jpg",  // <- fyrkantig omslagsbild (1:1)
     links: {
       spotify: "",
       youtube: "",
@@ -91,7 +96,7 @@ Skriv refrängen här ...`
     releaseDate: "",
     duration: "",
     audio: null,
-    cover: null,
+    cover: "assets/d02-cover.jpg",  // <- fyrkantig omslagsbild (1:1)
     links: { spotify: "", youtube: "", apple: "", bandcamp: "" },
     notes: "Nästa signal. Snart i sändning.",
     credits: [{ role: "Musik & text", name: "Drekmor" }],

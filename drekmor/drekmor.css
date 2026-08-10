@@ -331,6 +331,68 @@ body::after {
 }
 .cassette__ports i { width: 6px; height: 5px; background: #0a0806; border-radius: 1px; box-shadow: inset 0 0 2px #000, 0 1px 0 rgba(255,255,255,.06); }
 
+/* ---- PICTURE-KASSETT: riktig omslagsbild tryckt på skalet ---------------- */
+.cassette__art {
+  position: absolute; inset: 0; z-index: 0; border-radius: inherit;
+  background-size: cover; background-position: center;
+  filter: saturate(1.02) contrast(1.02);
+}
+.cassette__scrim {
+  position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.35) 0%, transparent 22%, transparent 40%, rgba(0,0,0,.72) 78%);
+}
+.cassette__plate {
+  position: absolute; top: 6%; left: 6.5%; z-index: 1; display: flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-weight: 700; letter-spacing: .14em;
+  font-size: clamp(5px, 1.6cqw, 9px); color: rgba(255,255,255,.9);
+  padding: 3px 7px; border-radius: 3px;
+  background: rgba(0,0,0,.42); border: 1px solid rgba(255,255,255,.14);
+  backdrop-filter: blur(2px);
+}
+.cassette__plate .cassette__id { color: var(--accent); }
+.cassette__name {
+  position: absolute; left: 6.5%; right: 6.5%; bottom: 47%; z-index: 1;
+  font-family: var(--cond); font-weight: 600; text-transform: uppercase;
+  letter-spacing: .04em; line-height: 1; color: #fff;
+  font-size: clamp(11px, 5cqw, 30px); text-shadow: 0 2px 10px rgba(0,0,0,.9);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cassette.has-cover .cassette__window {
+  background: radial-gradient(130% 150% at 50% 0%, rgba(14,9,6,.92), rgba(4,3,2,.96) 90%);
+}
+
+/* ---- SLITAGE: repor, damm, blekta hörn (över allt) ----------------------- */
+.cassette__wear {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit; overflow: hidden;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='150'%3E%3Cg stroke='%23ffffff' stroke-opacity='0.06' fill='none'%3E%3Cpath d='M12 8 L60 10'/%3E%3Cpath d='M180 20 L235 16'/%3E%3Cpath d='M30 130 L120 126'/%3E%3Cpath d='M150 140 L210 138'/%3E%3C/g%3E%3Cg stroke='%23000000' stroke-opacity='0.10' fill='none'%3E%3Cpath d='M20 40 L140 44'/%3E%3Cpath d='M90 70 L200 66'/%3E%3Cpath d='M40 100 L150 104'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 100% 100%;
+}
+.cassette__wear::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; mix-blend-mode: multiply;
+  background:
+    radial-gradient(70% 55% at 12% 118%, rgba(0,0,0,.6), transparent 60%),
+    radial-gradient(55% 45% at 92% -12%, rgba(0,0,0,.5), transparent 60%),
+    radial-gradient(40% 40% at 108% 90%, rgba(0,0,0,.55), transparent 55%),
+    radial-gradient(6% 22% at 26% 30%, rgba(255,255,255,.06), transparent 70%);
+}
+/* Åldrad, lätt gulnad och sned etikett + upprullat hörn */
+.cassette:not(.has-cover) .cassette__label {
+  transform: rotate(-.5deg);
+  background: linear-gradient(180deg, #f0e6cd 0%, #ddceac 100%);
+}
+.cassette:not(.has-cover) .cassette__label::after {
+  content: ""; position: absolute; top: -1px; right: -1px; width: 16%; height: 26%;
+  background: linear-gradient(225deg, rgba(0,0,0,.25), transparent 55%), #cbbb96;
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+  box-shadow: -2px 2px 4px rgba(0,0,0,.35);
+}
+/* Mattare, mer nött plast */
+.cassette__shell { box-shadow:
+  inset 0 1px 0 rgba(255,255,255,.09),
+  inset 0 -4px 10px rgba(0,0,0,.7),
+  inset 0 0 46px rgba(0,0,0,.5); }
+
 /* Genomskinligt plastfodral – reflexer ovanpå */
 .cassette__case {
   position: absolute; inset: 0; border-radius: inherit; pointer-events: none; overflow: hidden;
@@ -438,7 +500,7 @@ body::after {
 @keyframes fade { from { opacity: 0; } }
 .inlay {
   position: relative; width: min(920px, 100%); max-height: 88vh; overflow: hidden;
-  display: grid; grid-template-columns: minmax(220px, 300px) 1fr;
+  display: grid; grid-template-columns: minmax(220px, 300px) 1fr; align-items: start;
   background: linear-gradient(180deg, #12151a, #0b0d11);
   border: 1px solid #2b313a; border-radius: 14px; box-shadow: var(--shadow);
   animation: rise .35s cubic-bezier(.2,.9,.25,1);
@@ -453,18 +515,23 @@ body::after {
 
 .inlay__cover {
   --accent: #c0392b;
+  position: relative; aspect-ratio: 1; align-self: start;
   padding: 1.6rem 1.4rem; display: flex; flex-direction: column; justify-content: space-between;
-  min-height: 320px;
   background:
     linear-gradient(180deg, rgba(0,0,0,.1), rgba(0,0,0,.65)),
     linear-gradient(160deg, var(--accent), #0a0c10 80%);
   background-size: cover; background-position: center;
 }
+/* Riktig omslagsbild: visa hela den fyrkantiga bilden utan text ovanpå */
+.inlay__cover.has-image { background-size: cover; }
+.inlay__cover.has-image .inlay__cover-id,
+.inlay__cover.has-image .inlay__cover-title,
+.inlay__cover.has-image .inlay__cover-type { display: none; }
 .inlay__cover-id { font-family: var(--mono); font-weight: 700; color: #fff; letter-spacing: .1em; }
 .inlay__cover-title { font-weight: 600; font-size: 1.9rem; line-height: 1.02; text-transform: uppercase; text-shadow: 0 3px 10px #000; margin-top: auto; }
 .inlay__cover-type { font-family: var(--mono); font-size: .62rem; letter-spacing: .22em; color: rgba(255,255,255,.8); margin-top: .6rem; }
 
-.inlay__paper { padding: 2rem 1.9rem; overflow-y: auto; }
+.inlay__paper { padding: 2rem 1.9rem; overflow-y: auto; max-height: 88vh; }
 .inlay__head { border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: 1rem; }
 .inlay__id { font-family: var(--mono); font-size: .72rem; letter-spacing: .18em; color: var(--red); }
 .inlay__title { font-weight: 600; font-size: 1.8rem; text-transform: uppercase; letter-spacing: .03em; margin: .2rem 0 .4rem; }

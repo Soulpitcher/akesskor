@@ -83,26 +83,38 @@
        </div>`;
     const lock = r.status === "locked"
       ? `<div class="cassette__lock">🔒</div>` : "";
+
+    // Har släppet en riktig omslagsbild? Då blir det en "picture-kassett":
+    // bilden trycks över skalet (centrerad beskärning) med titel på en remsa.
+    const hasCover = !!r.cover;
+    const artLayer = hasCover
+      ? `<div class="cassette__art" style="background-image:url('${r.cover}'), linear-gradient(160deg, ${accent}, #0a0c10 82%)"></div>
+         <div class="cassette__scrim"></div>
+         <div class="cassette__plate"><span>DREKMOR · ARKIV</span><span class="cassette__id">${r.id}</span></div>
+         <div class="cassette__name">${escapeHtml(r.title)}</div>`
+      : `<div class="cassette__label">
+           <div class="cassette__stripe"></div>
+           <div class="cassette__brand"><span>DREKMOR</span><span>ARKIV</span></div>
+           <div class="cassette__idrow">
+             <span class="cassette__id">${r.id}</span>
+             <span class="cassette__title">${escapeHtml(r.title)}</span>
+           </div>
+           <div class="cassette__side"><b>A</b><span>${escapeHtml(sideInfo)}</span></div>
+         </div>`;
+
     return (
-      `<div class="cassette" style="--accent:${accent}">
+      `<div class="cassette${hasCover ? " has-cover" : ""}" style="--accent:${accent}">
          <div class="cassette__shell">
+           ${artLayer}
            <i class="screw s-tl"></i><i class="screw s-tr"></i>
            <i class="screw s-bl"></i><i class="screw s-br"></i><i class="screw s-c"></i>
-           <div class="cassette__label">
-             <div class="cassette__stripe"></div>
-             <div class="cassette__brand"><span>DREKMOR</span><span>ARKIV</span></div>
-             <div class="cassette__idrow">
-               <span class="cassette__id">${r.id}</span>
-               <span class="cassette__title">${escapeHtml(r.title)}</span>
-             </div>
-             <div class="cassette__side"><b>A</b><span>${escapeHtml(sideInfo)}</span></div>
-           </div>
            <div class="cassette__window">
              ${reel("l")}
              <div class="cassette__tape"></div>
              ${reel("r")}
            </div>
            <div class="cassette__ports"><i></i><i></i><i></i><i></i><i></i></div>
+           <div class="cassette__wear"></div>
          </div>
          <div class="cassette__case"></div>
          ${lock}
@@ -368,9 +380,8 @@
     // Framsida
     const cover = $("inlay-cover");
     cover.style.setProperty("--accent", r.accent || "#c0392b");
-    cover.style.backgroundImage = r.cover
-      ? `linear-gradient(180deg, rgba(0,0,0,.1), rgba(0,0,0,.65)), url("${r.cover}")`
-      : "";
+    cover.classList.toggle("has-image", !!r.cover);
+    cover.style.backgroundImage = r.cover ? `url("${r.cover}")` : "";
     $("inlay-cover-id").textContent = r.id;
     $("inlay-cover-title").textContent = r.title;
     $("inlay-cover-type").textContent = TYPE_LABEL[r.type] || "";
