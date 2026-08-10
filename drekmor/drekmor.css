@@ -47,6 +47,13 @@ body {
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; color: inherit; cursor: pointer; }
 
+/* Varm analog filmkorn-overlay över hela scenen */
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  opacity: .05; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 /* ------------------------------------------------------------------ HEADER */
 .site-header {
   display: flex; align-items: center; gap: 2rem;
@@ -125,8 +132,17 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
   border-radius: 6px;
   box-shadow: 0 6px 16px -10px #000, inset 0 1px 0 rgba(255,255,255,.04);
   text-align: left;
-  width: 100%;
+  width: 100%; overflow: hidden;
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s;
+}
+/* Glansig plastyta som på ett kassettfodrals rygg */
+.spine::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.10) 0%, transparent 22%, transparent 82%, rgba(255,255,255,.04) 100%);
+}
+.spine::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 4px; width: 2px;
+  background: color-mix(in srgb, var(--accent) 60%, #000); opacity: .8;
 }
 .spine:hover, .spine:focus-visible {
   transform: translateX(6px);
@@ -175,10 +191,16 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 
 /* Fönstret */
 .deck__window {
-  position: relative; height: 150px; border-radius: 10px;
-  background: radial-gradient(120% 100% at 50% 0%, #23282e, #0b0d10 80%);
-  border: 1px solid #000; box-shadow: inset 0 4px 18px rgba(0,0,0,.85), inset 0 0 0 1px rgba(255,255,255,.03);
+  position: relative; height: 210px; border-radius: 10px;
+  background:
+    radial-gradient(120% 120% at 50% -10%, #23282e, #0b0d10 78%);
+  border: 1px solid #000; box-shadow: inset 0 4px 22px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,255,255,.03);
   display: grid; place-items: center; overflow: hidden;
+}
+.deck__door {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), transparent 30%);
+  border-bottom: 1px solid rgba(255,255,255,.04);
 }
 .deck__insert-hint {
   font-family: var(--mono); font-size: .8rem; letter-spacing: .2em; color: var(--red);
@@ -187,42 +209,149 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 @keyframes blink { 50% { opacity: .35; } }
 .deck__window[data-empty="false"] .deck__insert-hint { display: none; }
 
-/* Det isatta bandet i fönstret */
-.loaded-tape {
-  position: absolute; inset: 12px; border-radius: 8px; padding: .7rem;
-  background: linear-gradient(180deg, #17191d, #0d0f12);
-  border: 1px solid #2a2e34;
-  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .6rem;
-  transform: translateY(-170%); transition: transform .55s cubic-bezier(.2,.9,.25,1);
+/* Det isatta bandet glider in i fönstret */
+.deck__tape {
+  position: absolute; inset: 16px; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  transform: translateY(-185%); transition: transform .62s cubic-bezier(.2,.9,.25,1);
 }
-.deck__window[data-empty="false"] .loaded-tape { transform: translateY(0); }
-.loaded-tape__reel {
-  width: 52px; height: 52px; border-radius: 50%;
-  background: radial-gradient(circle, #3a3f47 0 30%, #14161a 32%, #0e1013 70%);
-  border: 2px solid #4a5059; place-self: center; display: grid; place-items: center;
-  box-shadow: inset 0 0 8px #000;
+.deck__window[data-empty="false"] .deck__tape { transform: translateY(0); }
+.deck__tape .cassette { height: 100%; width: auto; aspect-ratio: 100 / 63; }
+
+/* =============================================================================
+   REALISTISK ANALOG KASSETT  (delas av hyllan, de liggande banden och spelaren)
+   Byggd helt i CSS: rökfärgat skal, spolar med lindad tejp, skruvar,
+   gräddvit etikett med färgstripe och exponerad tejp.
+   ============================================================================= */
+.cassette {
+  --accent: #c0392b;
+  position: relative; width: 100%; aspect-ratio: 100 / 63; border-radius: 10px;
+  filter: saturate(1.05);
+  container-type: inline-size;
 }
-.loaded-tape__reel span {
-  width: 16px; height: 16px; border-radius: 50%;
-  border: 3px solid #6a7280; position: relative;
+.cassette__shell {
+  position: absolute; inset: 0; border-radius: inherit; overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.10), transparent 10%),
+    radial-gradient(140% 120% at 50% -20%, #33302b, transparent 60%),
+    linear-gradient(158deg, #2b2723 0%, #211d19 42%, #131009 100%);
+  border: 1px solid rgba(0,0,0,.65);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 -4px 10px rgba(0,0,0,.65),
+    inset 0 0 40px rgba(0,0,0,.35);
 }
-.loaded-tape__reel span::before,
-.loaded-tape__reel span::after {
-  content: ""; position: absolute; inset: -8px; border: 1px dashed #444a52; border-radius: 50%;
+
+/* Skruvar (5 st som på en riktig kassett) */
+.screw {
+  position: absolute; width: 7px; height: 7px; border-radius: 50%; z-index: 2;
+  background: radial-gradient(circle at 35% 30%, #756853, #201a12 72%);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), 0 1px 1px rgba(255,255,255,.07);
 }
-.is-playing .loaded-tape__reel { animation: spin 1.6s linear infinite; }
-.reel--right.spin { animation-duration: 2.4s; }
+.screw::after { content: ""; position: absolute; inset: 2px; border-top: 1px solid rgba(0,0,0,.65); transform: rotate(38deg); }
+.s-tl { top: 6px; left: 6px; } .s-tr { top: 6px; right: 6px; }
+.s-bl { bottom: 6px; left: 6px; } .s-br { bottom: 6px; right: 6px; }
+.s-c  { left: 50%; bottom: 6px; transform: translateX(-50%); }
+
+/* Etiketten – gräddvitt papper med färgstripe och maskinskriven titel */
+.cassette__label {
+  position: absolute; left: 8%; right: 8%; top: 8%; height: 42%;
+  border-radius: 4px; overflow: hidden; z-index: 1;
+  background: linear-gradient(180deg, #f5efe1 0%, #e9dec8 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 2px 7px rgba(0,0,0,.45);
+  color: #2a2419;
+}
+.cassette__stripe {
+  height: 30%;
+  background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 72%, #000));
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,.25);
+}
+.cassette__brand {
+  position: absolute; top: 4.5%; left: 7%; right: 7%; display: flex; justify-content: space-between;
+  font-family: var(--mono); font-weight: 700; letter-spacing: .16em; color: rgba(255,255,255,.92);
+  font-size: clamp(5px, 1.5cqw, 9px); text-shadow: 0 1px 1px rgba(0,0,0,.35);
+}
+.cassette__idrow { position: absolute; left: 7%; right: 7%; top: 36%; }
+.cassette__id { font-family: var(--mono); font-weight: 700; color: var(--accent); font-size: clamp(6px, 2.1cqw, 12px); }
+.cassette__title {
+  display: block; margin-top: 2px; font-family: var(--mono); font-weight: 700;
+  color: #241d12; text-transform: uppercase; letter-spacing: .01em; line-height: 1.05;
+  font-size: clamp(7px, 2.6cqw, 14px);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cassette__side {
+  position: absolute; right: 7%; bottom: 7%; display: flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: clamp(5px, 1.6cqw, 9px); color: #6b5f49;
+}
+.cassette__side b { background: #241d12; color: #f5efe1; padding: 0 3px; border-radius: 2px; }
+
+/* Fönstret med spolarna */
+.cassette__window {
+  position: absolute; left: 8%; right: 8%; bottom: 10%; height: 36%;
+  border-radius: 6px;
+  background: radial-gradient(130% 150% at 50% 0%, #201812, #0a0705 88%);
+  box-shadow: inset 0 2px 12px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,255,255,.05);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 7%;
+}
+/* Exponerad tejp längs nederkanten mellan spolarna */
+.cassette__tape {
+  position: absolute; left: 16%; right: 16%; bottom: 14%; height: 9%; z-index: 0;
+  background: linear-gradient(180deg, #43301a, #150d07);
+  border-radius: 1px; box-shadow: 0 0 5px rgba(0,0,0,.7);
+}
+.reel {
+  position: relative; z-index: 1; width: 33%; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, #17100a 0 56%, #090604 100%);
+  box-shadow: inset 0 0 9px rgba(0,0,0,.95);
+}
+.reel__spin { position: absolute; inset: 0; }
+.reel__pack {
+  position: absolute; inset: 11%; border-radius: 50%;
+  background: repeating-radial-gradient(circle at 50% 50%, #23160a 0 1.5px, #402a13 1.5px 3px);
+  -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0 30%, #000 31%);
+          mask: radial-gradient(circle at 50% 50%, transparent 0 30%, #000 31%);
+  box-shadow: inset 0 0 6px rgba(0,0,0,.8);
+}
+.reel__hub {
+  position: absolute; top: 50%; left: 50%; width: 36%; aspect-ratio: 1; transform: translate(-50%,-50%);
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, #dccdb0 0 12deg, #8a7c62 12deg 24deg);
+  box-shadow: 0 0 0 2px #090604;
+}
+.reel__hub::after { content: ""; position: absolute; inset: 32%; border-radius: 50%; background: #090604; }
+.reel__gloss {
+  position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: linear-gradient(150deg, rgba(255,255,255,.20) 0%, transparent 42%);
+}
+
+/* Nedre öppningarna (huvud/capstan-hål) */
+.cassette__ports {
+  position: absolute; left: 50%; bottom: 4.5%; transform: translateX(-50%);
+  display: flex; gap: 4px; z-index: 1;
+}
+.cassette__ports i { width: 6px; height: 5px; background: #0a0806; border-radius: 1px; box-shadow: inset 0 0 2px #000, 0 1px 0 rgba(255,255,255,.06); }
+
+/* Genomskinligt plastfodral – reflexer ovanpå */
+.cassette__case {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  background: linear-gradient(125deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 16%, rgba(255,255,255,0) 84%, rgba(255,255,255,.05) 100%);
+}
+.cassette__case::after {
+  content: ""; position: absolute; top: -40%; left: -12%; width: 34%; height: 180%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.11), transparent);
+  transform: rotate(17deg);
+}
+.cassette__lock {
+  position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; border-radius: inherit;
+  background: rgba(6,6,9,.55); backdrop-filter: blur(1px);
+  font-size: clamp(20px, 9cqw, 42px); color: rgba(255,255,255,.62);
+}
+
+/* Spolarna snurrar när spelaren spelar */
 @keyframes spin { to { transform: rotate(360deg); } }
-.loaded-tape__tapewin {
-  width: 46px; height: 20px; align-self: center; border-radius: 3px;
-  background: linear-gradient(180deg, #2a2d33, #0c0d10); border: 1px solid #000;
-}
-.loaded-tape__label {
-  position: absolute; left: 10%; right: 10%; bottom: 8px;
-  font-family: var(--mono); font-size: .62rem; letter-spacing: .12em;
-  color: var(--ink-dim); text-align: center;
-  border-top: 1px solid rgba(255,255,255,.08); padding-top: 4px;
-}
+.deck.is-playing .reel__spin { animation: spin 2.4s linear infinite; }
+.deck.is-playing .reel--l .reel__spin { animation-duration: 3.2s; }
 
 /* VU-mätare */
 .vu {
@@ -265,36 +394,21 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .volume { display: flex; align-items: center; gap: .6rem; flex: 1; max-width: 60%; }
 .volume input[type="range"] { flex: 1; accent-color: var(--red); }
 
-/* ---------------------------------------------------------------- FEATURED */
+/* -------------------------------------------------- FEATURED (liggande band) */
 .featured {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: clamp(.8rem, 1.6vw, 1.4rem); margin-top: .5rem;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: clamp(1rem, 2vw, 1.9rem); margin-top: .5rem;
 }
 .case {
-  position: relative; aspect-ratio: 4 / 5; border-radius: 10px;
-  padding: 4px; background: linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,.02));
-  box-shadow: 0 18px 40px -22px #000; text-align: left;
-  transition: transform .2s ease, box-shadow .2s ease;
+  position: relative; background: none; border: 0; padding: 0; text-align: left;
+  transition: transform .22s ease;
 }
-.case:hover, .case:focus-visible { transform: translateY(-8px) rotate(-.6deg); box-shadow: 0 26px 50px -20px #000, 0 0 30px -10px var(--accent); outline: none; }
-.case.is-loaded { transform: translateY(-8px); box-shadow: 0 0 0 2px var(--accent), 0 22px 44px -20px #000; }
-.case__inner {
-  --accent: #c0392b;
-  height: 100%; border-radius: 7px; padding: 1rem .9rem; overflow: hidden;
-  background:
-    linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.6)),
-    linear-gradient(160deg, var(--accent), #0c0e12 75%);
-  display: flex; flex-direction: column; justify-content: space-between;
-  border: 1px solid rgba(255,255,255,.08);
-}
-.case__id { font-family: var(--mono); font-weight: 700; font-size: .8rem; color: #fff; text-shadow: 0 1px 4px #000; }
-.case__title { font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 1.15rem; line-height: 1.05; text-shadow: 0 2px 6px #000; }
-.case__foot { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: .58rem; letter-spacing: .1em; color: rgba(255,255,255,.72); }
-.case__lock {
-  position: absolute; inset: 4px; border-radius: 7px; display: grid; place-items: center;
-  background: rgba(6,8,11,.62); backdrop-filter: blur(1px); font-size: 2.2rem; color: rgba(255,255,255,.55);
-}
-.case[data-status="coming"] .case__foot { color: var(--cyan); }
+.case .cassette { box-shadow: 0 24px 46px -22px #000, 0 4px 10px -6px #000; }
+.case:hover, .case:focus-visible { transform: translateY(-9px) rotate(-.5deg); outline: none; }
+.case:hover .cassette { filter: brightness(1.06) saturate(1.08); }
+.case:focus-visible .cassette { box-shadow: 0 0 0 2px var(--cyan), 0 24px 46px -22px #000; }
+.case.is-loaded { transform: translateY(-9px); }
+.case.is-loaded .cassette { box-shadow: 0 0 0 2px var(--accent), 0 24px 46px -20px #000; }
 
 /* --------------------------------------------------------------- STATUSBAR */
 .statusbar {

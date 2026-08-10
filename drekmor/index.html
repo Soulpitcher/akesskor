@@ -57,13 +57,9 @@
 
       <!-- Fönstret där det isatta bandet visas -->
       <div class="deck__window" id="deck-window" data-empty="true">
+        <div class="deck__door" aria-hidden="true"></div>
         <div class="deck__insert-hint" id="insert-hint">— SÄTT I ETT BAND —</div>
-        <div class="loaded-tape" id="loaded-tape" aria-hidden="true">
-          <div class="loaded-tape__reel reel--left"><span></span></div>
-          <div class="loaded-tape__tapewin"></div>
-          <div class="loaded-tape__reel reel--right"><span></span></div>
-          <div class="loaded-tape__label" id="loaded-label"></div>
-        </div>
+        <div class="deck__tape" id="deck-tape" aria-hidden="true"></div>
       </div>
 
       <!-- VU-mätare -->

@@ -18,8 +18,8 @@
     shelfRight: $("shelf-right"),
     featured: $("featured"),
     deckWindow: $("deck-window"),
-    loadedLabel: $("loaded-label"),
-    rightReel: document.querySelector(".reel--right"),
+    deck: $("deck"),
+    deckTape: $("deck-tape"),
     vuBars: $("vu-bars"),
     powerLed: $("power-led"),
     volume: $("volume"),
@@ -70,33 +70,53 @@
     return b;
   }
 
+  /* Bygger en realistisk analog kassett (samma anatomi i hyllan och i spelaren).
+     "full" = full etikett/titel (liggande kassett + spelaren).                */
+  function cassetteHTML(r) {
+    const accent = r.accent || "#c0392b";
+    const type = TYPE_LABEL[r.type] || "";
+    const sideInfo = r.status === "coming" ? "SNART" : (r.duration || type || "DREKMOR");
+    const reel = (side) =>
+      `<div class="reel reel--${side}">
+         <div class="reel__spin"><span class="reel__pack"></span><span class="reel__hub"></span></div>
+         <div class="reel__gloss"></div>
+       </div>`;
+    const lock = r.status === "locked"
+      ? `<div class="cassette__lock">🔒</div>` : "";
+    return (
+      `<div class="cassette" style="--accent:${accent}">
+         <div class="cassette__shell">
+           <i class="screw s-tl"></i><i class="screw s-tr"></i>
+           <i class="screw s-bl"></i><i class="screw s-br"></i><i class="screw s-c"></i>
+           <div class="cassette__label">
+             <div class="cassette__stripe"></div>
+             <div class="cassette__brand"><span>DREKMOR</span><span>ARKIV</span></div>
+             <div class="cassette__idrow">
+               <span class="cassette__id">${r.id}</span>
+               <span class="cassette__title">${escapeHtml(r.title)}</span>
+             </div>
+             <div class="cassette__side"><b>A</b><span>${escapeHtml(sideInfo)}</span></div>
+           </div>
+           <div class="cassette__window">
+             ${reel("l")}
+             <div class="cassette__tape"></div>
+             ${reel("r")}
+           </div>
+           <div class="cassette__ports"><i></i><i></i><i></i><i></i><i></i></div>
+         </div>
+         <div class="cassette__case"></div>
+         ${lock}
+       </div>`
+    );
+  }
+
   function makeCase(r) {
     const b = document.createElement("button");
     b.className = "case";
     b.dataset.id = r.id;
     b.dataset.status = r.status;
     b.style.setProperty("--accent", r.accent || "#c0392b");
-    const inner = document.createElement("div");
-    inner.className = "case__inner";
-    inner.style.setProperty("--accent", r.accent || "#c0392b");
-    if (r.cover) {
-      inner.style.backgroundImage =
-        `linear-gradient(180deg, rgba(0,0,0,.1), rgba(0,0,0,.72)), url("${r.cover}")`;
-      inner.style.backgroundSize = "cover";
-      inner.style.backgroundPosition = "center";
-    }
-    inner.innerHTML =
-      `<div class="case__id">${r.id}</div>` +
-      `<div class="case__title">${escapeHtml(r.title)}</div>` +
-      `<div class="case__foot"><span>${TYPE_LABEL[r.type] || ""}</span>` +
-      `<span>${r.status === "coming" ? "SNART" : (r.duration || "DREKMOR")}</span></div>`;
-    b.appendChild(inner);
-    if (r.status === "locked") {
-      const lock = document.createElement("div");
-      lock.className = "case__lock";
-      lock.textContent = "🔒";
-      b.appendChild(lock);
-    }
+    b.innerHTML = cassetteHTML(r);
     b.addEventListener("click", () => loadTape(r.id));
     return b;
   }
@@ -131,9 +151,9 @@
     document.querySelectorAll(".spine, .case").forEach((n) =>
       n.classList.toggle("is-loaded", n.dataset.id === id));
 
-    // Fönstret
+    // Fönstret – rendera en riktig kassett och sätt i den.
+    el.deckTape.innerHTML = cassetteHTML(r);
     el.deckWindow.dataset.empty = "false";
-    el.loadedLabel.textContent = `${r.id} · ${r.title.toUpperCase()}`;
     el.deckWindow.style.setProperty("--accent", r.accent || "#c0392b");
     el.powerLed.classList.add("on");
 
@@ -167,6 +187,7 @@
     stopPlayback();
     current = null;
     el.deckWindow.dataset.empty = "true";
+    setTimeout(() => { if (!current) el.deckTape.innerHTML = ""; }, 500);
     el.powerLed.classList.remove("on");
     document.querySelectorAll(".spine, .case").forEach((n) => n.classList.remove("is-loaded"));
     [el.btnPlay, el.btnRew, el.btnStop, el.btnInlay, el.btnEject].forEach((b) => setEnabled(b, false));
@@ -249,10 +270,7 @@
   function startPlayback() {
     if (!current) return;
     playing = true;
-    el.deckWindow.parentElement.classList.add("is-playing");
-    el.loadedLabel.parentElement.classList.add("is-playing");
-    document.querySelector(".loaded-tape").classList.add("is-playing");
-    el.rightReel.classList.add("spin");
+    el.deck.classList.add("is-playing");
     el.btnPlay.classList.add("is-active");
     el.playGlyph.textContent = "❚❚"; el.playLabel.textContent = "PAUSE";
     el.stNow.innerHTML = `${current.title.toUpperCase()} <span class="dash">—</span>`;
@@ -284,8 +302,7 @@
   }
 
   function setPausedUI() {
-    el.rightReel.classList.remove("spin");
-    document.querySelectorAll(".is-playing").forEach((n) => n.classList.remove("is-playing"));
+    el.deck.classList.remove("is-playing");
     el.btnPlay.classList.remove("is-active");
     el.playGlyph.textContent = "▶"; el.playLabel.textContent = "PLAY";
     if (rafId) cancelAnimationFrame(rafId), (rafId = null);
