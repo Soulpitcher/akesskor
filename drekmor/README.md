@@ -1,74 +1,58 @@
 # DREKMOR – Arkivet
 
-En mörk, filmisk kassettsida. Varje släpp är en kassett i ett arkiv. Man
-trycker på en kassett – antingen en liggande framför spelaren eller en **rygg**
-i hyllan – så laddas bandet in i kassettspelaren. Därifrån kan man:
+En realtids-3D-upplevelse (WebGL/three.js): ett mörkt rum, ett 80-tals
+kassettdäck och bandarkivet. Varje släpp är ett riktigt kassettfodral.
+Klicka på ett fodral → locket öppnas, kassetten lyfts ur, flyger in i däckets
+lucka och luckan slår igen. Sedan kan man **spela** signalen eller öppna
+**omslaget** (J-kortet viks ut) och läsa text, credits och berättelser.
 
-- **Spela** signalen (låt / intervju / uppläsning), eller
-- **Öppna omslaget** ("papperet") och läsa titel, credits, text/berättelse och länkar.
-
-Sidan är helt statisk (HTML/CSS/JS, inga byggsteg) och **datadriven** – hela
-arkivet bor i `releases.js`.
+Allt – omslag, ryggar, kassettetiketter, frontpanel, ljudeffekter och
+demosignal – genereras i koden från `releases.js`. Inga byggsteg, inga CDN:er.
 
 ## Filer
 
-| Fil            | Vad den gör                                                        |
-|----------------|--------------------------------------------------------------------|
-| `index.html`   | Stommen: header, spelare, hyllor, statusrad, omslags-modal.        |
-| `drekmor.css`  | All design. Färger/mått ligger som variabler högst upp (`:root`).  |
-| `drekmor.js`   | All logik: isättning, uppspelning, VU-mätare, omslag. Rör sällan.  |
-| **`releases.js`** | **Datan – den enda fil du behöver ändra för nya släpp.**        |
+| Fil / mapp          | Innehåll                                                              |
+|---------------------|-----------------------------------------------------------------------|
+| **`releases.js`**   | **Datan – den enda fil du behöver ändra för nya släpp.**              |
+| `assets/`           | Omslagsbilder (`d01-cover.jpg` …) och ljudfiler. Se `assets/README.md`. |
+| `index.html`        | Stomme: laddare, meny, HUD, arkivlista, omslag.                       |
+| `css/site.css`      | Gränssnittet ovanpå scenen.                                           |
+| `js/main.js`        | Scen, ljussättning, kamera, interaktion och koreografi.               |
+| `js/models.js`      | 3D-modeller: däck, kassett, fodral.                                   |
+| `js/textures.js`    | Procedurella texturer: omslag, ryggar, etiketter, borstad metall.    |
+| `js/audio.js`       | Ljudmotor: uppspelning, demosignal, bandbrus, VU, mekaniska ljud.     |
+| `js/ui.js`, `js/tween.js` | DOM-lager och animationer.                                      |
+| `vendor/three/`     | three.js r170 (MIT), självhostad.                                     |
+| `fonts/`            | Space Grotesk, Space Mono, Bebas Neue (OFL), självhostade.            |
 
 ## Lägg till ett nytt släpp
 
-1. Öppna `releases.js`.
-2. Kopiera ett helt `{ ... }`-block.
-3. Klistra in på rätt plats i listan (ordningen = ordningen i hyllan).
-4. Ändra fälten. Spara. Klart – sidan bygger om sig själv.
+1. Öppna `releases.js`, kopiera ett `{ … }`-block och ändra fälten.
+2. Lägg omslaget i `assets/` (kvadrat, minst 1000×1000, JPG) och peka på det
+   med `cover: "assets/d03-cover.jpg"`.
+3. Lägg ljudfilen i `assets/` och peka på den med `audio: "assets/d03.mp3"`.
 
-Varje kassett har ett `type`:
+Klart. Fodralet, J-kortet, ryggen, kassettetiketten och displaytexten skapas
+automatiskt. `featured: true` lägger fodralet framför däcket (max 4 st);
+alla släpp hamnar i staplarna och i listan under **Arkivet**.
 
-- `"song"` – låt. Spelas upp; omslaget visar **texten**.
-- `"interview"` – inspelad intervju. Spelas upp; omslaget visar **transkript**.
-- `"story"` – berättelse ur Drekmor-världen. Läses i omslaget.
-
-…och en `status`:
-
-- `"available"` – går att spela/läsa nu.
-- `"coming"` – syns i arkivet men är inte släppt än (teaser).
-- `"locked"` – låst kassett med hänglås (mystik / kommande signal).
-
-`accent` (hex-färg) ger varje kassett sitt eget uttryck. `featured: true` gör
-att den även visas som liggande kassett längst fram (max ~4 st).
-
-### Lägga till riktigt ljud
-
-Lägg ljudfilen i `drekmor/assets/` och peka på den:
-
-```js
-audio: "assets/d01.mp3",
-```
-
-Finns ingen fil (`audio: null`) spelas en atmosfärisk platshållarsignal så att
-mätaren och rullarna lever redan innan låten finns. Streaminglänkar (Spotify,
-YouTube) hör hemma i `links`, inte i `audio`.
-
-### Omslagsbild
-
-Lägg en bild i `assets/` och sätt `cover: "assets/d01-cover.jpg"`. Utan bild
-ritas ett snyggt färgomslag av `accent`-färgen automatiskt.
+- `status: "available"` – går att sätta i och spela.
+- `status: "coming"` – går att sätta i och läsa omslaget, men "ingen signal ännu".
+- `status: "locked"` – hänglås; klick ger en glitch och "signal krypterad".
+- `type`: `"song"`, `"interview"` eller `"story"` styr rubriken i omslaget.
+- Saknas `audio` spelar däcket en generativ demosignal så att allt lever ändå.
 
 ## Köra lokalt
 
-Öppna `index.html` i en webbläsare, eller kör en enkel server i mappen:
+ES-moduler kräver en webbserver (inte `file://`):
 
 ```bash
-cd drekmor && python3 -m http.server 8080
-# öppna http://localhost:8080
+cd drekmor && python3 -m http.server 8080   # öppna http://localhost:8080
 ```
 
-## Tillgänglighet & prestanda
+## Tangentbord och tillgänglighet
 
-- Fungerar med tangentbord (Tab + Enter, `Esc` stänger omslaget, mellanslag = play/paus).
-- Respekterar `prefers-reduced-motion` (stänger av rullar/animationer).
-- Inga ramverk, inga byggsteg, ~en handfull kB. Endast typsnitt laddas externt.
+Mellanslag = spela/paus · ←/→ = spola · ↑/↓ = volym · E = mata ut ·
+O = omslag · I = arkivet · Esc = stäng. Hela arkivet finns även som vanlig
+lista (knappen **Arkivet**) för tangentbord, skärmläsare och webbläsare utan
+WebGL. `prefers-reduced-motion` förkortar animationerna.

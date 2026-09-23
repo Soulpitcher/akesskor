@@ -2,208 +2,143 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>DREKMOR — Arkivet</title>
-  <meta name="description" content="DREKMOR — arkivet. Varje släpp är en signal på kassett. Sätt i ett band, spela låten eller öppna omslaget och läs." />
-  <meta name="theme-color" content="#05060a" />
+  <meta name="description" content="DREKMOR – arkivet. Varje släpp är en kassett. Öppna fodralet, sätt i bandet i däcket och lyssna – eller läs omslaget med text och credits." />
+  <meta name="theme-color" content="#030306" />
   <meta property="og:title" content="DREKMOR — Arkivet" />
-  <meta property="og:description" content="Varje släpp är en signal. Sätt i ett band och lyssna." />
+  <meta property="og:description" content="Varje släpp är en kassett. Sätt i ett band och lyssna på signalen." />
   <meta property="og:type" content="music.musician" />
   <meta property="og:locale" content="sv_SE" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-
-  <link rel="stylesheet" href="drekmor.css" />
+  <link rel="preload" href="fonts/space-grotesk-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="fonts/space-mono-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="modulepreload" href="vendor/three/build/three.module.min.js" />
+  <link rel="stylesheet" href="css/site.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three/build/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }
+  </script>
 </head>
 <body>
+  <canvas id="scene" aria-hidden="true"></canvas>
 
-  <!-- Intro-slöja som tonar bort -->
-  <div class="intro" id="intro"><span class="intro__word">DREKMOR</span></div>
-
-  <!-- =============================== NAV =============================== -->
-  <header class="nav" id="nav">
-    <a class="nav__brand" href="#top" aria-label="DREKMOR — hem">
-      <span class="nav__mark" aria-hidden="true">D</span>
-      <span class="nav__word">DREKMOR</span>
-    </a>
-    <nav class="nav__links" aria-label="Huvudmeny">
-      <a href="#archive" class="nav__link">Arkivet</a>
-      <a href="#machine" class="nav__link">Spelaren</a>
-      <a href="#about" class="nav__link">Om</a>
-      <a href="#contact" class="nav__link">Kontakt</a>
-    </nav>
-    <div class="nav__social" aria-label="Kanaler">
-      <a href="#" aria-label="Spotify" class="nav__soc">Spotify</a>
-      <a href="#" aria-label="YouTube" class="nav__soc">YouTube</a>
-      <a href="#" aria-label="Instagram" class="nav__soc">Instagram</a>
+  <!-- ============================== LADDARE ============================== -->
+  <div class="loader" id="loader">
+    <div class="loader__inner">
+      <p class="kicker">Arkivet · signal 001–012</p>
+      <h1 class="loader__word" aria-label="DREKMOR"><span>D</span><span>R</span><span>E</span><span>K</span><span>M</span><span>O</span><span>R</span></h1>
+      <div class="loader__bar" aria-hidden="true"><span id="loader-fill"></span></div>
+      <p class="loader__status" id="loader-status" role="status">Laddar arkivet…</p>
+      <div class="loader__actions" id="loader-actions" hidden>
+        <button class="btn btn--primary" id="enter-sound">Gå in i arkivet</button>
+        <button class="btn btn--ghost" id="enter-silent">Utan ljud</button>
+      </div>
+      <p class="loader__hint">Bäst med hörlurar</p>
     </div>
+  </div>
+
+  <!-- ============================== TOPP ================================= -->
+  <header class="top">
+    <a class="brand" href="./" aria-label="DREKMOR – arkivet"><span class="brand__mark">D</span><span class="brand__word">DREKMOR</span></a>
+    <nav class="top__nav" aria-label="Meny">
+      <button class="navlink" id="open-index">Arkivet <sup id="count">0</sup></button>
+      <button class="navlink" id="open-about">Om</button>
+      <button class="sound" id="toggle-sound" aria-pressed="true">
+        <span class="sound__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="sound__txt">Ljud på</span>
+      </button>
+    </nav>
   </header>
 
-  <main id="top">
-
-    <!-- ============================== HERO ============================= -->
-    <section class="hero" id="machine">
-      <div class="hero__aura" aria-hidden="true"></div>
-      <div class="hero__grid" aria-hidden="true"></div>
-
-      <div class="hero__head" data-reveal>
-        <p class="eyebrow">Arkivet · signal 001–012</p>
-        <h1 class="hero__title">DREKMOR</h1>
-        <p class="hero__lead">Varje släpp är en signal på kassett. Sätt i ett band och spela — eller öppna omslaget och läs texten, creditsen och berättelserna bakom.</p>
+  <!-- ============================== HUD ================================== -->
+  <section class="hud" aria-label="Kassettdäcket">
+    <div class="hud__now">
+      <p class="hud__label" id="hud-label">I däcket</p>
+      <p class="hud__title" id="hud-title">Inget band</p>
+      <p class="hud__sub" id="hud-sub">Välj en kassett ur arkivet</p>
+      <div class="hud__progress" id="hud-progress" hidden>
+        <span id="hud-time">0:00</span>
+        <div class="hud__bar" id="hud-bar" role="presentation"><i id="hud-fill"></i></div>
+        <span id="hud-dur">—</span>
       </div>
+    </div>
+    <p class="hud__hint" id="hud-hint"><span class="pulse" aria-hidden="true"></span><span class="hint-desk">Klicka på en kassett för att sätta i den</span><span class="hint-touch">Tryck på en kassett för att sätta i den</span></p>
+    <div class="hud__actions" id="hud-actions" hidden>
+      <button class="btn btn--primary" id="act-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-play" d="M8 5.5v13l10.5-6.5z"/><path class="i-pause" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg><span>Spela</span></button>
+      <button class="btn" id="act-inlay">Omslag</button>
+      <button class="btn btn--ghost" id="act-eject">Mata ut</button>
+    </div>
+  </section>
 
-      <!-- Kassettspelaren (hjärtat) -->
-      <div class="deck" id="deck" data-reveal>
-        <div class="deck__top">
-          <div class="deck__brand">DRKMR<span>DECK-01</span></div>
-          <div class="deck__d">D</div>
+  <div class="cursor" id="cursor" aria-hidden="true"><i></i><span id="cursor-label"></span></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="sr-only" id="live" aria-live="polite"></div>
+
+  <!-- ============================== ARKIVET ============================== -->
+  <div class="sheet" id="index" hidden role="dialog" aria-modal="true" aria-labelledby="index-title">
+    <div class="sheet__panel">
+      <header class="sheet__head">
+        <div><p class="kicker">Samlingen</p><h2 id="index-title">Hela arkivet</h2></div>
+        <button class="close" data-close aria-label="Stäng">Stäng <span aria-hidden="true">✕</span></button>
+      </header>
+      <ol class="tracklist" id="tracklist"></ol>
+      <p class="sheet__foot">Vissa signaler är ännu krypterade.</p>
+    </div>
+  </div>
+
+  <!-- ============================== OM =================================== -->
+  <div class="sheet sheet--about" id="about" hidden role="dialog" aria-modal="true" aria-labelledby="about-title">
+    <div class="sheet__panel">
+      <header class="sheet__head">
+        <div><p class="kicker">Om</p><h2 id="about-title">Ett arkiv av signaler</h2></div>
+        <button class="close" data-close aria-label="Stäng">Stäng <span aria-hidden="true">✕</span></button>
+      </header>
+      <div class="about">
+        <p class="about__lead">DREKMOR samlar sina släpp som kassetter i ett arkiv. Öppna ett fodral, sätt i bandet i däcket och lyssna – eller läs omslaget med texten, creditsen och berättelserna bakom.</p>
+        <p>Arkivet växer, signal för signal. Vissa band är ännu låsta.</p>
+        <div class="about__links">
+          <a href="#" target="_blank" rel="noopener">Spotify ↗</a>
+          <a href="#" target="_blank" rel="noopener">YouTube ↗</a>
+          <a href="#" target="_blank" rel="noopener">Instagram ↗</a>
+          <a href="mailto:kontakt@drekmor.se">Kontakt ↗</a>
         </div>
+        <dl class="keys">
+          <dt>Mellanslag</dt><dd>Spela / paus</dd>
+          <dt>← →</dt><dd>Spola</dd>
+          <dt>↑ ↓</dt><dd>Volym</dd>
+          <dt>E</dt><dd>Mata ut</dd>
+          <dt>O</dt><dd>Omslag</dd>
+          <dt>I</dt><dd>Arkivet</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
 
-        <div class="deck__window" id="deck-window" data-empty="true">
-          <div class="deck__door" aria-hidden="true"></div>
-          <div class="deck__insert-hint" id="insert-hint">SÄTT I ETT BAND</div>
-          <div class="deck__tape" id="deck-tape" aria-hidden="true"></div>
-        </div>
-
-        <div class="vu" aria-hidden="true">
-          <div class="vu__title">SIGNAL LEVEL</div>
-          <div class="vu__bars" id="vu-bars"></div>
-          <div class="vu__scale"><span>-20</span><span>-10</span><span>-6</span><span>-3</span><span>0</span><span>+3</span></div>
-        </div>
-
-        <div class="transport">
-          <button class="tbtn" id="btn-rew"   disabled aria-label="Spola tillbaka"><b>◀◀</b><small>REW</small></button>
-          <button class="tbtn tbtn--play" id="btn-play" disabled aria-label="Spela / pausa"><b id="play-glyph">▶</b><small id="play-label">PLAY</small></button>
-          <button class="tbtn" id="btn-stop"  disabled aria-label="Stopp"><b>■</b><small>STOP</small></button>
-          <button class="tbtn" id="btn-inlay" disabled aria-label="Öppna omslag"><b>▤</b><small>OMSLAG</small></button>
-          <button class="tbtn" id="btn-eject" disabled aria-label="Mata ut band"><b>⏏</b><small>EJECT</small></button>
-        </div>
-
-        <div class="deck__bottom">
-          <div class="power"><span class="power__led" id="power-led"></span><small>POWER</small></div>
-          <div class="volume">
-            <span class="volume__label">VOL</span>
-            <input type="range" id="volume" min="0" max="100" value="80" aria-label="Volym" />
+  <!-- ============================== OMSLAG =============================== -->
+  <div class="jcard" id="jcard" hidden role="dialog" aria-modal="true" aria-labelledby="jc-title">
+    <button class="close jcard__close" data-close aria-label="Stäng omslaget">Stäng <span aria-hidden="true">✕</span></button>
+    <div class="jcard__stage">
+      <div class="jc">
+        <div class="jc-front"><img id="jc-art" alt="" /></div>
+        <div class="jc-fold">
+          <div class="jc-spine"><span id="jc-spine"></span></div>
+          <div class="jc-fold2">
+            <article class="jc-inside">
+              <p class="jc-id" id="jc-id"></p>
+              <h2 class="jc-title" id="jc-title"></h2>
+              <p class="jc-meta" id="jc-meta"></p>
+              <p class="jc-notes" id="jc-notes"></p>
+              <section id="jc-credits-wrap"><h3>Credits</h3><dl class="jc-credits" id="jc-credits"></dl></section>
+              <section><h3 id="jc-text-h">Text</h3><pre class="jc-text" id="jc-text"></pre></section>
+              <div class="jc-links" id="jc-links"></div>
+            </article>
           </div>
         </div>
       </div>
-
-      <a class="hero__scroll" href="#archive" data-reveal>
-        <span>Utforska arkivet</span><i aria-hidden="true">↓</i>
-      </a>
-    </section>
-
-    <!-- ============================ ARKIVET =========================== -->
-    <section class="archive" id="archive">
-      <div class="section-head" data-reveal>
-        <span class="section-head__num">01 — Arkivet</span>
-        <h2 class="section-head__title">Utvalda signaler</h2>
-        <p class="section-head__lead">Tryck på en kassett för att sätta i den i spelaren.</p>
-      </div>
-      <div class="featured" id="featured"></div>
-    </section>
-
-    <!-- ======================== HELA ARKIVET ========================== -->
-    <section class="rack-section" id="collection">
-      <div class="section-head" data-reveal>
-        <span class="section-head__num">02 — Samlingen</span>
-        <h2 class="section-head__title">Hela arkivet</h2>
-        <p class="section-head__lead">Tolv platser. Vissa signaler är ännu krypterade.</p>
-      </div>
-      <div class="rack" id="rack"></div>
-    </section>
-
-    <!-- ============================== OM ============================== -->
-    <section class="about" id="about">
-      <div class="about__inner" data-reveal>
-        <span class="section-head__num">03 — Om</span>
-        <h2 class="about__title">Ett arkiv av signaler</h2>
-        <p>
-          DREKMOR samlar sina släpp som kassetter i ett arkiv. Sätt i ett band,
-          spela signalen eller öppna omslaget och läs texten, creditsen och
-          berättelserna bakom. Arkivet växer — signal efter signal.
-        </p>
-      </div>
-    </section>
-  </main>
-
-  <!-- ============================= FOOTER ============================ -->
-  <footer class="footer" id="contact">
-    <div class="footer__inner">
-      <div class="footer__brand">
-        <span class="nav__mark" aria-hidden="true">D</span>
-        <span class="nav__word">DREKMOR</span>
-      </div>
-      <div class="footer__links">
-        <a href="mailto:kontakt@drekmor.se">Kontakt</a>
-        <a href="#" target="_blank" rel="noopener">Spotify</a>
-        <a href="#" target="_blank" rel="noopener">YouTube</a>
-        <a href="#" target="_blank" rel="noopener">Instagram</a>
-      </div>
-      <small>© <span id="year"></span> DREKMOR · Arkivet</small>
-    </div>
-  </footer>
-
-  <!-- ==================== NOW PLAYING-RAD (mini) ==================== -->
-  <div class="nowbar" id="nowbar" data-active="false" aria-label="Spelas nu">
-    <div class="nowbar__meta">
-      <div class="nowbar__art" id="now-art"></div>
-      <div class="nowbar__text">
-        <div class="nowbar__title"><span id="now-id"></span><span id="now-title">Inget band isatt</span></div>
-        <div class="nowbar__sub" id="now-sub">Välj en kassett ur arkivet</div>
-      </div>
-    </div>
-    <div class="nowbar__controls">
-      <button class="nb" id="nb-rew" aria-label="Spola tillbaka">◀◀</button>
-      <button class="nb nb--play" id="nb-play" aria-label="Spela / pausa">▶</button>
-      <button class="nb" id="nb-stop" aria-label="Stopp">■</button>
-    </div>
-    <div class="nowbar__progress">
-      <span class="nowbar__time" id="time-cur">0:00</span>
-      <div class="scrub" id="scrub"><div class="scrub__fill" id="scrub-fill"></div><div class="scrub__knob" id="scrub-knob"></div></div>
-      <span class="nowbar__time" id="time-dur">—:—</span>
-    </div>
-    <div class="nowbar__right">
-      <button class="nb nb--text" id="nb-inlay" aria-label="Öppna omslag">Omslag</button>
-      <button class="nb" id="nb-eject" aria-label="Mata ut">⏏</button>
     </div>
   </div>
 
-  <!-- ========================= OMSLAG (modal) ====================== -->
-  <div class="inlay-overlay" id="inlay" hidden>
-    <div class="inlay" role="dialog" aria-modal="true" aria-labelledby="inlay-title">
-      <button class="inlay__close" id="inlay-close" aria-label="Stäng omslag">✕</button>
-      <div class="inlay__cover" id="inlay-cover">
-        <div class="inlay__cover-id" id="inlay-cover-id">D-01</div>
-        <div class="inlay__cover-title" id="inlay-cover-title">Titel</div>
-        <div class="inlay__cover-type" id="inlay-cover-type">LÅT</div>
-      </div>
-      <div class="inlay__paper">
-        <div class="inlay__head">
-          <span class="inlay__id" id="inlay-id">D-01</span>
-          <h2 class="inlay__title" id="inlay-title">Titel</h2>
-          <div class="inlay__meta" id="inlay-meta"></div>
-        </div>
-        <p class="inlay__notes" id="inlay-notes"></p>
-        <div class="inlay__section" id="inlay-credits-wrap" hidden>
-          <h3>Credits</h3>
-          <dl class="credits" id="inlay-credits"></dl>
-        </div>
-        <div class="inlay__section" id="inlay-text-wrap" hidden>
-          <h3 id="inlay-text-heading">Text</h3>
-          <pre class="inlay__text" id="inlay-text"></pre>
-        </div>
-        <div class="inlay__links" id="inlay-links"></div>
-      </div>
-    </div>
-  </div>
-
-  <audio id="audio" preload="none" crossorigin="anonymous"></audio>
-
+  <noscript><p class="noscript">DREKMOR-arkivet behöver JavaScript.</p></noscript>
   <script src="releases.js"></script>
-  <script src="drekmor.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
