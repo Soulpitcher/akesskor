@@ -70,6 +70,7 @@ export const UI = {
     this.el.time.textContent = fmt(time); this.el.dur.textContent = dur ? fmt(dur) : '—';
     this.el.barFill.style.transform = `scaleX(${dur ? time / dur : 0})`;
   },
+  sub(text) { this.el.sub.textContent = text; },
   hideHint() { this.el.hint.classList.add('gone'); },
 
   /* ----------------------------------------------------------- markör --- */
@@ -128,10 +129,11 @@ export const UI = {
   /* ------------------------------------------------ omslaget (J-kort) --- */
   openJCard(r, artURL) {
     const creds = (r.credits || []).filter((c) => c && c.name);
-    const links = r.links || {}, names = { spotify: 'Spotify', youtube: 'YouTube', apple: 'Apple Music', bandcamp: 'Bandcamp' };
+    const links = r.links || {}, names = { spotify: 'Spotify', apple: 'Apple Music', youtube: 'YouTube', tidal: 'Tidal', deezer: 'Deezer', bandcamp: 'Bandcamp' };
     const heading = { song: 'Text', interview: 'Transkript', story: 'Berättelse' }[r.type] || 'Text';
     const body = r.status === 'locked' ? 'Signalen är krypterad.\nBandet är låst tills vidare.'
-      : (r.text && r.text.trim()) || (r.status === 'coming' ? 'Ännu inte publicerad.\nSnart i sändning.' : 'Innehåll läggs till här.');
+      : r.status === 'coming' ? 'Texten publiceras när signalen släpps.\nSnart i sändning.'
+      : (r.text && r.text.trim()) || 'Innehåll läggs till här.';
     const meta = [r.releaseDate && new Date(r.releaseDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }), r.duration, TYPE_LABEL[r.type]].filter(Boolean);
 
     $('jc-art').src = artURL; $('jc-art').alt = `Omslag: ${r.title}`;

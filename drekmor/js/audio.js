@@ -66,24 +66,34 @@ export class AudioEngine {
   /* --------------------------------------------------------------- musik -- */
   load(release) {
     this.stop();
-    this.release = release; this.demoTime = 0;
+    this.release = release; this.demoTime = 0; this.missing = false;
+    if (release.status !== 'available') { this.mode = 'none'; return; }
     if (release.audio) {
       this.mode = 'file';
       if (!this.el) {
         this.el = new Audio(); this.el.crossOrigin = 'anonymous'; this.el.preload = 'metadata';
+        this.el.addEventListener('error', () => this.fallback());
         if (this.ctx) { try { this.ctx.createMediaElementSource(this.el).connect(this.musicIn); } catch (e) { /* spelas ändå */ } }
       }
       this.el.src = release.audio;
     } else {
-      this.mode = release.status === 'available' ? 'demo' : 'none';
+      this.mode = 'demo';
     }
+  }
+  /** Ljudfilen saknas eller kan inte spelas: byt tyst till demosignalen. */
+  fallback() {
+    if (this.mode !== 'file' || !this.el?.getAttribute('src')) return;
+    const wasPlaying = this.playing;
+    this.mode = 'demo'; this.missing = true; this.playing = false;
+    if (wasPlaying) this.play();
+    this.onfallback?.(this.release);
   }
   unload() { this.stop(); this.mode = 'none'; this.release = null; if (this.el) this.el.removeAttribute('src'); }
 
   play() {
     if (this.mode === 'none' || this.playing) return false;
     this.playing = true;
-    if (this.mode === 'file') this.el.play().catch(() => { this.playing = false; });
+    if (this.mode === 'file') this.el.play().catch((e) => { if (e.name === 'NotSupportedError') this.fallback(); else if (e.name !== 'AbortError') this.playing = false; });
     else this.startDemo();
     if (this.hissGain) this.hissGain.gain.setTargetAtTime(0.016, this.ctx.currentTime, 0.2);
     return true;

@@ -1,23 +1,24 @@
-# assets/ – bilder och ljud
+# assets/ – omslag och ljud
 
-Lägg släppens filer här och peka på dem i `../releases.js`.
+## Omslag (på plats)
 
-## Omslagsbilder (cover)
+| Fil             | Släpp               | Källa (Google Drive)                                       |
+|-----------------|---------------------|------------------------------------------------------------|
+| `d01-cover.jpg` | Blacked Out Beacon  | Blacked Out Beacon - Omslag Green.jpg                      |
+| `d02-cover.jpg` | Midnight Call       | Drekmor - Midnight Call 3000 x 3000.jpg                    |
 
-- **Format:** kvadrat (1:1), minst **1000×1000 px** (gärna 1500×1500), **JPG**.
-- **Filnamn (förväntas av releases.js just nu):**
-  - `d01-cover.jpg` — Blacked Out Beacon
-  - `d02-cover.jpg` — Midnight Call
-- Håll motivets viktigaste del **mot mitten**. Hela den fyrkantiga bilden visas
-  i "omslaget" (modalen); på själva kassetten görs en centrerad beskärning till
-  kassettformat (topp/botten kan beskäras där – t.ex. logga och titeltext).
-- Saknas filen ritas ett färgomslag av `accent`-färgen automatiskt (inget
-  trasigt), så du kan lägga upp sidan innan alla bilder finns.
+Nedskalade till 1500×1500 JPG. Nya omslag: kvadrat, minst 1000×1000.
 
-De två bilderna du redan har (Blacked Out Beacon i turkos, Midnight Call i
-lila) passar rakt av – spara dem bara med filnamnen ovan.
+## Ljud – exakta filnamn som releases.js väntar sig
 
-## Ljud (audio)
+| Fil                                 | Släpp               |
+|-------------------------------------|---------------------|
+| `d01-blacked-out-beacon.mp3`        | Blacked Out Beacon  |
+| `d02-midnight-call.mp3`             | Midnight Call       |
 
-- Direkta ljudfiler, t.ex. `d01.mp3`. Peka på dem via `audio:` i releases.js.
-- Streaminglänkar (Spotify/YouTube) läggs i `links:`, inte i `audio:`.
+Så länge en fil saknas spelar däcket en demosignal istället, så inget går
+sönder. MP3 i 256–320 kbps räcker gott. Filerna blir nedladdningsbara för
+besökare (medvetet val).
+
+Ett band med `status: "coming"` spelas aldrig och visar inte texten, även om
+ljudfilen och texten redan finns – ändra till `"available"` på släppdagen.

@@ -25,9 +25,9 @@
                 false = visas bara som rygg i hyllan
    releaseDate  Datum "ÅÅÅÅ-MM-DD" (visas i omslaget). Tom sträng = döljs.
    duration     Speltid "3:42" eller tom sträng.
-   audio        Sökväg/URL till ljudfilen ("assets/d01.mp3") ELLER en
-                streaminglänk. Lämna null så spelar en platshållar-signal
-                (så att mätaren och rullarna lever redan innan låten finns).
+   audio        Sökväg till ljudfilen, t.ex. "assets/d01-blacked-out-beacon.mp3".
+                Direktlänk till en fil – inte Spotify/YouTube (de hör hemma i
+                links). Saknas filen spelar däcket en demosignal istället.
    cover        Fyrkantig omslagsbild (1:1), t.ex. "assets/d01-cover.jpg",
                 eller null. Med bild blir kassetten en "picture-kassett" (bilden
                 trycks på skalet, centrerad beskärning) och hela den fyrkantiga
@@ -35,10 +35,12 @@
                 färgomslag av accent-färgen istället.
                 REKOMMENDERAT FORMAT: kvadrat, minst 1000×1000 px (gärna 1500),
                 JPG. Håll motivet mot mitten så beskärningen på kassetten blir bra.
-   links        Länkar som visas i omslaget. Tomma fält döljs automatiskt.
+   links        Länkar i omslaget: spotify, apple, youtube, tidal, deezer,
+                bandcamp. Tomma fält döljs automatiskt.
    notes        Kort blänkare överst i omslaget (1–2 meningar).
    credits      Lista med { role, name } – visas som credits i omslaget.
-   text         Själva "papperet" i kassetten:
+   text         Själva "papperet" i kassetten (visas först när status är
+                "available" – för "coming" hålls texten tillbaka):
                   låt        -> texten
                   intervju   -> transkript / anteckningar
                   berättelse -> berättelsen
@@ -49,61 +51,187 @@
 
 const RELEASES = [
 
-  /* --------------------------------------------------------------------- D-01
-     EXEMPEL PÅ ETT RIKTIGT, SLÄPPT SPÅR.
-     Byt ut text, credits, audio och länkar mot ert riktiga släpp.        */
+  /* ------------------------------------------------------------------ D-01
+     Debutsingeln, släppt 10 juli 2026.                                     */
   {
     id: "D-01",
     title: "Blacked Out Beacon",
     type: "song",
     status: "available",
-    accent: "#2bb6c9",              // turkos – matchar omslaget
+    accent: "#2bb6c9",
     featured: true,
-    releaseDate: "2026-05-01",
-    duration: "3:42",
-    audio: null,                    // <- lägg in "assets/d01.mp3" när filen finns
-    cover: "assets/d01-cover.jpg",  // <- fyrkantig omslagsbild (1:1)
+    releaseDate: "2026-07-10",
+    duration: "5:04",
+    audio: "assets/d01-blacked-out-beacon.mp3",
+    cover: "assets/d01-cover.jpg",
     links: {
-      spotify: "",
-      youtube: "",
-      apple: "",
-      bandcamp: ""
+      spotify: "https://open.spotify.com/artist/1LW39JZPbzFi1peIuaPm0e",
+      apple: "https://music.apple.com/us/artist/drekmor/6782703112",
+      youtube: "https://www.youtube.com/@Drekmor-Official",
+      tidal: "https://tidal.com/artist/81451660",
+      deezer: "https://www.deezer.com/en/artist/398094771"
     },
-    notes: "Den första signalen ur arkivet. En sång om fyrljuset som slocknar.",
+    notes: "Den första signalen. Mörk, tung synth om en värld efter kollapsen – med den mörklagda fyren i centrum: en trasig signal, en utebliven varning, kanske den sista resten av hopp.",
     credits: [
+      { role: "Leadsång", name: "Linus Nyman" },
+      { role: "Sång", name: "Tomas Vasseur" },
+      { role: "Keyboards & gitarr", name: "Johan Brinkman" },
+      { role: "Produktion", name: "Drekmor" },
       { role: "Musik & text", name: "Drekmor" },
-      { role: "Produktion",   name: "Drekmor" },
-      { role: "Mix & master", name: "" }
+      { role: "Mix & mastering", name: "Lars Norgren" }
     ],
-    text:
-`Första versen skrivs här.
-Varje radbrytning behålls precis som du skriver den.
+    text: `Can't make out the lines
+In this dusty story book
+Imagine the time
+And effort that the writing took
+Around me shrapnel
+Line the parks and fields
+As creatures move in agony
+With their naked feet
 
-Refräng:
-Skriv refrängen här ...`
+The sun has given up
+It did what it could
+And mankind did
+What we knew she would
+
+Under the cold
+Blacked out beacon
+We scurry
+We scurry
+But there's no need to hurry
+No need to hurry
+
+Truth be told
+Be told it
+It was too weird a feeling
+To imagine
+The Blacked out beacon
+
+I wash myself dirty
+In a puddle amongst the rubble
+The smell of waste
+And a faint sound of bubbles
+
+The critters that are here
+Are my only company
+But the apex ones are new
+So I strive to stay lonely
+
+The night is when I sleep
+And that is when I dream
+I dream but of regret
+And of what used to be
+
+Under the cold
+Blacked out beacon
+We scurry
+We scurry
+But there's no need to hurry
+No need to hurry
+
+Truth be told
+Be told it
+It was too weird a feeling
+To imagine
+The Blacked out beacon
+
+Under the cold
+Under the cold
+Blacked out beacon
+Blacked out beacon
+We scurry
+But there's no need to hurry
+No need to hurry
+
+Truth be told
+It was too weird a feeling
+To imagine
+The Blacked out beacon`
   },
 
-  /* --------------------------------------------------------------------- D-02
-     LÅTEN SOM ÄR PÅ GÅNG. status: "coming" -> syns men går inte att spela.
-     Ändra till "available" och lägg in audio när den släpps.             */
+  /* ------------------------------------------------------------------ D-02 */
   {
     id: "D-02",
     title: "Midnight Call",
     type: "song",
-    status: "coming",
-    accent: "#a12bd0",              // lila/magenta – matchar omslaget
+    status: "available",
+    accent: "#a12bd0",
     featured: true,
     releaseDate: "",
-    duration: "",
-    audio: null,
-    cover: "assets/d02-cover.jpg",  // <- fyrkantig omslagsbild (1:1)
-    links: { spotify: "", youtube: "", apple: "", bandcamp: "" },
-    notes: "Nästa signal. Snart i sändning.",
-    credits: [{ role: "Musik & text", name: "Drekmor" }],
-    text: ""
+    duration: "4:52",
+    audio: "assets/d02-midnight-call.mp3",
+    cover: "assets/d02-cover.jpg",
+    links: {
+      spotify: "https://open.spotify.com/artist/1LW39JZPbzFi1peIuaPm0e",
+      apple: "https://music.apple.com/us/artist/drekmor/6782703112",
+      youtube: "https://www.youtube.com/@Drekmor-Official",
+      tidal: "https://tidal.com/artist/81451660",
+      deezer: "https://www.deezer.com/en/artist/398094771"
+    },
+    notes: "Andra signalen. Ett samtal mitt i natten – plocka upp luren.",
+    credits: [
+      { role: "Musik & text", name: "Drekmor" },
+      { role: "Produktion", name: "Drekmor" }
+    ],
+    text: `City fading away
+too fast
+no turning back
+
+Shadows fall on the road
+so deep
+I can’t escape, I can’t let go
+
+Burning fire behind
+… my life
+is haunting me
+
+Got a feeling inside of me
+it breaks my ground and tears my sky
+
+Hold on, don’t break, I am falling down
+
+Hold on, don’t break, I am falling down
+So close, so far, I reach for you now
+Hold tight, don’t fall, I am breaking down
+One word, one sound, I reach for you now
+
+I got blood on my hands
+Too dark
+tell me who I am
+
+…and stories of lies
+so loud
+they speak my name, they cloud my fame
+
+Hold on, don’t break, I am falling down
+So close, so far, I reach for you now
+Hold tight, don’t fall, I am breaking down
+One word, one sound, I reach for you now
+
+This is my midnight call — pick up now
+This is my midnight call
+This is my midnight call — pick up now
+This is my midnight call
+
+Hold on, don’t break, I am falling down
+So close, so far, I reach for you now
+Hold tight, don’t fall, I am breaking down
+One word, one sound, I reach for you now
+
+This is my midnight call — pick up now
+This is my midnight call
+This is my midnight call — pick up now
+This is my midnight call
+
+This is my midnight call
+This is my midnight call
+This is my midnight call
+This is my midnight call`
   },
 
-  /* --------------------------------------------------------------------- D-03 */
+  /* ------------------------------------------------------------------ D-03
+     Ej släppt. Lägg in cover, audio och text på släppdagen och ändra
+     status till "available".                                              */
   {
     id: "D-03",
     title: "Silent Alarm",
@@ -115,87 +243,28 @@ Skriv refrängen här ...`
     duration: "",
     audio: null,
     cover: null,
-    links: { spotify: "", youtube: "", apple: "", bandcamp: "" },
-    notes: "",
-    credits: [{ role: "Musik & text", name: "Drekmor" }],
-    text: ""
-  },
-
-  /* --------------------------------------------------------------------- D-04
-     LÅST KASSETT. Perfekt som mysterium / förhandsvisning av något kommande.
-     Hänglåset visas automatiskt när status = "locked".                    */
-  {
-    id: "D-04",
-    title: "Locked / Unknown Signal",
-    type: "story",
-    status: "locked",
-    accent: "#5b6169",
-    featured: true,
-    releaseDate: "",
-    duration: "",
-    audio: null,
-    cover: null,
-    links: { spotify: "", youtube: "", apple: "", bandcamp: "" },
-    notes: "Signalen är krypterad. Ännu.",
+    links: {},
+    notes: "Nästa signal. Snart i sändning.",
     credits: [],
     text: ""
   },
 
-  /* --------------------------------------------------------------------- D-05
-     EXEMPEL PÅ EN BERÄTTELSE (type: "story").
-     Ingen låt – ett "papper" man öppnar och läser. Bra för Drekmor-lore.  */
-  {
-    id: "D-05",
-    title: "Static Memories",
-    type: "story",
-    status: "available",
-    accent: "#9aa0a6",
-    featured: false,
-    releaseDate: "2026-05-01",
-    duration: "",
-    audio: null,                    // en berättelse kan även ha inspelad uppläsning
-    cover: null,
-    links: { spotify: "", youtube: "", apple: "", bandcamp: "" },
-    notes: "En berättelse ur Drekmor-världen.",
-    credits: [{ role: "Text", name: "Drekmor" }],
-    text:
-`Skriv berättelsen här.
+  /* ------------------------------------------------------------------ D-04
+     Låst kassett – mysterium / nästa hemlighet.                             */
+  { id: "D-04", title: "Locked / Unknown Signal", type: "story", status: "locked", accent: "#5b6169", featured: true, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "Signalen är krypterad. Ännu.", credits: [], text: "" },
 
-Det här är kassetten för det som händer runt musiken –
-världen, karaktärerna, det som förklarar signalerna.`
-  },
-
-  /* --------------------------------------------------------------------- D-06
-     EXEMPEL PÅ EN INTERVJU (type: "interview").
-     Spelas upp som ljud + transkript/anteckningar i omslaget.             */
-  {
-    id: "D-06",
-    title: "Echoes In The Void",
-    type: "interview",
-    status: "coming",
-    accent: "#4b7f52",
-    featured: false,
-    releaseDate: "",
-    duration: "",
-    audio: null,
-    cover: null,
-    links: { spotify: "", youtube: "", apple: "", bandcamp: "" },
-    notes: "Inspelad intervju med Drekmor.",
-    credits: [{ role: "Medverkande", name: "Drekmor" }],
-    text: ""
-  },
-
-  /* --------------------------------------------------------------------- D-07…
-     Framtida platser i arkivet. Lägg till fler block precis så här.
-     Ta bort dem du inte vill visa än.                                     */
-  { id: "D-07", title: "Signals Fade",      type: "song",  status: "locked", accent: "#b23b3b", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "", credits: [], text: "" },
-  { id: "D-08", title: "Night Window",      type: "song",  status: "locked", accent: "#3f6f8f", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "", credits: [], text: "" },
-  { id: "D-09", title: "Distant Coast",     type: "song",  status: "locked", accent: "#c47a2c", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "", credits: [], text: "" },
-  { id: "D-10", title: "Empty Frequencies", type: "story", status: "locked", accent: "#8a8f96", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "", credits: [], text: "" },
-  { id: "D-11", title: "Subsurface",        type: "song",  status: "locked", accent: "#7d5ba6", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "", credits: [], text: "" },
-  { id: "D-12", title: "Afterlight",        type: "song",  status: "locked", accent: "#c9a24b", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "", credits: [], text: "" }
+  /* ------------------------------------------------------------------ D-05…
+     Platser för berättelser, intervjuer och kommande låtar.
+     Byt titel/typ och ändra status när innehållet finns.                     */
+  { id: "D-05", title: "Static Memories",    type: "story",     status: "coming", accent: "#9aa0a6", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "En berättelse ur Drekmor-världen.", credits: [], text: "" },
+  { id: "D-06", title: "Echoes In The Void", type: "interview", status: "coming", accent: "#4b7f52", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "Inspelad intervju med Drekmor.", credits: [], text: "" },
+  { id: "D-07", title: "Signals Fade",       type: "song",      status: "locked", accent: "#b23b3b", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "", credits: [], text: "" },
+  { id: "D-08", title: "Night Window",       type: "song",      status: "locked", accent: "#3f6f8f", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "", credits: [], text: "" },
+  { id: "D-09", title: "Distant Coast",      type: "song",      status: "locked", accent: "#c47a2c", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "", credits: [], text: "" },
+  { id: "D-10", title: "Empty Frequencies",  type: "story",     status: "locked", accent: "#8a8f96", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "", credits: [], text: "" },
+  { id: "D-11", title: "Subsurface",         type: "song",      status: "locked", accent: "#7d5ba6", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "", credits: [], text: "" },
+  { id: "D-12", title: "Afterlight",         type: "song",      status: "locked", accent: "#c9a24b", featured: false, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "", credits: [], text: "" }
 
 ];
 
-/* Gör listan tillgänglig för app.js (funkar både som <script> och modul). */
 if (typeof window !== "undefined") { window.RELEASES = RELEASES; }

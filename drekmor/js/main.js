@@ -70,6 +70,7 @@ async function boot() {
     releases: RELEASES, enter, toggleSound, playPause, inlay: openInlay, eject, seekTo,
     pick: (id) => pickRelease(id), modal: (m) => { S.modal = m; if (m) S.hover = null; },
   });
+  audio.onfallback = (r) => { if (S.loaded?.r === r) UI.sub('Ljudfilen hittades inte – spelar demosignal'); };
   UI.loading(0.06, 'Laddar typsnitt…');
   await fontsReady();
 
@@ -382,7 +383,7 @@ function vfdText(now) {
   if (!S.loaded) return 'SÄTT I ETT BAND   ·   DREKMOR ARKIV   ·   SIGNAL 001–012   ·   ';
   const r = S.loaded.r, name = `${r.id}  ${r.title.toUpperCase()}`;
   if (r.status === 'coming') return `${name}   ·   INGEN SIGNAL ÄNNU   ·   SNART I SÄNDNING   ·   `;
-  if (!r.audio) return `${name}   ·   DEMOSIGNAL   ·   RIKTIG INSPELNING KOMMER   ·   `;
+  if (audio.mode === 'demo') return `${name}   ·   DEMOSIGNAL   ·   RIKTIG INSPELNING KOMMER   ·   `;
   return `${name}   ·   DREKMOR   ·   `;
 }
 const vfdSay = (msg, secs = 4) => { S.msg = msg; S.msgUntil = performance.now() + secs * 1000; };
