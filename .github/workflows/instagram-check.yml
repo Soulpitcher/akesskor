@@ -1,0 +1,111 @@
+name: Instagram-kontroll
+
+# Kontrollerar varje morgon att Instagram-flödet på hemsidan fungerar.
+# Vid fel skapas ett ärende (issue) i repot, vilket ger ett mejl till repots ägare.
+# Ärendet stängs automatiskt när flödet fungerar igen.
+
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  actions: write
+
+concurrency:
+  group: instagram-check
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kontrollera Instagram-flödet
+        id: check
+        run: |
+          check() {
+            local url="https://www.akesskor.se/api/instagram?check=$(date +%s)"
+            local body
+            if ! body=$(curl -fsS --retry 3 --retry-delay 20 --max-time 30 "$url" 2>&1); then
+              echo "Hemsidan svarade inte: $body"
+              return
+            fi
+            echo "$body" | jq -r '
+              if .configured == false then "IG_ACCESS_TOKEN eller IG_USER_ID saknas i Vercel."
+              elif .error then .error
+              elif (.posts | length) == 0 then "Instagram returnerade inga inlägg."
+              else empty end
+            ' 2>/dev/null || echo "Oväntat svar från /api/instagram: ${body:0:300}"
+          }
+
+          problem=$(check)
+          if [ -n "$problem" ]; then
+            echo "Första kontrollen misslyckades: $problem"
+            echo "Försöker igen om fem minuter."
+            sleep 300
+            problem=$(check)
+          fi
+
+          if [ -n "$problem" ]; then
+            echo "::error::$problem"
+          else
+            echo "Instagram-flödet fungerar."
+          fi
+          {
+            echo "problem<<PROBLEM_EOF"
+            echo "$problem"
+            echo "PROBLEM_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Skapa eller stäng varning
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          PROBLEM: ${{ steps.check.outputs.problem }}
+        run: |
+          label="instagram-varning"
+          gh label create "$label" --color D93F0B --description "Automatisk varning: Instagram-flödet på hemsidan" --force
+          open=$(gh issue list --label "$label" --state open --json number --jq '.[0].number // empty')
+
+          if [ -z "$PROBLEM" ]; then
+            if [ -n "$open" ]; then
+              gh issue close "$open" --comment "✅ Instagram-flödet fungerar igen ($(date -u +%F)). Varningen stängdes automatiskt."
+            fi
+            exit 0
+          fi
+
+          if [ -n "$open" ]; then
+            echo "Det finns redan en öppen varning (#$open). Skapar ingen ny."
+            exit 0
+          fi
+
+          body=$(mktemp)
+          cat > "$body" <<EOF
+          @$OWNER Den dagliga kontrollen av Instagram-flödet på www.akesskor.se misslyckades.
+
+          **Felmeddelande:**
+          > $PROBLEM
+
+          ## Så fixar du det
+
+          Om felet nämner *access token*, *Session has expired* eller *OAuthException* behöver Instagram-token bytas:
+
+          1. Öppna Meta Business → [Systemanvändare](https://business.facebook.com/latest/settings/system_users?business_id=2388944861162180).
+          2. Välj **Åkes Skor Hemsida** → **Generera token**.
+          3. Välj appen **Åkes Skor**, utgångsdatum **Aldrig** och behörigheterna \`instagram_basic\`, \`pages_show_list\` och \`pages_read_engagement\`.
+          4. Klistra in token som \`IG_ACCESS_TOKEN\` i [Vercel](https://vercel.com/tomasvasseur-7917s-projects/akesskor/settings/environment-variables).
+          5. Gå till **Deployments** i Vercel → **⋯** vid den översta → **Redeploy**.
+
+          Om felet säger att hemsidan inte svarade ligger problemet troligen hos Vercel och inte hos Instagram.
+
+          Varningen stängs automatiskt när flödet fungerar igen.
+          EOF
+
+          gh issue create --label "$label" --title "⚠️ Instagram-flödet på hemsidan fungerar inte" --body-file "$body"
+
+      - name: Håll schemat aktivt
+        if: always() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/instagram-check.yml/enable"
