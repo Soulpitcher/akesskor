@@ -4,7 +4,10 @@
  * Hämtar de 9 senaste inläggen från @akesskor via Instagram Graph API.
  *
  * Miljövariabler att sätta i Vercel-dashboarden:
- *   IG_ACCESS_TOKEN   — Long-lived Page Access Token (giltig 60 dagar, förnyas automatiskt)
+ *   IG_ACCESS_TOKEN   — Token för systemanvändaren "Åkes Skor Hemsida" (utgångsdatum: aldrig).
+ *                       Skapas i Meta Business → Inställningar → Systemanvändare → Generera token,
+ *                       med appen Åkes Skor och behörigheterna instagram_basic, pages_show_list,
+ *                       pages_read_engagement. Kräver ny deploy i Vercel efter byte.
  *   IG_USER_ID        — Instagram Business Account ID (t.ex. "17841400000000000")
  */
 
