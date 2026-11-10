@@ -210,7 +210,12 @@ export function drawVFD(v, s) {
 }
 
 /* ============================================================ KASSETT ===== */
-const SHELL_MAT = () => new THREE.MeshPhysicalMaterial({ color: 0x1c1916, metalness: 0.05, roughness: 0.42, clearcoat: 0.55, clearcoatRoughness: 0.3 });
+/* Skalet: tonad klar plast i släppets egen färg (låsta band: rökgrå). */
+const SHELL_MAT = (r) => {
+  const tint = new THREE.Color(r && r.status !== 'locked' ? (r.accent || '#38cfe0') : '#6a6f78');
+  const col = tint.clone().multiplyScalar(0.22).add(new THREE.Color(0x0a0908));
+  return new THREE.MeshPhysicalMaterial({ color: col, metalness: 0.05, roughness: 0.28, clearcoat: 0.85, clearcoatRoughness: 0.18, transparent: true, opacity: 0.93, envMapIntensity: 1.1 });
+};
 let sharedSpool, sharedHub;
 
 export function makeCassette(r) {
@@ -218,7 +223,7 @@ export function makeCassette(r) {
   sharedHub ||= new THREE.MeshStandardMaterial({ map: T.toTexture(T.drawHub()), alphaTest: 0.5, roughness: 0.55 });
 
   const g = new THREE.Group(); g.name = 'cassette:' + r.id;
-  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(10, 6.4, 1.2, 3, 0.24), SHELL_MAT())));
+  g.add(shadow(new THREE.Mesh(new RoundedBoxGeometry(10, 6.4, 1.2, 3, 0.24), SHELL_MAT(r))));
   const hy = T.LABEL.hubY, Z = 0.6;
 
   const backing = new THREE.MeshStandardMaterial({ color: 0x0a0806, roughness: 0.9 });

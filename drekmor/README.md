@@ -1,7 +1,9 @@
 # DREKMOR – Arkivet
 
-En realtids-3D-upplevelse (WebGL/three.js): ett mörkt rum, ett 80-tals
-kassettdäck och bandarkivet. Varje släpp är ett riktigt kassettfodral.
+En realtids-3D-upplevelse (WebGL/three.js): ett rum på natten – regn mot
+fönstret, neonstaden utanför, en neonskylt och en affisch på väggen – med ett
+80-tals kassettdäck på bordet och bandarkivet i staplar. Varje släpp är ett
+riktigt kassettfodral.
 Klicka på ett fodral → locket öppnas, kassetten lyfts ur, flyger in i däckets
 lucka och luckan slår igen. Sedan kan man **spela** signalen eller öppna
 **omslaget** (J-kortet viks ut) och läsa text, credits och berättelser.
@@ -14,11 +16,12 @@ demosignal – genereras i koden från `releases.js`. Inga byggsteg, inga CDN:er
 | Fil / mapp          | Innehåll                                                              |
 |---------------------|-----------------------------------------------------------------------|
 | **`releases.js`**   | **Datan – den enda fil du behöver ändra för nya släpp.**              |
-| `assets/`           | Omslagsbilder (`d01-cover.jpg` …) och ljudfiler. Se `assets/README.md`. |
+| `assets/`           | Omslagsbilder (`d01-cover.jpg` …), ljudfiler och laddarens stillbild. Se `assets/README.md`. |
 | `index.html`        | Stomme: laddare, meny, HUD, arkivlista, omslag.                       |
 | `css/site.css`      | Gränssnittet ovanpå scenen.                                           |
-| `js/main.js`        | Scen, ljussättning, kamera, interaktion och koreografi.               |
-| `js/models.js`      | 3D-modeller: däck, kassett, fodral.                                   |
+| `js/main.js`        | Scen, ljussättning, kamera, vyer, interaktion och koreografi.         |
+| `js/room.js`        | Rummet: vägg, fönster, regn, stad, neonskylt, affisch, hörlurar.      |
+| `js/models.js`      | 3D-modeller: däck, kassett, fodral (skalet tonas i släppets färg).    |
 | `js/textures.js`    | Procedurella texturer: omslag, ryggar, etiketter, borstad metall.    |
 | `js/audio.js`       | Ljudmotor: uppspelning, demosignal, bandbrus, VU, mekaniska ljud.     |
 | `js/ui.js`, `js/tween.js` | DOM-lager och animationer.                                      |
@@ -50,9 +53,30 @@ ES-moduler kräver en webbserver (inte `file://`):
 cd drekmor && python3 -m http.server 8080   # öppna http://localhost:8080
 ```
 
+## Laddaren och stillbilden
+
+Medan rummet byggs visas en stillbild av rummet (`assets/still.jpg`, 2,4:1) och
+laddningen spelas upp på däckets display i bilden, i perspektiv. Hörnen för
+displayen ligger i `assets/still.json`. Vid "klicka för att gå in" tar det
+levande rummet över med en störningsblixt. Ljud på/av väljs i samma steg.
+
+Ändrar du rummet, kameran (`FRAME` i `js/main.js`) eller däcket: ta en ny bild.
+`index.html?still=1&room=1` ritar rummet utan gränssnitt och lägger displayens
+hörn i `window.__still`. Fotografera i 2400×1000, spara som `assets/still.jpg`
+och skriv `window.__still` till `assets/still.json`.
+
+## Lo-fi
+
+Datorer som ritar WebGL i mjukvara (utan grafikkort) och webbläsare utan WebGL
+får automatiskt lo-fi-versionen: samma arkiv som lista, spelare och omslag.
+`?lofi=1` tvingar lo-fi, `?room=1` tvingar rummet. Länken **Lo-fi** i menyn
+finns alltid.
+
 ## Tangentbord och tillgänglighet
 
-Mellanslag = spela/paus · ←/→ = spola · ↑/↓ = volym · E = mata ut ·
-O = omslag · I = arkivet · Esc = stäng. Hela arkivet finns även som vanlig
-lista (knappen **Arkivet**) för tangentbord, skärmläsare och webbläsare utan
-WebGL. `prefers-reduced-motion` förkortar animationerna.
+1–4 = sätt i ett band · Mellanslag = spela/paus · ←/→ = spola · ↑/↓ = volym ·
+Z = nära däcket · F = titta ut genom fönstret · N = neonskylten · E = mata ut ·
+O = omslag · I = arkivet · Esc = tillbaka/stäng. Klick i rummet: fönstret,
+affischen (om), neonskylten (av/på) och hörlurarna (ljud) går också att klicka.
+Hela arkivet finns även som vanlig lista (knappen **Arkivet**) för tangentbord
+och skärmläsare. `prefers-reduced-motion` förkortar animationerna.
