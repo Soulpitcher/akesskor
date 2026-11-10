@@ -1,7 +1,7 @@
 /* =============================================================================
-   DREKMOR — Arkivet. Realtids-3D (three.js): ett rum på natten, ett kassettdäck,
-   fodral och kassetter. Data: releases.js · Texturer: textures.js ·
-   Modeller: models.js · Rummet: room.js · Ljud: audio.js · DOM: ui.js
+   DREKMOR — Arkivet. Realtids-3D (three.js): ett kassettdäck och kassetterna.
+   Data: releases.js · Texturer: textures.js · Modeller: models.js ·
+   Ljud: audio.js · DOM: ui.js
    ============================================================================= */
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -11,7 +11,6 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import * as T from './textures.js';
 import { makeDeck, drawVFD, makeCassette, makeCase, DECK, CASE } from './models.js';
-import { makeRoom } from './room.js';
 import { AudioEngine } from './audio.js';
 import { UI } from './ui.js';
 import { tween, updateTweens, ease, wait, lerp, damp, clamp, setMotionScale } from './tween.js';
@@ -31,12 +30,12 @@ const S = {
   loaded: null, playing: false, paused: false, windDir: 0, windUntil: 0,
   levels: { l: 0, r: 0 }, peaks: { l: 0, r: 0, hl: 0, hr: 0 },
   focus: 0, shake: 0, glitch: 0, msg: null, msgUntil: 0,
-  hover: null, volume: 0.8, view: 'desk', fadeIn: 0,
+  hover: null, volume: 0.8, view: 'desk', fadeIn: 0, page: 0, pageT: 0,
 };
 
-let renderer, scene, camera, composer, bloom, grainPass, deck, room, dust, lights = {};
+let renderer, scene, camera, composer, bloom, grainPass, deck, dust, lights = {};
 const cases = [];
-const rig = { target: new THREE.Vector3(), dist: 90, elev: 0.5, azim: 0, fixed: false };
+const rig = { target: new THREE.Vector3(), dist: 90, elev: 0.5, azim: 0, fixed: false, portrait: false };
 const cam = { target: new THREE.Vector3(0, 5, 6), dist: 90, elev: 0.5, azim: 0 };
 const pointer = { x: innerWidth / 2, y: innerHeight / 2, nx: 0, ny: 0, px: 0, py: 0, dirty: false };
 const jcards = new Map();
@@ -74,25 +73,24 @@ async function boot() {
   UI.init({
     releases: RELEASES, enter, toggleSound, playPause, inlay: openInlay, eject, seekTo,
     pick: (id) => pickRelease(id), modal: (m) => { S.modal = m; if (m) S.hover = null; },
-    setView, goLofi: () => { location.href = location.pathname + '?lofi=1'; },
+    setView, page: (d) => goPage(S.page + d), goLofi: () => { location.href = location.pathname + '?lofi=1'; },
   });
-  audio.onfallback = (r) => { if (S.loaded?.r === r) UI.sub('Ljudfilen hittades inte – spelar demosignal'); };
+  audio.onfallback = (r) => { if (S.loaded?.r === r) UI.sub('Demosignal'); };
 
-  // Lo-fi: valt (?lofi=1), eller en dator som ritar 3D i mjukvara (då hänger hela maskinen – ?room=1 provar ändå)
+  // Lo-fi: valt (?lofi=1), eller en dator som ritar 3D i mjukvara (då hänger hela maskinen – ?3d=1 provar ändå)
   if (Q.get('lofi') === '1') return lofi('chosen');
   UI.loading(0.05, 'Laddar typsnitt');
   await fontsReady();
   try { createRenderer(); } catch (e) { console.warn(e); return lofi('nogl'); }
-  if (softwareGL() && Q.get('room') !== '1' && !STILL_MODE) return lofi('soft');
+  if (softwareGL() && Q.get('3d') !== '1' && Q.get('room') !== '1' && !STILL_MODE) return lofi('soft');
 
-  UI.loading(0.2, 'Bygger rummet'); await nextFrame();
+  UI.loading(0.2, 'Bygger däcket'); await nextFrame();
   buildWorld();
   UI.loading(0.38, 'Hämtar omslagen'); await nextFrame();
   await loadCovers();
-  room = makeRoom({ posterRelease: RELEASES[0], posterImage: images.get(RELEASES[0]?.id), touch: TOUCH });
-  scene.add(room.group);
   await buildCases((p) => UI.loading(0.42 + p * 0.4, 'Packar kassetterna'));
   layout();
+  UI.setPage(0, pages(), PER, RELEASES.length);
   UI.loading(0.86, 'Värmer upp displayen'); await nextFrame();
   try { await renderer.compileAsync(scene, camera); } catch (e) { /* äldre webbläsare */ }
   if (STILL_MODE) return stillMode();
@@ -131,7 +129,7 @@ function softwareGL() {
 function buildWorld() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x020205);
-  scene.fog = new THREE.Fog(0x020205, 170, 330);
+  scene.fog = new THREE.Fog(0x020205, 78, 140);
   scene.environment = studioEnvironment();
   scene.environmentIntensity = 1;
 
@@ -141,16 +139,20 @@ function buildWorld() {
   const desk = T.drawDesk();
   const dm = T.toTexture(desk.map, { wrap: true }), dr = T.toTexture(desk.rough, { color: false, wrap: true });
   dm.repeat.set(3, 1.6); dr.repeat.set(3, 1.6);
-  const deskMesh = new THREE.Mesh(new THREE.PlaneGeometry(280, 150), new THREE.MeshStandardMaterial({ map: dm, roughnessMap: dr, roughness: 0.7, metalness: 0, envMapIntensity: 0.9 }));
+  const deskMesh = new THREE.Mesh(new THREE.PlaneGeometry(280, 150), new THREE.MeshStandardMaterial({ map: dm, roughnessMap: dr, color: 0x23272d, roughness: 0.6, metalness: 0, envMapIntensity: 0.22 }));
   deskMesh.rotation.x = -Math.PI / 2; deskMesh.position.set(0, 0, 18); deskMesh.receiveShadow = true;
   scene.add(deskMesh);
   const deskFront = new THREE.Mesh(new THREE.BoxGeometry(280, 5, 2), new THREE.MeshStandardMaterial({ color: 0x0c0b0a, roughness: 0.6 }));
   deskFront.position.set(0, -2.5, 93); scene.add(deskFront);
 
-  // Ljus: kall nyckel ovanifrån, neon och fönster ger färgen
+  // Mjukt färgspill långt bak – ingen form, bara atmosfär
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(330, 150), new THREE.MeshBasicMaterial({ map: T.toTexture(T.drawBackGlow()), fog: false, transparent: true, opacity: 0.38, depthWrite: false }));
+  glow.position.set(0, 30, -95); scene.add(glow);
+
+  // Ljus: kall nyckel ovanifrån, cyan och magenta i kanterna
   scene.add(new THREE.HemisphereLight(0x1a2438, 0x030303, 0.36));
   const key = new THREE.SpotLight(0xdfe8ff, 4.2, 0, 0.46, 0.75, 0);
-  key.position.set(-30, 80, 52); key.target.position.set(2, 3, 8);
+  key.position.set(-60, 44, 70); key.target.position.set(2, 4, 14);   // lågt från sidan: rakt ovanifrån speglas lampan i de lutade fodralen
   key.castShadow = true; key.shadow.mapSize.set(TOUCH ? 1024 : 2048, TOUCH ? 1024 : 2048);
   key.shadow.bias = -0.0003; key.shadow.normalBias = 0.04; key.shadow.camera.near = 40; key.shadow.camera.far = 220;
   scene.add(key, key.target);
@@ -190,8 +192,8 @@ function studioEnvironment() {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(k), side: THREE.DoubleSide }));
     m.position.set(...pos); m.lookAt(0, 0, 0); env.add(m);
   };
-  box(46, 14, 0xe8f0ff, 2.4, [-14, 46, 22]);   // kall softbox snett ovanifrån
-  box(40, 26, 0x6fd8ff, 1.6, [0, 22, -40]);     // fönstret bakom
+  box(30, 14, 0xe8f0ff, 1.7, [-46, 24, 26]);   // kall softbox lågt från sidan – rakt ovanifrån skulle de lutade fodralen blända
+  box(40, 26, 0x6fd8ff, 1.2, [0, 22, -40]);     // kallt sken bakifrån
   box(7, 60, 0x2fd6ff, 2.6, [48, 8, -18]);      // cyan list höger
   box(7, 60, 0xff3d9a, 2.2, [-48, 8, -18]);     // magenta list vänster
   box(90, 30, 0x1a1c2a, 1.0, [0, -10, 48]);     // svag studs framifrån
@@ -219,24 +221,33 @@ const blankCard = () => {
   return blankCard.t;
 };
 
+/* Alla släpp står på rad framför däcket, fyra i taget; pilarna bläddrar sida för sida. */
+const PER = 4, PAGE_W = 104;
+const pages = () => Math.max(1, Math.ceil(RELEASES.length / PER));
+const pageOf = (c) => Math.floor(c.index / PER);
 async function buildCases(progress) {
-  const featured = RELEASES.filter((r) => r.featured).slice(0, 4);
-  const half = Math.ceil(RELEASES.length / 2);
-  const stacks = [RELEASES.slice(0, half), RELEASES.slice(half)];
-  const total = featured.length + RELEASES.length;
   let n = 0;
-  const add = (r, kind, lazyCard) => {
-    const c = makeCase(r, lazyCard ? blankCard() : jcard(r).tex, spine(r));
-    Object.assign(c, { kind, busy: false, hoverT: 0, home: { p: new THREE.Vector3(), q: new THREE.Quaternion() }, cardReady: !lazyCard, cassette: null });
+  for (const r of RELEASES) {
+    const lazy = n >= PER;                                   // omslagen på senare sidor ritas först när de behövs
+    const c = makeCase(r, lazy ? blankCard() : jcard(r).tex, spine(r));
+    Object.assign(c, { index: n, busy: false, hoverT: 0, home: { p: new THREE.Vector3(), q: new THREE.Quaternion() }, cardReady: !lazy, cassette: null });
     c.proxy.userData.hit.c = c;
     scene.add(c.group); cases.push(c);
-    return c;
-  };
-  for (const r of featured) { add(r, 'featured', false); progress(++n / total); await nextFrame(); }
-  stacks.forEach((list, side) => {
-    list.forEach((r, i) => { const c = add(r, 'stack', i !== list.length - 1); c.side = side; c.level = i; progress(++n / total); });
-  });
+    progress(++n / RELEASES.length);
+    if (!lazy) await nextFrame();
+  }
 }
+function goPage(p) {
+  p = clamp(p, 0, pages() - 1);
+  if (p === S.page || S.busy) return Promise.resolve();
+  S.page = p; S.hover = null;
+  for (const c of cases) if (pageOf(c) === p) ensureCard(c);
+  UI.setPage(p, pages(), PER, RELEASES.length);
+  if (S.entered) audio.sfx('whoosh');
+  const t0 = S.pageT;
+  return tween(REDUCED ? 0.3 : 0.75, (e) => (S.pageT = lerp(t0, p, e)), ease.inOutCubic);
+}
+const onPage = (c) => pageOf(c) === S.page;
 
 function ensureCard(c) {
   if (c.cardReady) return;
@@ -251,40 +262,41 @@ function ensureCassette(c) {
 }
 
 /* =============================================================== LAYOUT ==== */
-/* Liggande fönster (1.4:1 och bredare) ser samma vertikala skiva av rummet – bredare fönster ser mer åt sidorna.
-   Så kan laddarens stillbild (renderad i 2.4:1) läggas exakt över det levande rummet. */
-export const FRAME = { fov: 42, target: [0, 10, 2], elev: 0.3, halfH: 27 };
+/* Breda fönster (1.5:1 och bredare) ser samma vertikala skiva av scenen – bredare fönster ser mer åt sidorna.
+   Därför kan laddarens stillbild (renderad i 2.4:1) läggas exakt över den levande scenen. */
+export const FRAME = { fov: 30, target: [0, 3.2, 12], elev: 0.2, halfH: 17.5, wide: 1.5 };
+const TILT = 0.72;                                  // fodralen lutar upp mot kameran
 function layout() {
-  const w = innerWidth, h = innerHeight, a = w / h, portrait = a < 0.85;
+  const w = innerWidth, h = innerHeight, a = w / h, portrait = a < 0.85, wide = a >= FRAME.wide;
   renderer.setSize(w, h); composer.setSize(w, h);
   grainPass.uniforms.uRes.value.set(w, h);
   camera.aspect = a;
+  rig.portrait = portrait;
 
-  const featured = cases.filter((c) => c.kind === 'featured');
-  const placeF = portrait
-    ? [[-5.9, 16.5, 0.05], [5.9, 17.1, -0.04], [-5.9, 32.2, -0.03], [5.9, 32.8, 0.05]]
-    : [[-16.8, 17.6, 0.1], [-5.6, 18.4, -0.04], [5.6, 17.8, 0.05], [16.8, 18.6, -0.09]];
-  featured.forEach((c, i) => {
-    const [x, z, yaw] = placeF[i];
-    const k = portrait ? 1.28 : 1;
-    c.group.scale.setScalar(k);
-    c.home.p.set(x, (CASE.d / 2) * k, z);
-    c.home.q.setFromEuler(new THREE.Euler(-Math.PI / 2, yaw, 0, 'YXZ'));
-  });
-  const rand = T.seeded('stack');
-  cases.filter((c) => c.kind === 'stack').forEach((c) => {
-    const x = (c.side ? 1 : -1) * 31.5 + (rand() - 0.5) * 0.7, z = -1 + (rand() - 0.5) * 0.6;
-    c.home.p.set(x, CASE.d / 2 + c.level * (CASE.d + 0.02), z);
-    c.home.q.setFromEuler(new THREE.Euler(-Math.PI / 2, Math.PI / 2 + (rand() - 0.5) * 0.06, 0, 'YXZ'));
-    c.group.visible = !portrait;
-  });
+  const K = 0.92;                     // raden står mitt i bilden även när däcket är förskjutet
+  for (const c of cases) {
+    const i = c.index % PER;
+    if (portrait) {
+      const [x, z, yaw] = [[-5.9, 16.5, 0.05], [5.9, 17.1, -0.04], [-5.9, 32.2, -0.03], [5.9, 32.8, 0.05]][i];
+      c.group.scale.setScalar(1.28);
+      c.home.p.set(x, (CASE.d / 2) * 1.28, z);
+      c.home.q.setFromEuler(new THREE.Euler(-Math.PI / 2, yaw, 0, 'YXZ'));
+    } else {
+      const x = (i - 1.5) * 8.0, yaw = [0.05, -0.03, 0.04, -0.05][i], zb = 37.5 + [0.3, -0.2, 0.1, -0.3][i];
+      c.group.scale.setScalar(K);
+      c.home.p.set(x, K * ((CASE.h / 2) * Math.sin(TILT) + (CASE.d / 2) * Math.cos(TILT)), zb - K * (CASE.h / 2) * Math.cos(TILT));
+      c.home.q.setFromEuler(new THREE.Euler(-Math.PI / 2 + TILT, yaw, 0, 'YXZ'));
+    }
+  }
   for (const c of cases) if (!c.busy) { c.group.position.copy(c.home.p); c.group.quaternion.copy(c.home.q); }
-  if (room) room.phones.visible = !portrait;
 
   const t = Math.tan(THREE.MathUtils.degToRad(FRAME.fov / 2));
   if (portrait) { camera.fov = 34; rig.target.set(0, 4, 15); rig.elev = 0.82; rig.fixed = false; const t2 = Math.tan(THREE.MathUtils.degToRad(17)); rig.dist = Math.max(25 / (t2 * a), 33 / t2); }
-  else if (a >= 1.4) { camera.fov = FRAME.fov; rig.target.set(...FRAME.target); rig.elev = FRAME.elev; rig.fixed = true; rig.dist = FRAME.halfH / t; }
-  else { camera.fov = FRAME.fov; rig.target.set(...FRAME.target); rig.elev = FRAME.elev; rig.fixed = false; rig.dist = Math.max(37.5 / (t * a), FRAME.halfH / t); }
+  else {
+    camera.fov = FRAME.fov; rig.target.set(...FRAME.target); rig.elev = FRAME.elev; rig.fixed = wide;
+    rig.dist = wide ? FRAME.halfH / t : Math.max(27 / (t * a), FRAME.halfH / t);
+  }
+  scene.fog.near = rig.dist + 13; scene.fog.far = rig.dist + 75;   // dimman följer kameran, så golvet tonar ut bakom däcket i alla format
   camera.updateProjectionMatrix();
   UI.stillMatches(rig.fixed);
 }
@@ -293,8 +305,6 @@ function layout() {
 const focusPoint = new THREE.Vector3(DECK.hole.x, DECK.FOOT + DECK.H / 2 + DECK.hole.y, 0);
 const _t = new THREE.Vector3(), _want = { target: new THREE.Vector3(), dist: 0, elev: 0, azim: 0 };
 function wanted() {
-  if (S.view === 'window' && room) return room.windowView;
-  if (S.view === 'poster' && room) return room.posterView;
   const f = S.view === 'deck' ? 1 : S.focus;
   _want.target.copy(rig.target).lerp(focusPoint, f * 0.62);
   _want.dist = rig.dist * (1 - 0.3 * f); _want.elev = rig.elev - f * 0.1; _want.azim = rig.azim;
@@ -305,7 +315,7 @@ function updateCamera(dt, snap) {
   pointer.py = damp(pointer.py, TOUCH ? 0 : pointer.ny, 2.5, dt);
   const w = wanted(), k = snap ? 1 : 1 - Math.exp(-2.6 * dt);
   cam.target.lerp(w.target, k); cam.dist = lerp(cam.dist, w.dist, k); cam.elev = lerp(cam.elev, w.elev, k); cam.azim = lerp(cam.azim, w.azim, k);
-  const look = S.view === 'window' ? 0.09 : 0.035;
+  const look = 0.03;
   const elev = cam.elev - pointer.py * look, az = cam.azim + pointer.px * look * 1.7;
   _t.copy(cam.target);
   camera.position.set(_t.x + Math.sin(az) * Math.cos(elev) * cam.dist, _t.y + Math.sin(elev) * cam.dist, _t.z + Math.cos(az) * Math.cos(elev) * cam.dist);
@@ -318,11 +328,10 @@ const kick = (a = 1) => { S.shake = Math.max(S.shake, a); };
 function setView(v) {
   if (!S.entered) return;
   if (v === S.view) v = 'desk';
-  if (v === 'window' && innerWidth / innerHeight < 0.85) { UI.toast('Vänd telefonen för att titta ut.'); return; }
   S.view = v; S.hover = null;
   if (v !== 'desk') audio.sfx('whoosh');
   UI.setView(v);
-  UI.announce(v === 'window' ? 'Vid fönstret: regnet över staden.' : v === 'poster' ? 'Affischen på väggen.' : v === 'deck' ? 'Nära däcket.' : 'Tillbaka vid bordet.');
+  UI.announce(v === 'deck' ? 'Nära däcket.' : 'Hela bilden.');
 }
 
 /* =========================================================== RENDER-LOOP ==== */
@@ -369,10 +378,13 @@ function tick(dt, t, now, rawDt = dt) {
   for (const c of cases) {
     const target = S.hover && S.hover.c === c && !S.busy ? 1 : 0;
     c.hoverT = damp(c.hoverT, target, 10, dt);
+    const off = pageOf(c) - S.pageT;                       // 0 = på den synliga sidan
+    c.group.visible = c.busy || Math.abs(off) < 0.999;
     if (!c.busy) {
       c.group.position.copy(c.home.p);
-      if (c.kind === 'featured') c.group.position.y += c.hoverT * 0.9;
-      else c.group.position.z += c.hoverT * 1.6;
+      c.group.position.x += off * PAGE_W;
+      c.group.position.y += c.hoverT * (rig.portrait ? 0.9 : 0.7);
+      if (!rig.portrait) c.group.position.z += c.hoverT * 0.5;
     }
   }
 
@@ -385,11 +397,9 @@ function tick(dt, t, now, rawDt = dt) {
   deck.vfdLight.intensity = S.power ? 1.2 + (S.levels.l + S.levels.r) * 3 : 0;
   deck.led.material.emissiveIntensity = damp(deck.led.material.emissiveIntensity, S.power ? 3.2 : 0, 6, dt);
 
-  // Stämning: rimljuset tar färg av bandet, och rummet andas med basen
+  // Stämning: rimljuset tar färg av bandet och andas med basen
   lights.rimC.color.lerp(lights.moodTarget, 1 - Math.exp(-1.6 * dt));
   lights.rimC.intensity = lights.rimBase * (1 + (S.playing ? lv.bass * 1.1 : 0));
-  room.lights.winLight.intensity = 1.5 + (S.playing ? lv.bass * 1.2 : 0) + Math.sin(t * 0.7) * 0.1;
-  room.update(dt, t);
 
   // Damm
   const p = dust.geometry.attributes.position, sd = dust.userData.seed;
@@ -437,7 +447,7 @@ const ndc = new THREE.Vector2();
 function hitAt(x, y) {
   ndc.set((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1);
   raycaster.setFromCamera(ndc, camera);
-  const targets = [...deck.interactive, ...room.interactive, ...cases.filter((c) => c.group.visible).map((c) => c.proxy)];
+  const targets = [...deck.interactive, ...cases.filter((c) => onPage(c) && c.group.visible).map((c) => c.proxy)];
   const hit = raycaster.intersectObjects(targets, false)[0];
   return hit ? hit.object.userData.hit : null;
 }
@@ -455,10 +465,6 @@ function hoverLabel(h) {
     case 'knob': return `<em>Dra</em>Volym ${Math.round(S.volume * 100)}`;
     case 'door': return S.loaded ? '<em>Lucka</em>Mata ut' : '<em>Lucka</em>Tom';
     case 'power': return `<em>Ström</em>${S.power ? 'Stäng av' : 'Slå på'}`;
-    case 'window': return S.view === 'window' ? '<em>Fönstret</em>Tillbaka · Esc' : '<em>Fönstret</em>Titta ut · F';
-    case 'neon': return `<em>Neon</em>${room.state.neonOn ? 'Släck' : 'Tänd'}`;
-    case 'poster': return `<em>Affisch</em>Om Drekmor`;
-    case 'phones': return `<em>Hörlurar</em>${S.muted ? 'Ljud på' : 'Ljud av'}`;
   }
 }
 function updateHover() {
@@ -477,6 +483,7 @@ function addEvents() {
     pointer.x = e.clientX; pointer.y = e.clientY;
     pointer.nx = (e.clientX / innerWidth) * 2 - 1; pointer.ny = (e.clientY / innerHeight) * 2 - 1;
     pointer.dirty = true;
+    if (!pointer.seen) { pointer.seen = true; UI.cursorHidden(false); }
     if (!S.hover) UI.cursor(pointer.x, pointer.y, null, false);
     if (knobDrag) setVolume(knobDrag.v0 + (knobDrag.y0 - e.clientY) / 180 + (e.clientX - knobDrag.x0) / 260);
   }, { passive: true });
@@ -491,16 +498,12 @@ function addEvents() {
   canvas.addEventListener('click', (e) => {
     if (!S.entered || S.modal) return;
     const h = hitAt(e.clientX, e.clientY);
-    if (!h) { if (S.view !== 'desk' && S.view !== 'deck') setView('desk'); return; }
+    if (!h) return;
     switch (h.type) {
       case 'case': return insert(h.c);
       case 'key': return pressKey(h.key);
       case 'door': return S.loaded ? eject() : UI.toast('Facket är tomt – välj en kassett.');
       case 'power': return togglePower();
-      case 'window': return setView('window');
-      case 'poster': return UI.open('about');
-      case 'neon': room.setNeon(!room.state.neonOn); audio.sfx(room.state.neonOn ? 'power' : 'clack'); return;
-      case 'phones': toggleSound(); return;
     }
   });
   canvas.addEventListener('wheel', (e) => { if (S.hover && S.hover.type === 'knob') { e.preventDefault(); setVolume(S.volume - e.deltaY / 1200); } }, { passive: false });
@@ -516,13 +519,13 @@ function addEvents() {
     else if (k === 'o' && S.loaded) openInlay();
     else if (k === 'm') toggleSound();
     else if (k === 'z') setView('deck');
-    else if (k === 'f') setView('window');
-    else if (k === 'n') { room.setNeon(!room.state.neonOn); audio.sfx(room.state.neonOn ? 'power' : 'clack'); }
-    else if (/^[1-4]$/.test(k)) { const c = cases.filter((x) => x.kind === 'featured')[+k - 1]; if (c) insert(c); }
+    else if (/^[1-4]$/.test(k)) { const c = cases[S.page * PER + (+k - 1)]; if (c) insert(c); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setVolume(S.volume + 0.05); }
     else if (e.key === 'ArrowDown') { e.preventDefault(); setVolume(S.volume - 0.05); }
-    else if (e.key === 'ArrowLeft' && S.loaded) pressKey('rew');
-    else if (e.key === 'ArrowRight' && S.loaded) pressKey('ff');
+    else if (e.key === 'ArrowLeft') goPage(S.page - 1);
+    else if (e.key === 'ArrowRight') goPage(S.page + 1);
+    else if (k === 'j' && S.loaded) pressKey('rew');
+    else if (k === 'l' && S.loaded) pressKey('ff');
   });
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(layout, 80); });
 }
@@ -532,10 +535,9 @@ async function enter(withSound) {
   if (S.entered) return;
   audio.init();
   S.muted = !withSound; audio.setMuted(S.muted); UI.setSound(!S.muted);
-  room.setPhones(!S.muted);
   S.entered = true;
   updateCamera(0, true);                 // stå exakt som stillbilden
-  S.glitch = 1.0;                        // störningsblixten när rummet tar över
+  S.glitch = 1.0;                        // störningsblixten när scenen tar över
   UI.entered();
   await sleep(REDUCED ? 200 : 900);
   powerOn();
@@ -555,7 +557,6 @@ function togglePower() {
 function toggleSound() {
   if (!audio.ready) audio.init();
   S.muted = !S.muted; audio.setMuted(S.muted); UI.setSound(!S.muted);
-  if (room) room.setPhones(!S.muted);
   audio.sfx('clack');
 }
 function setVolume(v) { S.volume = clamp(v, 0, 1); audio.setVolume(S.volume); if (S.hover?.type === 'knob') UI.cursor(pointer.x, pointer.y, hoverLabel(S.hover), true); }
@@ -614,7 +615,7 @@ async function present(c) {
   c.busy = true; ensureCard(c);
   const p0 = c.group.position.clone();
   const to = c.home.p.clone();
-  if (c.kind === 'featured') to.y += 2.2; else to.z += 8.6;
+  to.y += 2.2;
   await tween(0.42, (e) => c.group.position.lerpVectors(p0, to, e), ease.outCubic);
 }
 async function returnHome(c) {
@@ -641,7 +642,7 @@ async function deny(c) {
   c.busy = true; audio.sfx('denied'); S.glitch = 1; vfdSay('ÅTKOMST NEKAD · SIGNAL KRYPTERAD');
   UI.toast(`${c.release.id} är låst – signalen är krypterad. Ännu.`);
   const p0 = c.home.p.clone();
-  await tween(0.5, (e, raw) => { c.group.position.set(p0.x + Math.sin(raw * Math.PI * 9) * (1 - raw) * 0.45, p0.y + (c.kind === 'featured' ? 0.4 * (1 - raw) : 0), p0.z); }, ease.linear);
+  await tween(0.5, (e, raw) => { c.group.position.set(p0.x + Math.sin(raw * Math.PI * 9) * (1 - raw) * 0.45, p0.y + 0.4 * (1 - raw), p0.z); }, ease.linear);
   c.busy = false;
 }
 
@@ -651,17 +652,17 @@ async function insert(c) {
   if (S.busy) return;
   if (S.loaded && S.loaded.c === c) { UI.toast(`${r.title} sitter redan i däcket.`); return; }
   S.busy = true; UI.hideHint(); UI.cursor(pointer.x, pointer.y, null, false);
-  if (S.view === 'window' || S.view === 'poster') setView('desk');
   try {
     if (!S.power) powerOn();
     if (S.loaded) await ejectInternal();
+    if (!onPage(c)) { S.busy = false; await goPage(pageOf(c)); S.busy = true; }
     audio.sfx('clack');
     await present(c);
     const cas = ensureCassette(c);
     await openLid(c);
     scene.attach(cas);
-    const u0 = cas.position.clone();
-    await tween(0.34, (e) => cas.position.set(u0.x, u0.y + 3.4 * e, u0.z), ease.outCubic);
+    const u0 = cas.position.clone(), up = new THREE.Vector3(0, 0, 1).applyQuaternion(c.group.quaternion).multiplyScalar(3.4);
+    await tween(0.34, (e) => cas.position.copy(u0).addScaledVector(up, e), ease.outCubic);
     openDoor(); audio.sfx('whoosh'); if (S.view === 'desk') focus(1, 1.2);
     const target = doorOpenPose();
     closeLid(c).then(() => returnHome(c));
@@ -689,6 +690,7 @@ async function eject() {
 async function ejectInternal() {
   const { c, cassette: cas } = S.loaded;
   stop();
+  if (!onPage(c)) { const b = S.busy; S.busy = false; await goPage(pageOf(c)); S.busy = b; }
   await openDoor();
   const p0 = cas.position.clone();
   await tween(0.16, (e) => cas.position.set(p0.x, p0.y + 1.0 * e, p0.z + 0.6 * e), ease.outCubic);
@@ -705,10 +707,9 @@ async function ejectInternal() {
 }
 
 function pickRelease(id) {
-  const list = cases.filter((c) => c.release.id === id);
-  const c = list.find((x) => x.kind === 'featured' && x.group.visible) || list.find((x) => x.group.visible) || list[0];
+  const c = cases.find((x) => x.release.id === id);
   if (!c) return;
-  if (c.release.status === 'locked') return deny(c);
+  if (c.release.status === 'locked') return goPage(pageOf(c)).then(() => deny(c));
   insert(c);
 }
 
@@ -720,16 +721,15 @@ function openInlay() {
 }
 
 /* ================================================= STILLBILDEN (verktyg) == */
-/* ?still=1: rummet som laddaren visar, exakt i FRAME, utan gränssnitt. Verktyget
+/* ?still=1: scenen som laddaren visar, exakt i FRAME, utan gränssnitt. Verktyget
    (scratch/still.js) fotograferar sidan i 2.4:1 och läser displayens hörn ur
    window.__still för att lägga laddningstexten på rätt plats i bilden.        */
 function stillMode() {
   document.body.classList.add('still');
   S.power = false;
-  room.setNeon(true); room.state.flicker = 1; room.state.neonT = 99;
   updateCamera(0, true);
   tick(0.016, 0.5, performance.now());
-  room.state.flicker = 1; room.update(0, 0.5); updateCamera(0, true);
+  updateCamera(0, true);
   composer.render(0.016);
   const v = DECK.vfd, cy = DECK.FOOT + DECK.H / 2 + v.y, z = 0.21;
   const corners = [[-1, 1], [1, 1], [1, -1], [-1, -1]].map(([sx, sy]) => {

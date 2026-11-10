@@ -272,7 +272,7 @@ let clearMat;
 
 export function makeCase(r, jcardTex, spineTex) {
   // Klar plast: ingen diffus färg, bara speglingar som adderas ovanpå (inget dis).
-  clearMat ||= new THREE.MeshPhysicalMaterial({ color: 0x000000, metalness: 0, roughness: 0.07, specularIntensity: 1, envMapIntensity: 1.35, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false });
+  clearMat ||= new THREE.MeshPhysicalMaterial({ color: 0x000000, metalness: 0, roughness: 0.1, specularIntensity: 0.8, envMapIntensity: 0.8, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false });
   const { w, h, d } = CASE;
   const g = new THREE.Group(); g.name = 'case:' + r.id;
 

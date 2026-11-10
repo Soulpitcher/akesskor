@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>DREKMOR — Arkivet</title>
-  <meta name="description" content="DREKMOR – arkivet. Ett rum på natten, ett kassettdäck och bandet som är varje släpp. Sätt i ett band och lyssna, eller läs omslaget." />
+  <meta name="description" content="DREKMOR – arkivet. Varje släpp är en kassett. Sätt i ett band i däcket och lyssna, eller läs omslaget." />
   <meta name="theme-color" content="#030306" />
   <meta property="og:title" content="DREKMOR — Arkivet" />
   <meta property="og:description" content="Varje släpp är en kassett. Sätt i ett band och lyssna på signalen." />
@@ -22,9 +22,9 @@
   </script>
 </head>
 <body>
-  <canvas id="scene" aria-label="Ett rum på natten: ett kassettdäck på ett bord, bandarkivet i staplar, regn mot fönstret och neonstaden utanför. Kassetterna och däckets knappar styr sidan."></canvas>
+  <canvas id="scene" aria-label="Ett kassettdäck med kassetterna på rad framför. Kassetterna och däckets knappar styr sidan."></canvas>
 
-  <!-- ===================== LADDAREN: rummet som stillbild, laddningen på däckets display ===================== -->
+  <!-- ===================== LADDAREN: däcket som stillbild, laddningen på däckets display ===================== -->
   <div class="loader" id="loader">
     <div class="still" id="still" aria-hidden="true"></div>
     <div class="osd" id="osd" aria-hidden="true">
@@ -39,7 +39,7 @@
       <button class="gate__snd" id="osd-snd" type="button" tabindex="-1">LJUD <b class="on">PÅ</b><b>AV</b></button>
     </div>
     <p class="lofi-note" id="lofi-note" hidden></p>
-    <a class="lofi-try" id="lofi-try" href="?room=1" hidden>Prova 3D-rummet ändå</a>
+    <a class="lofi-try" id="lofi-try" href="?3d=1" hidden>Prova 3D-versionen ändå</a>
     <button class="gate-btn" id="enter" hidden aria-label="Gå in i arkivet"></button>
     <button class="sr-only" id="gate-sound" hidden role="switch" aria-checked="true">Ljud</button>
     <h1 class="sr-only">DREKMOR – Arkivet</h1>
@@ -50,40 +50,56 @@
   <header class="top">
     <a class="brand" href="./" aria-label="DREKMOR – arkivet"><span class="brand__mark">D</span><span class="brand__word">DREKMOR</span></a>
     <nav class="top__nav" aria-label="Meny">
-      <button class="navlink" id="open-index">Arkivet <sup id="count">0</sup></button>
+      <button class="navlink is-active" id="open-index">Arkivet <sup id="count">0</sup></button>
       <button class="navlink" id="open-about">Om</button>
-      <a class="navlink navlink--lofi" id="open-lofi" href="?lofi=1">Lo-fi</a>
+      <a class="navlink" href="mailto:info@drekmor.com">Kontakt</a>
+    </nav>
+    <div class="top__right">
+      <a class="icon" href="https://open.spotify.com/artist/1LW39JZPbzFi1peIuaPm0e" target="_blank" rel="noopener" aria-label="Drekmor på Spotify"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.59 14.42a.62.62 0 0 1-.86.21c-2.35-1.44-5.3-1.76-8.79-.96a.62.62 0 1 1-.28-1.22c3.81-.87 7.08-.5 9.72 1.11.3.18.39.57.21.86Zm1.22-2.72a.78.78 0 0 1-1.07.26c-2.69-1.65-6.78-2.13-9.96-1.17a.78.78 0 0 1-.45-1.49c3.63-1.1 8.14-.57 11.22 1.33.37.22.48.7.26 1.07Zm.1-2.83C14.69 8.95 9.37 8.78 6.3 9.71a.94.94 0 1 1-.54-1.79c3.53-1.07 9.4-.86 13.11 1.34a.94.94 0 0 1-.96 1.61Z"/></svg></a>
+      <a class="icon" href="https://www.youtube.com/@Drekmor-Official" target="_blank" rel="noopener" aria-label="Drekmor på YouTube"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.76-1.77C18.25 5 12 5 12 5s-6.25 0-7.84.43A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.76 1.77C5.75 19 12 19 12 19s6.25 0 7.84-.43a2.5 2.5 0 0 0 1.76-1.77A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8ZM10 15V9l5.2 3-5.2 3Z"/></svg></a>
       <button class="sound" id="toggle-sound" aria-pressed="true">
         <span class="sound__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="sound__txt">Ljud på</span>
       </button>
-    </nav>
+    </div>
   </header>
 
-  <!-- ============================== HUD ================================== -->
+  <!-- ============================== BLÄDDRA ============================== -->
+  <button class="pager pager--prev" id="page-prev" aria-label="Föregående band" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4 7 12l8 8"/></svg></button>
+  <button class="pager pager--next" id="page-next" aria-label="Fler band"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 4 8 8-8 8"/></svg></button>
+
+  <!-- ============================== STATUSRADEN ========================== -->
   <section class="hud" aria-label="Kassettdäcket">
-    <div class="hud__now">
-      <p class="hud__label" id="hud-label">I däcket</p>
-      <p class="hud__title" id="hud-title">Inget band</p>
-      <p class="hud__sub" id="hud-sub">Välj en kassett ur arkivet</p>
-      <div class="hud__progress" id="hud-progress" hidden>
-        <span id="hud-time">0:00</span>
-        <div class="hud__bar" id="hud-bar" role="presentation"><i id="hud-fill"></i></div>
-        <span id="hud-dur">—</span>
+    <div class="bar">
+      <div class="bar__cell hud__now">
+        <p class="bar__k" id="hud-label">Spelas nu:</p>
+        <p class="bar__v" id="hud-title">Inget</p>
       </div>
-    </div>
-    <div class="hud__mid">
-      <p class="hud__hint" id="hud-hint"><span class="pulse" aria-hidden="true"></span><span class="hint-desk">Klicka på en kassett för att sätta i den</span><span class="hint-touch">Tryck på en kassett för att sätta i den</span></p>
-      <p class="keys" id="keys" aria-label="Tangenter"><b>1–4</b> band · <b>Mellanslag</b> spela · <b>Z</b> däcket · <b>F</b> fönstret · <b>E</b> mata ut · <b>O</b> omslag · <b>I</b> arkivet</p>
-    </div>
-    <div class="hud__actions" id="hud-actions" hidden>
-      <button class="btn btn--primary" id="act-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-play" d="M8 5.5v13l10.5-6.5z"/><path class="i-pause" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg><span>Spela</span></button>
-      <button class="btn" id="act-inlay">Omslag</button>
-      <button class="btn btn--ghost" id="act-eject">Mata ut</button>
+      <div class="bar__cell bar__cell--status">
+        <p class="bar__k">Status:</p>
+        <p class="bar__v" id="hud-sub">Inget band</p>
+      </div>
+      <div class="bar__cell bar__cell--main">
+        <div class="hud__hint" id="hud-hint">
+          <p class="bar__k">Välj ett band för att börja</p>
+          <p class="bar__v bar__v--plain">Signalen väntar</p>
+        </div>
+        <div class="hud__progress" id="hud-progress" hidden>
+          <span id="hud-time">0:00</span>
+          <div class="hud__bar" id="hud-bar" role="presentation"><i id="hud-fill"></i></div>
+          <span id="hud-dur">—</span>
+        </div>
+        <div class="hud__actions" id="hud-actions" hidden>
+          <button class="btn btn--primary" id="act-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-play" d="M8 5.5v13l10.5-6.5z"/><path class="i-pause" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg><span>Spela</span></button>
+          <button class="btn" id="act-inlay">Omslag</button>
+          <button class="btn btn--ghost" id="act-eject">Mata ut</button>
+        </div>
+      </div>
+      <div class="bar__id"><span id="hud-id" aria-hidden="true">D-00</span><div class="bar__code"><i class="barcode" aria-hidden="true"></i><span class="hud__page" id="hud-page" aria-live="polite"></span></div></div>
     </div>
     <button class="btn back" id="back" hidden>Tillbaka · Esc</button>
   </section>
 
-  <div class="cursor" id="cursor" aria-hidden="true"><i></i><span id="cursor-label"></span></div>
+  <div class="cursor hidden" id="cursor" aria-hidden="true"><i></i><span id="cursor-label"></span></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="sr-only" id="live" aria-live="polite"></div>
 
@@ -91,7 +107,7 @@
   <div class="lite" id="lite" hidden>
     <div class="lite__card" role="dialog" aria-modal="true" aria-labelledby="lite-q">
       <h2 id="lite-q">Byta till lo-fi?</h2>
-      <p>Om 3D-rummet är för mycket finns samma arkiv som en vanlig sida: lista, spelare och omslag.</p>
+      <p>Om 3D-scenen är för tung finns samma arkiv som en vanlig sida: lista, spelare och omslag.</p>
       <div class="lite__row"><button class="btn btn--ghost" id="lite-stay">Stanna</button><a class="btn btn--primary" id="lite-go" href="?lofi=1">Gå till lo-fi</a></div>
     </div>
   </div>
@@ -129,12 +145,11 @@
         <p class="about__contact">Press och bokning: <a href="mailto:info@drekmor.com">info@drekmor.com</a></p>
         <dl class="keys-list">
           <dt>1–4</dt><dd>Sätt i ett av banden framför däcket</dd>
+          <dt>← →</dt><dd>Bläddra bland banden</dd>
           <dt>Mellanslag</dt><dd>Spela / paus</dd>
-          <dt>← →</dt><dd>Spola</dd>
+          <dt>J L</dt><dd>Spola bakåt / framåt</dd>
           <dt>↑ ↓</dt><dd>Volym</dd>
           <dt>Z</dt><dd>Nära däcket</dd>
-          <dt>F</dt><dd>Titta ut genom fönstret</dd>
-          <dt>N</dt><dd>Neonskylten</dd>
           <dt>E</dt><dd>Mata ut</dd>
           <dt>O</dt><dd>Omslag</dd>
           <dt>I</dt><dd>Arkivet</dd>
@@ -142,7 +157,8 @@
         </dl>
         <section class="credits">
           <h3>Krediter</h3>
-          <p>Musik, texter och omslag © Drekmor. Rummet är byggt i <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> (MIT). Typsnitt: Space Grotesk, Space Mono och Bebas Neue (SIL Open Font License). Alla ljud i rummet – däckets mekanik, bandbruset, demosignalen – är syntetiserade i webbläsaren.</p>
+          <p>Musik, texter och omslag © Drekmor. Däcket och kassetterna är byggda i <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> (MIT). Typsnitt: Space Grotesk, Space Mono och Bebas Neue (SIL Open Font License). Alla ljud utöver musiken – däckets mekanik, bandbruset, demosignalen – är syntetiserade i webbläsaren.</p>
+          <p><a id="open-lofi" href="?lofi=1">Lo-fi-version utan 3D</a></p>
         </section>
       </div>
     </div>

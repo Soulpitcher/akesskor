@@ -27,7 +27,7 @@ export const UI = {
     this.el = {
       loader: $('loader'), still: $('still'), osd: $('osd'), osdPc: $('osd-pc'), osdBar: $('osd-bar'), osdStatus: $('osd-status'), osdCta: $('osd-cta'), osdSnd: $('osd-snd'), gate: $('gate'),
       enter: $('enter'), gateSound: $('gate-sound'), scene: $('scene'),
-      hud: $('hud'), label: $('hud-label'), title: $('hud-title'), sub: $('hud-sub'), hint: $('hud-hint'), keys: $('keys'), back: $('back'),
+      label: $('hud-label'), title: $('hud-title'), sub: $('hud-sub'), hint: $('hud-hint'), back: $('back'), hudId: $('hud-id'), hudPage: $('hud-page'), prev: $('page-prev'), next: $('page-next'),
       actionsBar: $('hud-actions'), play: $('act-play'), progress: $('hud-progress'), time: $('hud-time'), dur: $('hud-dur'), bar: $('hud-bar'), barFill: $('hud-fill'),
       cursor: $('cursor'), cursorLabel: $('cursor-label'), toast: $('toast'), live: $('live'),
       index: $('index'), tracklist: $('tracklist'), about: $('about'), jcard: $('jcard'), sound: $('toggle-sound'),
@@ -51,6 +51,8 @@ export const UI = {
     $('act-inlay').addEventListener('click', () => handlers.inlay());
     $('act-eject').addEventListener('click', () => handlers.eject());
     e.back.addEventListener('click', () => handlers.setView('desk'));
+    e.prev.addEventListener('click', () => handlers.page(-1));
+    e.next.addEventListener('click', () => handlers.page(1));
     e.bar.addEventListener('click', (ev) => { const r = e.bar.getBoundingClientRect(); handlers.seekTo((ev.clientX - r.left) / r.width); });
     document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => this.closeAll()));
     for (const sheet of [e.index, e.about, e.jcard]) sheet.addEventListener('click', (ev) => { if (ev.target === sheet) this.closeAll(); });
@@ -109,8 +111,8 @@ export const UI = {
   /* ---------------------------------------------------------------- lo-fi -- */
   lofi(why) {
     document.body.classList.add('lofi');
-    const msg = { soft: 'Din dator ritar 3D utan grafikkort, så rummet skulle gå tungt. Du får den enkla versionen – eller provar rummet ändå.',
-      nogl: 'Din webbläsare kan inte visa 3D-rummet. Här är arkivet som lista.', chosen: 'Lo-fi-version: samma arkiv, utan 3D-rummet.' }[why];
+    const msg = { soft: 'Din dator ritar 3D utan grafikkort, så 3D-versionen skulle gå tungt. Du får den enkla versionen – eller provar 3D ändå.',
+      nogl: 'Din webbläsare kan inte visa 3D-versionen. Här är arkivet som lista.', chosen: 'Lo-fi-version: samma arkiv, utan 3D.' }[why];
     this.el.lofiNote.textContent = msg; this.el.lofiNote.hidden = false;
     $('lofi-try').hidden = why === 'nogl';
     this.loading(1, 'Lo-fi');
@@ -126,37 +128,45 @@ export const UI = {
   setView(v) {
     document.body.dataset.view = v;
     this.el.back.hidden = v === 'desk';
-    this.el.back.textContent = v === 'deck' ? 'Tillbaka · Esc' : v === 'window' ? 'Tillbaka till bordet · Esc' : 'Tillbaka · Esc';
-    this.el.keys.innerHTML = v === 'window'
-      ? '<b>Esc</b> tillbaka · <b>Mellanslag</b> spela'
-      : '<b>1–4</b> band · <b>Mellanslag</b> spela · <b>Z</b> däcket · <b>F</b> fönstret · <b>E</b> mata ut · <b>O</b> omslag · <b>I</b> arkivet';
+  },
+  /** Vilka band som står framme: "01–04 / 12", och pilarna. */
+  setPage(p, pages, per, total) {
+    const a = p * per + 1, b = Math.min(total, a + per - 1), two = (n) => String(n).padStart(2, '0');
+    this.el.hudPage.textContent = `${two(a)}–${two(b)} / ${two(total)}`;
+    this.el.prev.disabled = p <= 0; this.el.next.disabled = p >= pages - 1;
+    this.el.prev.hidden = this.el.next.hidden = pages < 2;
   },
   setTape(r) {
-    const e = this.el;
+    const e = this.el; this._r = r || null; this._demo = false;
     if (!r) {
-      e.label.textContent = 'I däcket'; e.title.textContent = 'Inget band'; e.sub.textContent = 'Välj en kassett ur arkivet';
-      e.actionsBar.hidden = true; e.progress.hidden = true; document.body.style.removeProperty('--tape');
+      e.label.textContent = 'Spelas nu:'; e.title.textContent = 'Inget'; e.sub.textContent = 'Inget band';
+      e.actionsBar.hidden = true; e.progress.hidden = true; e.hint.hidden = false; e.hudId.textContent = 'D-00';
+      document.body.style.removeProperty('--tape'); document.body.classList.remove('has-tape');
       return;
     }
-    e.label.textContent = `I däcket · ${r.id}`;
+    e.label.textContent = 'I däcket:';
     e.title.textContent = r.title;
-    e.sub.textContent = r.status === 'coming' ? 'Ännu inte släppt · öppna omslaget för en förhandstitt' : r.audio ? 'Redo att spela' : 'Demosignal – riktig inspelning kommer';
-    e.actionsBar.hidden = false; e.progress.hidden = r.status !== 'available';
+    e.sub.textContent = r.status === 'coming' ? 'Inte släppt än' : r.audio ? 'Redo' : 'Demosignal';
+    e.actionsBar.hidden = false; e.progress.hidden = r.status !== 'available'; e.hint.hidden = true; e.hudId.textContent = r.id;
     e.play.disabled = r.status !== 'available';
-    document.body.style.setProperty('--tape', r.accent || '#38cfe0');
-    this.hideHint();
+    document.body.style.setProperty('--tape', r.accent || '#38cfe0'); document.body.classList.add('has-tape');
   },
   setPlaying(playing) {
     this.el.play.classList.toggle('is-playing', playing);
     this.el.play.querySelector('span').textContent = playing ? 'Paus' : 'Spela';
     this.el.play.setAttribute('aria-label', playing ? 'Pausa' : 'Spela');
+    if (this._r) {
+      this.el.label.textContent = playing ? 'Spelas nu:' : 'I däcket:';
+      if (this._r.status === 'available' && !this._demo) this.el.sub.textContent = playing ? 'Spelar' : 'Redo';
+    }
+    document.body.classList.toggle('playing', playing);
   },
   setProgress(time, dur) {
     this.el.time.textContent = fmt(time); this.el.dur.textContent = dur ? fmt(dur) : '—';
     this.el.barFill.style.transform = `scaleX(${dur ? time / dur : 0})`;
   },
-  sub(text) { this.el.sub.textContent = text; },
-  hideHint() { this.el.hint.classList.add('gone'); },
+  sub(text) { this.el.sub.textContent = text; this._demo = true; },
+  hideHint() { document.body.classList.add('touched'); },
 
   /* --------------------------------------------------------------- markör -- */
   cursor(x, y, label, active) {

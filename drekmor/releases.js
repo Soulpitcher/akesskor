@@ -21,7 +21,7 @@
                 "coming"    = teaser, syns i arkivet men är inte släppt än
                 "locked"    = låst kassett (hänglås) – mystik / kommande signal
    accent       Kassettens färg (hex). Ger varje släpp sitt eget uttryck.
-   featured     true  = visas även som liggande kassett längst fram (max ~4 st)
+   featured     används inte längre: alla släpp står på rad framför däcket, fyra per sida, i filens ordning
                 false = visas bara som rygg i hyllan
    releaseDate  Datum "ÅÅÅÅ-MM-DD" (visas i omslaget). Tom sträng = döljs.
    duration     Speltid "3:42" eller tom sträng.
