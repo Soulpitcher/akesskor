@@ -1,3 +1,42 @@
+# DREKMOR – Kontrollrummet (prototyp: `kontrollrum.html`)
+
+Ett övergivet kontrollrum. Rummet är **en bild** (`assets/kontrollrum.webp`,
+1672 × 941) som ritas med WebGL så att den kan leva: varje lampa i bilden kan
+släckas och tändas för sig, golvet skimrar och damm svävar i ljusstrålen.
+
+- **Välja signal:** larmtablån (klicka på tablån i pulten, eller knapparna 1–8).
+  Varje släpp i `releases.js` är en ruta. Släppta lyser, nästa kommande blinkar
+  rött med lappen "Ej i drift", låsta är tomma.
+- **När en signal spelas** startar anläggningen: lysrören flimrar igång,
+  oscilloskopet ritar ljudet, nålarna rör sig och varningslamporna följer basen.
+  När den stannar slocknar rummet igen.
+- **Låtinformationen:** de två skrivarfönstren på väggen. *Signal* visar
+  omslaget, titeln och kurvan som pennan ritar. *Journal* visar medverkande,
+  datum, länkar och texten.
+
+| Fil                    | Innehåll                                                        |
+|------------------------|-----------------------------------------------------------------|
+| `kontrollrum.html`     | Stomme: rummet, statusrad, tablå, skrivare, anslag, entré.      |
+| `css/kontrollrum.css`  | Skyltar, lysrutor, skrivarpapper.                               |
+| `js/kr/main.js`        | Tillstånd, ljusets koreografi, vy, tangenter.                   |
+| `js/kr/plate.js`       | Bildmotorn (WebGL): ljuskällorna och deras lägen i bilden.      |
+| `js/kr/live.js`        | Det som rör sig i bilden: kurva, nålar, papper, knappar. Här står också klickytornas lägen. |
+| `js/kr/panels.js`      | Närbilderna: tablån, skrivarna och anslaget (vanlig HTML).      |
+
+Delar `releases.js`, `js/audio.js`, `fonts/` och omslagen med arkivsidan nedan.
+
+**Byta bild:** en ny version av bilden kan läggas in rakt av så länge motivet
+ligger på samma ställe (samma komposition och proportioner 16:9). Flyttas något
+måste måtten i `js/kr/live.js` (klickytor, skärm, knappar) och `js/kr/plate.js`
+(lampor) justeras. Alla mått är i bildens pixlar vid 1672 × 941. Den nuvarande
+filen är retuscherad: kassetterna är borttagna och kassettdäcket i pulten är
+ersatt med DREKMOR-skylten.
+
+Tangenter: 1–8 välj · Mellanslag spela/paus · T tablå · S skrivare · O om ·
+←/→ föregående/nästa · J/L spola · ↑/↓ volym · M ljud · Esc stäng.
+
+---
+
 # DREKMOR – Arkivet
 
 En realtids-3D-upplevelse (WebGL/three.js): en industrihall på natten med vått

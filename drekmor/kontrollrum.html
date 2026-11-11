@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>DREKMOR – Kontrollrummet</title>
+  <meta name="description" content="Drekmor – dark synth. Välj en signal på larmtablån i kontrollrummet och lyssna.">
+  <meta name="theme-color" content="#050706">
+  <meta name="robots" content="noindex">
+  <link rel="preload" as="image" href="assets/kontrollrum.webp">
+  <link rel="preload" as="font" type="font/woff2" href="fonts/bebas-neue-latin-400-normal.woff2" crossorigin>
+  <link rel="stylesheet" href="css/kontrollrum.css">
+</head>
+<body class="is-loading">
+
+  <!-- ============================== RUMMET =============================== -->
+  <main id="stage" aria-label="Kontrollrummet">
+    <canvas id="gl" aria-hidden="true"></canvas>
+    <div id="world"></div>
+    <div id="marks" aria-hidden="true"></div>
+  </main>
+
+  <header class="top">
+    <h1 class="plate plate--brand">Drekmor</h1>
+    <button class="plate plate--btn" id="snd" type="button" aria-pressed="true"><span class="lamp" aria-hidden="true"></span><span id="snd-l">Ljud på</span></button>
+  </header>
+
+  <!-- ============================ STATUSRAD ============================== -->
+  <footer class="hud" id="hud" hidden>
+    <div class="hud__bar" id="seek" role="slider" tabindex="0" aria-label="Position i låten" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="seek-fill"></i></div>
+    <span class="lamp" id="hud-lamp" aria-hidden="true"></span>
+    <button class="hud__title" id="hud-open" type="button" title="Visa skrivarna"><b id="hud-id"></b><span id="hud-title"></span><em id="hud-note" hidden>Demosignal</em></button>
+    <span class="hud__time" id="hud-time">0:00</span>
+    <button class="hud__btn" id="hud-play" type="button" aria-label="Spela"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="i-play" d="M4 2.5v11l9-5.5z"/><path class="i-pause" d="M3.5 2.5h3.2v11H3.5zM9.3 2.5h3.2v11H9.3z"/></svg></button>
+    <button class="hud__btn" id="hud-stop" type="button" aria-label="Stopp"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5h9v9h-9z"/></svg></button>
+  </footer>
+
+  <!-- ============================== TABLÅN =============================== -->
+  <section class="panel" id="tabla" hidden role="dialog" aria-label="Larmtablå: välj signal">
+    <div class="cab">
+      <div class="cab__head">
+        <span class="plate plate--name">Drekmor</span>
+        <button class="plate plate--btn cab__close" type="button" data-close>Stäng</button>
+      </div>
+      <div class="mod">
+        <i class="screw s1"></i><i class="screw s2"></i><i class="screw s3"></i><i class="screw s4"></i>
+        <div class="tiles" id="tiles"></div>
+      </div>
+      <div class="ctl">
+        <div class="pbw"><button class="pb pb--w" id="pb-play" type="button" aria-labelledby="pb-play-l"></button><span id="pb-play-l">Spela</span></div>
+        <div class="pbw"><button class="pb pb--k" id="pb-stop" type="button" aria-labelledby="pb-stop-l"></button><span id="pb-stop-l">Stopp</span></div>
+        <div class="pbw"><button class="pb pb--w" id="pb-rec" type="button" aria-labelledby="pb-rec-l"></button><span id="pb-rec-l">Skrivare</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= SKRIVARNA ============================= -->
+  <section class="panel" id="rec" hidden role="dialog" aria-label="Skrivarna: låten och journalen">
+    <div class="cab cab--rec">
+      <div class="cab__head">
+        <span class="plate plate--name">Skrivare</span>
+        <button class="plate plate--btn cab__close" type="button" data-close>Stäng</button>
+      </div>
+      <div class="recs">
+        <article class="recw">
+          <span class="plate plate--tag">Signal</span>
+          <div class="bezel"><div class="paper paper--signal">
+            <div id="rec-signal"></div>
+            <div class="tracew"><canvas id="rec-trace"></canvas><i class="pen" id="rec-pen"></i></div>
+          </div></div>
+          <i class="badge"></i>
+        </article>
+        <article class="recw">
+          <span class="plate plate--tag">Journal</span>
+          <div class="bezel"><div class="paper paper--journal" id="rec-journal" tabindex="0"></div></div>
+          <i class="badge"></i>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== ANSLAGET ============================= -->
+  <section class="panel" id="om" hidden role="dialog" aria-labelledby="om-title">
+    <div class="notice">
+      <i class="pin"></i>
+      <button class="notice__close" type="button" data-close aria-label="Stäng">Stäng ✕</button>
+      <p class="notice__k">Anslag</p>
+      <h2 id="om-title">Somewhere between neon light and total darkness.</h2>
+      <p>Drekmor är ett dark synth-projekt som rör sig mellan synthpop, mörk synth och tyngre elektroniska rockelement – med melankoliska melodier, starka refränger, distade texturer och filmiskt berättande.</p>
+      <p>Bakom Drekmor finns Johan Brinkman, Linus Nyman och Tomas Vasseur.</p>
+      <p class="outs">
+        <a href="https://open.spotify.com/artist/1LW39JZPbzFi1peIuaPm0e" target="_blank" rel="noopener">Spotify</a>
+        <a href="https://music.apple.com/us/artist/drekmor/6782703112" target="_blank" rel="noopener">Apple Music</a>
+        <a href="https://www.youtube.com/@Drekmor-Official" target="_blank" rel="noopener">YouTube</a>
+        <a href="https://tidal.com/artist/81451660" target="_blank" rel="noopener">Tidal</a>
+        <a href="https://www.deezer.com/en/artist/398094771" target="_blank" rel="noopener">Deezer</a>
+        <a href="https://www.facebook.com/drekmormusic" target="_blank" rel="noopener">Facebook</a>
+      </p>
+      <p>Press och bokning: <a href="mailto:info@drekmor.com">info@drekmor.com</a></p>
+      <dl class="keys">
+        <div><dt>1–8</dt><dd>Välj signal</dd></div>
+        <div><dt>Mellanslag</dt><dd>Spela / paus</dd></div>
+        <div><dt>T</dt><dd>Tablån</dd></div>
+        <div><dt>S</dt><dd>Skrivarna</dd></div>
+        <div><dt>← →</dt><dd>Föregående / nästa</dd></div>
+        <div><dt>M</dt><dd>Ljud av / på</dd></div>
+      </dl>
+      <p class="notice__fine">Musik, texter och omslag © Drekmor. Typsnitt: Space Grotesk, Space Mono och Bebas Neue (SIL Open Font License).</p>
+    </div>
+  </section>
+
+  <!-- =============================== ENTRÉ =============================== -->
+  <div class="gate" id="gate">
+    <p class="gate__name" aria-hidden="true">Drekmor</p>
+    <div class="gate__load" id="gate-load"><i></i></div>
+    <div class="gate__go" id="gate-go" hidden>
+      <button class="plate plate--btn plate--go" id="enter" type="button">Gå in</button>
+      <button class="gate__mute" id="enter-mute" type="button">Gå in utan ljud</button>
+    </div>
+  </div>
+
+  <noscript><p class="nojs">Sidan behöver JavaScript. Drekmor finns också på <a href="https://open.spotify.com/artist/1LW39JZPbzFi1peIuaPm0e">Spotify</a>.</p></noscript>
+
+  <script src="releases.js"></script>
+  <script type="module" src="js/kr/main.js"></script>
+</body>
+</html>
