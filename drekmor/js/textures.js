@@ -443,12 +443,13 @@ export function drawPanel(L) {
   const W = 2048, H = Math.round(W * L.H / L.W);
   const k = W / L.W, X = (x) => (x + L.W / 2) * k, Y = (y) => (L.H / 2 - y) * k;
   const rand = seeded('panel');
-  const base = brushed(W, H, 168, 30, rand);
+  const base = brushed(W, H, 140, 30, rand);
   const c = makeCanvas(W, H), ctx = c.getContext('2d');
   ctx.drawImage(base, 0, 0);
   let g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, 'rgba(255,255,255,0.10)'); g.addColorStop(0.5, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.18)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  weather(ctx, W, H, seeded('panel-rust'), { spots: 54, edge: 0.72, alpha: 0.55, drips: 18, grime: 0.22 });
 
   // svart list nedtill
   ctx.fillStyle = '#101114'; ctx.fillRect(0, Y(-L.H / 2 + 1.25), W, H);
@@ -497,6 +498,18 @@ export function drawPanel(L) {
   spaced(ctx, 'VOLUME', kx, ky + (L.knob.r + 1.25) * k, 3, 'center');
   ctx.textAlign = 'left';
 
+  // Röda snedstreck (märket) och ett galler till vänster om facket
+  ctx.fillStyle = '#d2232e';
+  for (const dx of [0, 1.2]) {
+    ctx.beginPath(); ctx.moveTo(X(-21.2 + dx), Y(2.5)); ctx.lineTo(X(-20.4 + dx), Y(2.5)); ctx.lineTo(X(-19.0 + dx), Y(4.6)); ctx.lineTo(X(-19.8 + dx), Y(4.6)); ctx.closePath(); ctx.fill();
+  }
+  for (let i = 0; i < 5; i++) {
+    const gy = 1.5 - i * 0.68;
+    ctx.fillStyle = '#07080a'; roundRect(ctx, X(-21.2), Y(gy), 3.6 * k, 0.34 * k, 8); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.16)'; ctx.fillRect(X(-21.1), Y(gy - 0.34), 3.4 * k, 2);
+  }
+  weather(ctx, W, H, seeded('panel-rust2'), { spots: 12, edge: 0.9, alpha: 0.5, drips: 6, grime: 0 });
+
   // Skruvar i hörnen
   for (const [sx, sy] of [[-21.3, 6.85], [21.3, 6.85], [-21.3, -6.95], [21.3, -6.95]]) screw(ctx, X(sx), Y(sy), 11);
   ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = F.mono(400, 14); ctx.textAlign = 'right';
@@ -513,6 +526,7 @@ export function drawTopPlate(w, d) {
   const W = 1024, H = Math.round(W * d / w), k = W / w;
   const c = brushed(W, H, 26, 14, seeded('top'));
   const ctx = c.getContext('2d');
+  weather(ctx, W, H, seeded('top-rust'), { spots: 30, edge: 0.6, alpha: 0.55, drips: 0, grime: 0 });
   for (let row = 0; row < 7; row++) {
     for (let col = 0; col < 16; col++) {
       const x = (4 + col * 2.1) * k, y = (2.5 + row * 0.9) * k;
@@ -559,43 +573,251 @@ export function drawKnob() {
   return { side, top };
 }
 
-export function drawDesk() {
-  const S = 1024, c = makeCanvas(S, S), ctx = c.getContext('2d'), rand = seeded('desk');
-  ctx.fillStyle = '#0d0b0a'; ctx.fillRect(0, 0, S, S);
-  for (let i = 0; i < 260; i++) {
-    const y = rand() * S, amp = 4 + rand() * 14, f = 0.002 + rand() * 0.006, ph = rand() * 6.28;
-    ctx.strokeStyle = rand() < 0.5 ? `rgba(255,225,190,${0.012 + rand() * 0.03})` : `rgba(0,0,0,${0.1 + rand() * 0.2})`;
-    ctx.lineWidth = 1 + rand() * 3;
-    ctx.beginPath();
-    for (let x = -10; x <= S + 10; x += 16) { const yy = y + Math.sin(x * f + ph) * amp; x < 0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy); }
-    ctx.stroke();
+/* ================================================================ HALLEN === */
+
+/** Rost, rinn och smuts ovanpå en målad yta. */
+export function weather(ctx, W, H, rand, { spots = 40, edge = 0.6, alpha = 0.6, drips = 10, grime = 0.3 } = {}) {
+  ctx.save();
+  const blot = (x, y, r, a) => {
+    const c = rand() < 0.5 ? '122,54,22' : rand() < 0.5 ? '84,38,18' : '150,78,30';
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(${c},${a})`); g.addColorStop(0.55, `rgba(${c},${a * 0.5})`); g.addColorStop(1, `rgba(${c},0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, r, r * (0.45 + rand() * 0.6), rand() * 3, 0, Math.PI * 2); ctx.fill();
+  };
+  for (let i = 0; i < spots; i++) {
+    let x = rand() * W, y = rand() * H;
+    if (rand() < edge) { if (rand() < 0.5) x = rand() < 0.5 ? rand() * W * 0.07 : W - rand() * W * 0.07; else y = rand() < 0.5 ? rand() * H * 0.12 : H - rand() * H * 0.12; }
+    const r = (0.008 + rand() * 0.04) * W;
+    for (let k = 0; k < 6; k++) blot(x + (rand() - 0.5) * r * 2, y + (rand() - 0.5) * r * 2, r * (0.3 + rand() * 0.7), alpha * (0.4 + rand() * 0.6));
+    for (let k = 0; k < 34; k++) { ctx.fillStyle = `rgba(52,22,9,${0.25 + rand() * 0.45})`; ctx.fillRect(x + (rand() - 0.5) * r * 3.2, y + (rand() - 0.5) * r * 3.2, 1 + rand() * 3, 1 + rand() * 3); }
   }
-  grain(ctx, S, S, 8, rand);
-  const r = makeCanvas(512, 512), rc = r.getContext('2d');
-  rc.fillStyle = 'rgb(95,95,95)'; rc.fillRect(0, 0, 512, 512);
-  for (let i = 0; i < 90; i++) {
-    const x = rand() * 512, y = rand() * 512, rr = 20 + rand() * 90, v = rand() < 0.5 ? 150 : 60;
-    const g = rc.createRadialGradient(x, y, 0, x, y, rr);
-    g.addColorStop(0, `rgba(${v},${v},${v},0.45)`); g.addColorStop(1, `rgba(${v},${v},${v},0)`);
-    rc.fillStyle = g; rc.fillRect(x - rr, y - rr, rr * 2, rr * 2);
+  for (let i = 0; i < drips; i++) {
+    const x = rand() * W, y0 = rand() * H * 0.7, len = (0.06 + rand() * 0.3) * H, w = 2 + rand() * 6;
+    const g = ctx.createLinearGradient(0, y0, 0, y0 + len);
+    g.addColorStop(0, `rgba(74,34,15,${0.3 * alpha + rand() * 0.25})`); g.addColorStop(1, 'rgba(74,34,15,0)');
+    ctx.fillStyle = g; ctx.fillRect(x, y0, w, len);
   }
+  if (grime > 0) {
+    let g = ctx.createLinearGradient(0, H * 0.55, 0, H);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(8,5,4,${grime})`);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  for (let i = 0; i < spots; i++) {
+    ctx.strokeStyle = `rgba(255,255,255,${0.03 + rand() * 0.06})`; ctx.lineWidth = 1;
+    const x = rand() * W, y = rand() * H, l = 20 + rand() * 120, a = (rand() - 0.5) * 0.6;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** Nitad, rostig plåtvägg. Kakel 40×40 cm-enheter. Returnerar {map, rough}. */
+export function drawRustWall() {
+  const S = 1024, c = makeCanvas(S, S), ctx = c.getContext('2d'), rand = seeded('rustwall');
+  ctx.fillStyle = '#24262c'; ctx.fillRect(0, 0, S, S);
+  for (let i = 0; i < 2600; i++) { const v = 26 + rand() * 30; ctx.fillStyle = `rgba(${v},${v + 2},${v + 8},0.3)`; ctx.fillRect(rand() * S, rand() * S, 3 + rand() * 40, 1 + rand() * 2); }
+  weather(ctx, S, S, rand, { spots: 90, edge: 0.25, alpha: 0.75, drips: 46, grime: 0.25 });
+  // plåtskarvar och nitar: 2×2 plåtar per kakel
+  const P = S / 2;
+  for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) {
+    const x = i * P, y = j * P;
+    ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.lineWidth = 5; ctx.strokeRect(x + 2, y + 2, P - 4, P - 4);
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 2; ctx.strokeRect(x + 7, y + 7, P - 14, P - 14);
+    for (let k = 0; k < 9; k++) for (const [rx, ry] of [[x + 26 + k * (P - 52) / 8, y + 22], [x + 26 + k * (P - 52) / 8, y + P - 22], [x + 22, y + 26 + k * (P - 52) / 8], [x + P - 22, y + 26 + k * (P - 52) / 8]]) {
+      const g = ctx.createRadialGradient(rx - 2, ry - 2, 1, rx, ry, 7);
+      g.addColorStop(0, '#7b7f88'); g.addColorStop(0.6, '#2c2e34'); g.addColorStop(1, 'rgba(0,0,0,0.85)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(rx, ry, 7, 0, Math.PI * 2); ctx.fill();
+      if (rand() < 0.35) { const d = ctx.createLinearGradient(0, ry, 0, ry + 60 + rand() * 90); d.addColorStop(0, 'rgba(110,48,18,0.55)'); d.addColorStop(1, 'rgba(110,48,18,0)'); ctx.fillStyle = d; ctx.fillRect(rx - 3, ry, 6, 150); }
+    }
+  }
+  grain(ctx, S, S, 10, rand);
+  const r = makeCanvas(256, 256), rc = r.getContext('2d');
+  rc.fillStyle = 'rgb(150,150,150)'; rc.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 70; i++) { const x = rand() * 256, y = rand() * 256, rr = 10 + rand() * 50, v = rand() < 0.5 ? 215 : 85; const g = rc.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, `rgba(${v},${v},${v},0.5)`); g.addColorStop(1, `rgba(${v},${v},${v},0)`); rc.fillStyle = g; rc.fillRect(x - rr, y - rr, rr * 2, rr * 2); }
   return { map: c, rough: r };
 }
 
-/** Mjukt ljusspill på bakväggen – ingen skarp form, bara atmosfär. */
-export function drawBackGlow() {
-  const W = 1024, H = 512, c = makeCanvas(W, H), ctx = c.getContext('2d');
-  ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, W, H);
-  const blob = (x, y, rx, ry, color, a) => {
-    ctx.save(); ctx.translate(x, y); ctx.scale(rx / ry, 1);
-    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, ry);
-    g.addColorStop(0, rgba(color, a)); g.addColorStop(0.5, rgba(color, a * 0.35)); g.addColorStop(1, rgba(color, 0));
-    ctx.fillStyle = g; ctx.fillRect(-ry, -ry, ry * 2, ry * 2); ctx.restore();
+/** Betongplattor, mörka och fläckiga. Kakel 96×96 cm-enheter (4×4 plattor). Returnerar {map, rough}. */
+export function drawFloorTiles() {
+  const S = 1024, c = makeCanvas(S, S), ctx = c.getContext('2d'), rand = seeded('floor2');
+  ctx.fillStyle = '#16171b'; ctx.fillRect(0, 0, S, S);
+  const P = S / 4;
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const v = 18 + rand() * 12; ctx.fillStyle = `rgba(${v},${v + 1},${v + 4},0.8)`; ctx.fillRect(i * P, j * P, P, P); }
+  for (let i = 0; i < 420; i++) { const x = rand() * S, y = rand() * S, rr = 6 + rand() * 70, v = rand() < 0.6 ? 0 : 60; const g = ctx.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, `rgba(${v},${v},${v + 6},${0.1 + rand() * 0.2})`); g.addColorStop(1, `rgba(${v},${v},${v},0)`); ctx.fillStyle = g; ctx.fillRect(x - rr, y - rr, rr * 2, rr * 2); }
+  for (let i = 0; i < 26; i++) { ctx.strokeStyle = `rgba(0,0,0,${0.35 + rand() * 0.3})`; ctx.lineWidth = 1 + rand(); let x = rand() * S, y = rand() * S; ctx.beginPath(); ctx.moveTo(x, y); for (let k = 0; k < 8; k++) { x += (rand() - 0.5) * 70; y += (rand() - 0.5) * 70; ctx.lineTo(x, y); } ctx.stroke(); }
+  for (let i = 0; i <= 4; i++) {
+    ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(i * P - 3, 0, 6, S); ctx.fillRect(0, i * P - 3, S, 6);
+    ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fillRect(i * P + 3, 0, 2, S); ctx.fillRect(0, i * P + 3, S, 2);
+  }
+  grain(ctx, S, S, 9, rand);
+  const r = makeCanvas(512, 512), rc = r.getContext('2d');
+  rc.fillStyle = 'rgb(190,190,190)'; rc.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 120; i++) { const x = rand() * 512, y = rand() * 512, rr = 20 + rand() * 80, v = rand() < 0.6 ? 125 : 235; const g = rc.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, `rgba(${v},${v},${v},0.55)`); g.addColorStop(1, `rgba(${v},${v},${v},0)`); rc.fillStyle = g; rc.fillRect(x - rr, y - rr, rr * 2, rr * 2); }
+  return { map: c, rough: r };
+}
+
+/** Vätan på golvet (sömlös): R = pölar, G/B = hur spegelbilden bryts. */
+export function drawWetMask() {
+  const S = 512, rand = seeded('wet');
+  const layer = (n, r0, r1, base, amp) => {
+    const c = makeCanvas(S, S), x = c.getContext('2d');
+    x.fillStyle = `rgb(${base},${base},${base})`; x.fillRect(0, 0, S, S);
+    for (let i = 0; i < n; i++) {
+      const px = rand() * S, py = rand() * S, rr = r0 + rand() * (r1 - r0), v = rand() < 0.5 ? 255 : 0, a = amp * (0.4 + rand() * 0.6);
+      for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) {
+        if (px + ox + rr < 0 || px + ox - rr > S || py + oy + rr < 0 || py + oy - rr > S) continue;
+        const g = x.createRadialGradient(px + ox, py + oy, 0, px + ox, py + oy, rr);
+        g.addColorStop(0, `rgba(${v},${v},${v},${a})`); g.addColorStop(1, `rgba(${v},${v},${v},0)`);
+        x.fillStyle = g; x.fillRect(px + ox - rr, py + oy - rr, rr * 2, rr * 2);
+      }
+    }
+    return x.getImageData(0, 0, S, S).data;
   };
-  blob(W * 0.2, H * 0.58, 380, 260, '#c42a80', 0.5);
-  blob(W * 0.8, H * 0.55, 380, 260, '#1fb0d0', 0.55);
-  blob(W * 0.5, H * 0.95, 520, 180, '#3b2a8f', 0.35);
-  grain(ctx, W, H, 10);
+  const A = layer(70, 30, 120, 110, 0.75), B = layer(260, 6, 30, 128, 0.5), C = layer(260, 6, 30, 128, 0.5);
+  const c = makeCanvas(S, S), ctx = c.getContext('2d'), img = ctx.createImageData(S, S), d = img.data;
+  for (let i = 0; i < S * S; i++) { d[i * 4] = A[i * 4]; d[i * 4 + 1] = B[i * 4]; d[i * 4 + 2] = C[i * 4]; d[i * 4 + 3] = 255; }
+  // fogarna mellan plattorna håller vatten
+  const P = S / 4;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (x % P < 3 || y % P < 3) d[(y * S + x) * 4] = 255;
+  ctx.putImageData(img, 0, 0);
+  return c;
+}
+
+/** DREKMOR i neonrör: kantiga, lutande bokstäver i ett drag vardera. */
+export function drawNeonLogo(color = '#d23cff') {
+  const W = 2048, H = 512, c = makeCanvas(W, H), ctx = c.getContext('2d');
+  const G = {
+    D: [[[0, 0], [0, 1], [0.6, 1], [1, 0.55], [1, 0.45], [0.6, 0], [0, 0]]],
+    R: [[[0, 0], [0, 1], [0.72, 1], [1, 0.76], [0.72, 0.52], [0, 0.52]], [[0.42, 0.52], [1, 0]]],
+    E: [[[1, 1], [0, 1], [0, 0], [1, 0]], [[0, 0.52], [0.72, 0.52]]],
+    K: [[[0, 0], [0, 1]], [[1, 1], [0.06, 0.5], [1, 0]]],
+    M: [[[0, 0], [0, 1], [0.5, 0.3], [1, 1], [1, 0]]],
+    O: [[[0.26, 0], [0, 0.3], [0, 0.7], [0.26, 1], [0.74, 1], [1, 0.7], [1, 0.3], [0.74, 0], [0.26, 0]]],
+  };
+  const word = 'DREKMOR', lw = 176, gap = 74, lh = 300, skew = 0.2;
+  const total = word.length * lw + (word.length - 1) * gap, x0 = (W - total) / 2 - lh * skew / 2, y0 = (H + lh) / 2;
+  const path = () => {
+    ctx.beginPath();
+    [...word].forEach((ch, i) => {
+      const ox = x0 + i * (lw + gap);
+      for (const stroke of G[ch]) stroke.forEach(([u, v], k) => { const x = ox + u * lw + v * lh * skew, y = y0 - v * lh; k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    });
+  };
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.shadowColor = color; ctx.strokeStyle = rgba(color, 0.5);
+  ctx.shadowBlur = 90; ctx.lineWidth = 34; path(); ctx.stroke();
+  ctx.shadowBlur = 40; ctx.lineWidth = 24; ctx.strokeStyle = color; path(); ctx.stroke();
+  ctx.shadowBlur = 10; ctx.lineWidth = 9; ctx.strokeStyle = lighten(color, 0.82); path(); ctx.stroke();
+  return c;
+}
+
+/** Hallens bortre vägg: röd port med ratt, ljusrör, lådor och dis. 150×80 enheter. */
+export function drawHallBackdrop() {
+  const W = 1920, H = 1024, c = makeCanvas(W, H), ctx = c.getContext('2d'), rand = seeded('hall');
+  const u = W / 150, X = (x) => x * u, Y = (y) => H - y * u;          // enheter från vänster/golv
+  ctx.fillStyle = '#07080d'; ctx.fillRect(0, 0, W, H);
+  // väggplåtar
+  for (let x = 0; x < 150; x += 12.5) { ctx.fillStyle = `rgba(${14 + rand() * 10},${16 + rand() * 10},${24 + rand() * 12},1)`; ctx.fillRect(X(x), 0, X(12.5) - 3, H); }
+  weather(ctx, W, H, rand, { spots: 60, edge: 0.2, alpha: 0.5, drips: 40, grime: 0.2 });
+  const glow = (x, y, r, col, a) => { const g = ctx.createRadialGradient(X(x), Y(y), 0, X(x), Y(y), r * u); g.addColorStop(0, rgba(col, a)); g.addColorStop(1, rgba(col, 0)); ctx.fillStyle = g; ctx.fillRect(X(x) - r * u, Y(y) - r * u, r * u * 2, r * u * 2); };
+  const tube = (x0, y0, x1, y1, col, w = 0.7) => { ctx.save(); ctx.shadowColor = col; ctx.shadowBlur = 40; ctx.strokeStyle = lighten(col, 0.55); ctx.lineWidth = w * u; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(X(x0), Y(y0)); ctx.lineTo(X(x1), Y(y1)); ctx.stroke(); ctx.stroke(); ctx.restore(); };
+  // porten
+  const dx = 97, dw = 30, dh = 34;
+  glow(dx, 18, 46, '#ff2030', 0.5);
+  ctx.fillStyle = '#3a0d12'; ctx.fillRect(X(dx - dw / 2), Y(dh), dw * u, dh * u);
+  ctx.strokeStyle = '#120406'; ctx.lineWidth = 0.9 * u; ctx.strokeRect(X(dx - dw / 2), Y(dh), dw * u, dh * u);
+  ctx.strokeStyle = 'rgba(255,70,80,0.5)'; ctx.lineWidth = 0.25 * u;
+  for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(X(dx - dw / 2), Y(dh * i / 4)); ctx.lineTo(X(dx + dw / 2), Y(dh * i / 4)); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(X(dx), Y(dh)); ctx.lineTo(X(dx), Y(0)); ctx.stroke();
+  ctx.strokeStyle = '#ff5560'; ctx.lineWidth = 0.7 * u; ctx.beginPath(); ctx.arc(X(dx), Y(15), 4.2 * u, 0, Math.PI * 2); ctx.stroke();
+  for (let a = 0; a < 3; a++) { ctx.beginPath(); ctx.moveTo(X(dx) - Math.cos(a * 1.047) * 4.2 * u, Y(15) - Math.sin(a * 1.047) * 4.2 * u); ctx.lineTo(X(dx) + Math.cos(a * 1.047) * 4.2 * u, Y(15) + Math.sin(a * 1.047) * 4.2 * u); ctx.stroke(); }
+  tube(dx - 9, dh + 4.5, dx + 9, dh + 4.5, '#ff2a3a', 0.9);
+  // ljusrör och lampor
+  for (const [x, y0, y1, col] of [[52, 8, 24, '#2fd6ff'], [66, 10, 22, '#2fd6ff'], [124, 6, 26, '#2fd6ff'], [140, 12, 20, '#ff2a3a'], [20, 14, 26, '#2fd6ff']]) { glow(x, (y0 + y1) / 2, 16, col, 0.28); tube(x, y0, x, y1, col); }
+  for (const [x, y, col] of [[36, 30, '#ff2a3a'], [76, 44, '#ff2a3a'], [116, 46, '#2fd6ff'], [12, 40, '#ff2a3a']]) { glow(x, y, 9, col, 0.5); tube(x - 3, y, x + 3, y, col, 0.6); }
+  // övre gångbro med räcke
+  ctx.fillStyle = '#05060a'; ctx.fillRect(0, Y(52), W, 2.4 * u);
+  ctx.strokeStyle = '#0b0c12'; ctx.lineWidth = 0.5 * u;
+  ctx.beginPath(); ctx.moveTo(0, Y(58)); ctx.lineTo(W, Y(58)); ctx.stroke();
+  for (let x = 0; x < 150; x += 5) { ctx.beginPath(); ctx.moveTo(X(x), Y(52)); ctx.lineTo(X(x), Y(58)); ctx.stroke(); }
+  for (let x = 6; x < 150; x += 24) tube(x, 51, x + 8, 51, x % 48 < 24 ? '#ff2a3a' : '#2fd6ff', 0.45);
+  // lådor, skåp och en trappa i silhuett
+  for (const [x, w, h] of [[4, 12, 11], [9, 9, 19], [28, 14, 9], [44, 6, 13], [72, 10, 8], [118, 12, 12], [133, 10, 18], [143, 7, 9]]) {
+    ctx.fillStyle = '#04050a'; ctx.fillRect(X(x), Y(h), w * u, h * u);
+    ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fillRect(X(x), Y(h), w * u, 0.3 * u);
+    ctx.fillStyle = rand() < 0.6 ? '#ff2a3a' : '#2fd6ff'; ctx.fillRect(X(x + 1.2), Y(h - 2.2), 0.9 * u, 0.5 * u);
+  }
+  ctx.strokeStyle = '#090a10'; ctx.lineWidth = 0.6 * u;
+  ctx.beginPath(); for (let i = 0; i < 12; i++) { ctx.lineTo(X(54 + i * 1.8), Y(i * 1.9)); ctx.lineTo(X(54 + (i + 1) * 1.8), Y(i * 1.9)); } ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,60,70,0.7)'; ctx.lineWidth = 0.3 * u; ctx.beginPath(); ctx.moveTo(X(54), Y(6)); ctx.lineTo(X(75.6), Y(28.8)); ctx.stroke();
+  // dis: tätare nära golvet, och allt tonar mot mörkret uppåt
+  let g = ctx.createLinearGradient(0, Y(26), 0, H);
+  g.addColorStop(0, 'rgba(40,52,84,0)'); g.addColorStop(1, 'rgba(46,58,92,0.5)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  g = ctx.createLinearGradient(0, 0, 0, Y(40));
+  g.addColorStop(0, 'rgba(2,2,5,0.92)'); g.addColorStop(1, 'rgba(2,2,5,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  grain(ctx, W, H, 8, rand);
+  return c;
+}
+
+/** Varningsrand (svart/violett) under skylten. */
+export function drawHazard() {
+  const W = 1024, H = 40, c = makeCanvas(W, H), ctx = c.getContext('2d'), rand = seeded('hazard');
+  ctx.fillStyle = '#0c0a10'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#6d2a86';
+  for (let x = -H; x < W; x += 44) { ctx.beginPath(); ctx.moveTo(x, H); ctx.lineTo(x + 22, H); ctx.lineTo(x + 22 + H, 0); ctx.lineTo(x + H, 0); ctx.closePath(); ctx.fill(); }
+  weather(ctx, W, H, rand, { spots: 14, edge: 0, alpha: 0.5, drips: 0, grime: 0 });
+  return c;
+}
+
+/** Fläktgaller. */
+export function drawFan() {
+  const S = 256, c = makeCanvas(S, S), ctx = c.getContext('2d'), rand = seeded('fan');
+  ctx.fillStyle = '#1b1c21'; ctx.fillRect(0, 0, S, S);
+  ctx.fillStyle = '#050507'; ctx.beginPath(); ctx.arc(S / 2, S / 2, S * 0.4, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#2c2e35'; ctx.lineWidth = 5;
+  for (let r = 14; r < S * 0.4; r += 15) { ctx.beginPath(); ctx.arc(S / 2, S / 2, r, 0, Math.PI * 2); ctx.stroke(); }
+  for (let a = 0; a < 4; a++) { ctx.beginPath(); ctx.moveTo(S / 2 - Math.cos(a * 0.785) * S * 0.4, S / 2 - Math.sin(a * 0.785) * S * 0.4); ctx.lineTo(S / 2 + Math.cos(a * 0.785) * S * 0.4, S / 2 + Math.sin(a * 0.785) * S * 0.4); ctx.stroke(); }
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 6; ctx.strokeRect(3, 3, S - 6, S - 6);
+  for (const [x, y] of [[20, 20], [S - 20, 20], [20, S - 20], [S - 20, S - 20]]) screw(ctx, x, y, 8);
+  weather(ctx, S, S, rand, { spots: 12, edge: 0.6, alpha: 0.6, drips: 5, grime: 0.2 });
+  return c;
+}
+
+/** Rostigt fat (mantelytan), lådsida och korrugerad slang. */
+export function drawBarrel() {
+  const W = 512, H = 256, c = makeCanvas(W, H), ctx = c.getContext('2d'), rand = seeded('barrel');
+  ctx.fillStyle = '#2a2326'; ctx.fillRect(0, 0, W, H);
+  for (const y of [0.3, 0.66]) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0, H * y, W, 8); ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(0, H * y - 3, W, 3); }
+  weather(ctx, W, H, rand, { spots: 60, edge: 0.3, alpha: 0.85, drips: 26, grime: 0.35 });
+  return c;
+}
+export function drawCrate() {
+  const S = 256, c = makeCanvas(S, S), ctx = c.getContext('2d'), rand = seeded('crate');
+  ctx.fillStyle = '#2b2e37'; ctx.fillRect(0, 0, S, S);
+  ctx.strokeStyle = '#0b0c10'; ctx.lineWidth = 12; ctx.strokeRect(8, 8, S - 16, S - 16);
+  ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(8, 8); ctx.lineTo(S - 8, S - 8); ctx.moveTo(S - 8, 8); ctx.lineTo(8, S - 8); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 2; ctx.strokeRect(16, 16, S - 32, S - 32);
+  weather(ctx, S, S, rand, { spots: 16, edge: 0.6, alpha: 0.6, drips: 8, grime: 0.3 });
+  return c;
+}
+export function drawHose() {
+  const W = 64, H = 64, c = makeCanvas(W, H), ctx = c.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, W, 0);
+  g.addColorStop(0, '#08080a'); g.addColorStop(0.5, '#2e2f36'); g.addColorStop(1, '#08080a');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  return c;
+}
+
+/** Mjuk rökpuff. */
+export function drawSmoke() {
+  const S = 256, c = makeCanvas(S, S), ctx = c.getContext('2d'), rand = seeded('smoke');
+  for (let i = 0; i < 26; i++) {
+    const x = S * (0.25 + rand() * 0.5), y = S * (0.3 + rand() * 0.4), r = S * (0.12 + rand() * 0.22);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(255,255,255,${0.05 + rand() * 0.06})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
+  }
   return c;
 }
 

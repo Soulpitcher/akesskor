@@ -1,7 +1,7 @@
 /* =============================================================================
-   DREKMOR — Arkivet. Realtids-3D (three.js): ett kassettdäck och kassetterna.
-   Data: releases.js · Texturer: textures.js · Modeller: models.js ·
-   Ljud: audio.js · DOM: ui.js
+   DREKMOR — Arkivet. Realtids-3D (three.js): ett kassettdäck och kassetterna
+   på ett vått golv i en industrihall. Data: releases.js · Texturer: textures.js ·
+   Modeller: models.js · Hallen: hall.js · Ljud: audio.js · DOM: ui.js
    ============================================================================= */
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -11,6 +11,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import * as T from './textures.js';
 import { makeDeck, drawVFD, makeCassette, makeCase, DECK, CASE } from './models.js';
+import { makeHall } from './hall.js';
 import { AudioEngine } from './audio.js';
 import { UI } from './ui.js';
 import { tween, updateTweens, ease, wait, lerp, damp, clamp, setMotionScale } from './tween.js';
@@ -33,8 +34,8 @@ const S = {
   hover: null, volume: 0.8, view: 'desk', fadeIn: 0, page: 0, pageT: 0,
 };
 
-let renderer, scene, camera, composer, bloom, grainPass, deck, dust, lights = {};
-const cases = [];
+let renderer, scene, camera, composer, bloom, grainPass, deck, hall, dust, lights = {};
+const cases = [], props = [];
 const rig = { target: new THREE.Vector3(), dist: 90, elev: 0.5, azim: 0, fixed: false, portrait: false };
 const cam = { target: new THREE.Vector3(0, 5, 6), dist: 90, elev: 0.5, azim: 0 };
 const pointer = { x: innerWidth / 2, y: innerHeight / 2, nx: 0, ny: 0, px: 0, py: 0, dirty: false };
@@ -128,48 +129,49 @@ function softwareGL() {
 /* ============================================================== VÄRLDEN ==== */
 function buildWorld() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x020205);
-  scene.fog = new THREE.Fog(0x020205, 78, 140);
+  scene.background = new THREE.Color(0x030308);
+  scene.fog = new THREE.Fog(0x05050c, 60, 320);
   scene.environment = studioEnvironment();
   scene.environmentIntensity = 1;
 
-  camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 1, 900);
+  camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 1, 900);
 
-  // Skrivbord i mörk lack
-  const desk = T.drawDesk();
-  const dm = T.toTexture(desk.map, { wrap: true }), dr = T.toTexture(desk.rough, { color: false, wrap: true });
-  dm.repeat.set(3, 1.6); dr.repeat.set(3, 1.6);
-  const deskMesh = new THREE.Mesh(new THREE.PlaneGeometry(280, 150), new THREE.MeshStandardMaterial({ map: dm, roughnessMap: dr, color: 0x23272d, roughness: 0.6, metalness: 0, envMapIntensity: 0.22 }));
-  deskMesh.rotation.x = -Math.PI / 2; deskMesh.position.set(0, 0, 18); deskMesh.receiveShadow = true;
-  scene.add(deskMesh);
-  const deskFront = new THREE.Mesh(new THREE.BoxGeometry(280, 5, 2), new THREE.MeshStandardMaterial({ color: 0x0c0b0a, roughness: 0.6 }));
-  deskFront.position.set(0, -2.5, 93); scene.add(deskFront);
+  // Hallen: vått golv, väggen med skylten, djupet till vänster
+  hall = makeHall({ renderer, touch: TOUCH });
+  scene.add(hall.group);
 
-  // Mjukt färgspill långt bak – ingen form, bara atmosfär
-  const glow = new THREE.Mesh(new THREE.PlaneGeometry(330, 150), new THREE.MeshBasicMaterial({ map: T.toTexture(T.drawBackGlow()), fog: false, transparent: true, opacity: 0.38, depthWrite: false }));
-  glow.position.set(0, 30, -95); scene.add(glow);
-
-  // Ljus: kall nyckel ovanifrån, cyan och magenta i kanterna
-  scene.add(new THREE.HemisphereLight(0x1a2438, 0x030303, 0.36));
-  const key = new THREE.SpotLight(0xdfe8ff, 4.2, 0, 0.46, 0.75, 0);
-  key.position.set(-60, 44, 70); key.target.position.set(2, 4, 14);   // lågt från sidan: rakt ovanifrån speglas lampan i de lutade fodralen
+  // Ljus: en kall nyckel lågt från sidan, rött och cyan i kanterna; neonet gör resten
+  scene.add(new THREE.HemisphereLight(0x1c2036, 0x040305, 0.42));
+  const key = new THREE.SpotLight(0xdfe4ff, 2.9, 0, 0.5, 0.8, 0);
+  key.position.set(-70, 46, 78); key.target.position.set(-4, 4, 12);   // lågt från sidan: rakt ovanifrån speglas lampan i fodralen
   key.castShadow = true; key.shadow.mapSize.set(TOUCH ? 1024 : 2048, TOUCH ? 1024 : 2048);
-  key.shadow.bias = -0.0003; key.shadow.normalBias = 0.04; key.shadow.camera.near = 40; key.shadow.camera.far = 220;
+  key.shadow.bias = -0.0003; key.shadow.normalBias = 0.04; key.shadow.camera.near = 40; key.shadow.camera.far = 240;
   scene.add(key, key.target);
-  const rimC = new THREE.SpotLight(0x33d9ff, 4.0, 0, 0.46, 0.9, 0);
-  rimC.position.set(46, 72, -52); rimC.target.position.set(0, 6, -4); scene.add(rimC, rimC.target);
-  const rimM = new THREE.SpotLight(0xff3d9a, 3.4, 0, 0.46, 0.9, 0);
-  rimM.position.set(-50, 68, -48); rimM.target.position.set(0, 6, -4); scene.add(rimM, rimM.target);
-  const fill = new THREE.DirectionalLight(0x8190ff, 0.2); fill.position.set(10, 30, 90); scene.add(fill);
-  lights = { key, rimC, rimM, fill, moodTarget: new THREE.Color(0x33d9ff), rimBase: 4.0 };
+  const rimC = new THREE.SpotLight(0x33d9ff, 3.2, 0, 0.5, 0.9, 0);
+  rimC.position.set(60, 58, -6); rimC.target.position.set(0, 6, 0); scene.add(rimC, rimC.target);
+  const rimM = new THREE.SpotLight(0xff2a3a, 3.6, 0, 0.6, 0.9, 0);
+  rimM.position.set(-95, 40, -10); rimM.target.position.set(-10, 4, 8);   // härifrån hamnar blänket i golvet utanför bild scene.add(rimM, rimM.target);
+  const fill = new THREE.DirectionalLight(0x8a93ff, 0.1); fill.position.set(10, 30, 90); scene.add(fill);
+  // ett mjukt ljus rakt på fodralen, framifrån-ovanifrån (speglas bakåt, inte i kameran)
+  const caseSpot = new THREE.SpotLight(0xf4ecff, 3.6, 0, 0.36, 0.9, 0);
+  caseSpot.position.set(-30, 62, 72); caseSpot.target.position.set(-22, 0, 19); scene.add(caseSpot, caseSpot.target);
+  lights = { key, rimC, rimM, fill, moodTarget: new THREE.Color(0x33d9ff), rimBase: 3.2 };
 
   // Kassettdäcket
   deck = makeDeck();
   scene.add(deck.group);
 
+  // Två lösa band på golvet, bara som rekvisita
+  for (const [x, z, yaw, accent, id] of [[9.5, 22, 0.3, '#ff2a3a', 'D-A'], [22, 17.5, -0.16, '#2fd6ff', 'D-B']]) {
+    const loose = makeCassette({ id, title: 'Unmarked', accent, status: 'available', type: 'song' });
+    loose.rotation.set(-Math.PI / 2, 0, yaw); loose.position.set(x, 0.75, z); loose.scale.setScalar(1.15);
+    loose.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    scene.add(loose); props.push(loose);
+  }
+
   // Damm i ljuskäglan
   const N = TOUCH ? 140 : 320, pos = new Float32Array(N * 3), seed = new Float32Array(N), rand = T.seeded('dust');
-  for (let i = 0; i < N; i++) { pos[i * 3] = (rand() - 0.5) * 100; pos[i * 3 + 1] = 2 + rand() * 50; pos[i * 3 + 2] = -30 + rand() * 70; seed[i] = rand() * 100; }
+  for (let i = 0; i < N; i++) { pos[i * 3] = -30 + (rand() - 0.5) * 150; pos[i * 3 + 1] = 2 + rand() * 50; pos[i * 3 + 2] = -28 + rand() * 78; seed[i] = rand() * 100; }
   const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   dust = new THREE.Points(dg, new THREE.PointsMaterial({ map: T.toTexture(T.drawSprite()), size: 0.5, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xdde8ff }));
   dust.userData.seed = seed; scene.add(dust);
@@ -193,10 +195,10 @@ function studioEnvironment() {
     m.position.set(...pos); m.lookAt(0, 0, 0); env.add(m);
   };
   box(30, 14, 0xe8f0ff, 1.7, [-46, 24, 26]);   // kall softbox lågt från sidan – rakt ovanifrån skulle de lutade fodralen blända
-  box(40, 26, 0x6fd8ff, 1.2, [0, 22, -40]);     // kallt sken bakifrån
+  box(26, 7, 0xc23cff, 1.1, [8, 34, -40]);      // skylten bakom – liten, annars färgar den allt blankt lila
   box(7, 60, 0x2fd6ff, 2.6, [48, 8, -18]);      // cyan list höger
-  box(7, 60, 0xff3d9a, 2.2, [-48, 8, -18]);     // magenta list vänster
-  box(90, 30, 0x1a1c2a, 1.0, [0, -10, 48]);     // svag studs framifrån
+  box(7, 60, 0xff2a3a, 2.2, [-48, 8, -18]);     // rött från hallen till vänster
+  box(90, 30, 0x1a1626, 1.0, [0, -10, 48]);     // svag studs framifrån (golvet)
   const pmrem = new THREE.PMREMGenerator(renderer);
   const tex = pmrem.fromScene(env, 0.02).texture;
   pmrem.dispose();
@@ -222,7 +224,7 @@ const blankCard = () => {
 };
 
 /* Alla släpp står på rad framför däcket, fyra i taget; pilarna bläddrar sida för sida. */
-const PER = 4, PAGE_W = 104;
+const PER = 4, PAGE_W = 130;
 const pages = () => Math.max(1, Math.ceil(RELEASES.length / PER));
 const pageOf = (c) => Math.floor(c.index / PER);
 async function buildCases(progress) {
@@ -262,41 +264,47 @@ function ensureCassette(c) {
 }
 
 /* =============================================================== LAYOUT ==== */
-/* Breda fönster (1.5:1 och bredare) ser samma vertikala skiva av scenen – bredare fönster ser mer åt sidorna.
-   Därför kan laddarens stillbild (renderad i 2.4:1) läggas exakt över den levande scenen. */
-export const FRAME = { fov: 30, target: [0, 3.2, 12], elev: 0.2, halfH: 17.5, wide: 1.5 };
-const TILT = 0.72;                                  // fodralen lutar upp mot kameran
+/* Vidvinkel, snett ovanifrån. Breda fönster (1.5:1 och bredare) ser samma vertikala skiva av hallen – bredare
+   fönster ser mer åt sidorna – och bilden är förskjuten i sidled (som ett skiftobjektiv) med en fast andel av
+   höjden: däcket hamnar till höger och hallens djup till vänster. Därför kan laddarens stillbild (2.4:1) läggas
+   exakt över den levande scenen. Smalare fönster får däcket i mitten utan förskjutning.                        */
+export const FRAME = { fov: 50, target: [-26, 5, 0], dist: 65, elev: 0.312, shift: 0.267, wide: 1.5 };
 function layout() {
   const w = innerWidth, h = innerHeight, a = w / h, portrait = a < 0.85, wide = a >= FRAME.wide;
   renderer.setSize(w, h); composer.setSize(w, h);
   grainPass.uniforms.uRes.value.set(w, h);
+  const db = renderer.getDrawingBufferSize(new THREE.Vector2()); hall.resize(db.x, db.y);
   camera.aspect = a;
   rig.portrait = portrait;
 
-  const K = 0.92;                     // raden står mitt i bilden även när däcket är förskjutet
+  // Fodralen ligger på golvet: i en solfjäder snett framför däcket, eller två och två på en telefon
   for (const c of cases) {
     const i = c.index % PER;
-    if (portrait) {
-      const [x, z, yaw] = [[-5.9, 16.5, 0.05], [5.9, 17.1, -0.04], [-5.9, 32.2, -0.03], [5.9, 32.8, 0.05]][i];
-      c.group.scale.setScalar(1.28);
-      c.home.p.set(x, (CASE.d / 2) * 1.28, z);
-      c.home.q.setFromEuler(new THREE.Euler(-Math.PI / 2, yaw, 0, 'YXZ'));
-    } else {
-      const x = (i - 1.5) * 8.0, yaw = [0.05, -0.03, 0.04, -0.05][i], zb = 37.5 + [0.3, -0.2, 0.1, -0.3][i];
-      c.group.scale.setScalar(K);
-      c.home.p.set(x, K * ((CASE.h / 2) * Math.sin(TILT) + (CASE.d / 2) * Math.cos(TILT)), zb - K * (CASE.h / 2) * Math.cos(TILT));
-      c.home.q.setFromEuler(new THREE.Euler(-Math.PI / 2 + TILT, yaw, 0, 'YXZ'));
-    }
+    const [x, z, yaw, K] = portrait
+      ? [[-5.9, 19.5, 0.05, 1.28], [5.9, 20.1, -0.04, 1.28], [-5.9, 35.2, -0.03, 1.28], [5.9, 35.8, 0.05, 1.28]][i]
+      : [[-40, 14.5, -0.42, 1.2], [-28.5, 17.5, -0.36, 1.2], [-17, 21.5, -0.3, 1.2], [-5.5, 23.5, -0.24, 1.2]][i];
+    c.group.scale.setScalar(K);
+    c.home.p.set(x, (CASE.d / 2) * K + 0.05, z);
+    c.home.q.setFromEuler(new THREE.Euler(-Math.PI / 2, yaw, 0, 'YXZ'));
   }
   for (const c of cases) if (!c.busy) { c.group.position.copy(c.home.p); c.group.quaternion.copy(c.home.q); }
+  for (const o of props) o.visible = !portrait;
+  hall.setPortrait(portrait);
 
-  const t = Math.tan(THREE.MathUtils.degToRad(FRAME.fov / 2));
-  if (portrait) { camera.fov = 34; rig.target.set(0, 4, 15); rig.elev = 0.82; rig.fixed = false; const t2 = Math.tan(THREE.MathUtils.degToRad(17)); rig.dist = Math.max(25 / (t2 * a), 33 / t2); }
-  else {
-    camera.fov = FRAME.fov; rig.target.set(...FRAME.target); rig.elev = FRAME.elev; rig.fixed = wide;
-    rig.dist = wide ? FRAME.halfH / t : Math.max(27 / (t * a), FRAME.halfH / t);
+  camera.clearViewOffset();
+  if (portrait) {
+    camera.fov = 34; rig.target.set(0, 7, 14); rig.elev = 0.64; rig.fixed = false;
+    const t2 = Math.tan(THREE.MathUtils.degToRad(17)); rig.dist = Math.max(25 / (t2 * a), 36 / t2);
+  } else if (wide) {
+    camera.fov = FRAME.fov; rig.target.set(...FRAME.target); rig.elev = FRAME.elev; rig.dist = FRAME.dist; rig.fixed = true;
+    camera.setViewOffset(w, h, FRAME.shift * h, 0, w, h);
+  } else {
+    // däck och fodral (x −46…24) ska rymmas: backa tills bredden räcker
+    camera.fov = FRAME.fov; rig.target.set(-11, 5, 0); rig.elev = FRAME.elev; rig.fixed = false;
+    rig.dist = Math.max(FRAME.dist, 40 / (Math.tan(THREE.MathUtils.degToRad(FRAME.fov / 2)) * a) + 14);
   }
-  scene.fog.near = rig.dist + 13; scene.fog.far = rig.dist + 75;   // dimman följer kameran, så golvet tonar ut bakom däcket i alla format
+  scene.fog.near = rig.dist * 0.9; scene.fog.far = rig.dist + 255;
+  hall.setFog(scene.fog.near, scene.fog.far);
   camera.updateProjectionMatrix();
   UI.stillMatches(rig.fixed);
 }
@@ -382,9 +390,8 @@ function tick(dt, t, now, rawDt = dt) {
     c.group.visible = c.busy || Math.abs(off) < 0.999;
     if (!c.busy) {
       c.group.position.copy(c.home.p);
-      c.group.position.x += off * PAGE_W;
-      c.group.position.y += c.hoverT * (rig.portrait ? 0.9 : 0.7);
-      if (!rig.portrait) c.group.position.z += c.hoverT * 0.5;
+      c.group.position.x -= off * PAGE_W;                  // sidorna glider ut åt vänster, in i hallens mörker
+      c.group.position.y += c.hoverT * 1.0;
     }
   }
 
@@ -397,9 +404,13 @@ function tick(dt, t, now, rawDt = dt) {
   deck.vfdLight.intensity = S.power ? 1.2 + (S.levels.l + S.levels.r) * 3 : 0;
   deck.led.material.emissiveIntensity = damp(deck.led.material.emissiveIntensity, S.power ? 3.2 : 0, 6, dt);
 
-  // Stämning: rimljuset tar färg av bandet och andas med basen
+  // Stämning: rimljuset tar färg av bandet, och neonet andas med basen
+  const bass = S.playing ? lv.bass : 0;
   lights.rimC.color.lerp(lights.moodTarget, 1 - Math.exp(-1.6 * dt));
-  lights.rimC.intensity = lights.rimBase * (1 + (S.playing ? lv.bass * 1.1 : 0));
+  lights.rimC.intensity = lights.rimBase * (1 + bass * 1.1);
+  deck.rim.mat.color.setRGB(1.25 + bass * 1.4, 0.3 + bass * 0.3, 1.7 + bass * 1.6);
+  deck.rim.light.intensity = 1.2 + bass * 3;
+  hall.update(dt, t, bass);
 
   // Damm
   const p = dust.geometry.attributes.position, sd = dust.userData.seed;
@@ -725,10 +736,11 @@ function openInlay() {
    (scratch/still.js) fotograferar sidan i 2.4:1 och läser displayens hörn ur
    window.__still för att lägga laddningstexten på rätt plats i bilden.        */
 function stillMode() {
-  document.body.classList.add('still');
+  document.body.classList.add('shot');
   S.power = false;
   updateCamera(0, true);
   tick(0.016, 0.5, performance.now());
+  hall.update(0, 0.5, 0);
   updateCamera(0, true);
   composer.render(0.016);
   const v = DECK.vfd, cy = DECK.FOOT + DECK.H / 2 + v.y, z = 0.21;

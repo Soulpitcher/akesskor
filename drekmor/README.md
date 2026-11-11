@@ -1,8 +1,9 @@
 # DREKMOR – Arkivet
 
-En realtids-3D-upplevelse (WebGL/three.js): ett 80-tals kassettdäck och
-kassetterna på rad framför det, fyra i taget (pilarna bläddrar). Varje släpp är
-ett riktigt kassettfodral.
+En realtids-3D-upplevelse (WebGL/three.js): en industrihall på natten med vått
+golv som speglar neonljuset, ett rostigt kassettdäck under DREKMOR-skylten och
+kassetterna liggande på golvet framför, fyra i taget (pilarna bläddrar). Varje
+släpp är ett riktigt kassettfodral.
 Klicka på ett fodral → locket öppnas, kassetten lyfts ur, flyger in i däckets
 lucka och luckan slår igen. Sedan kan man **spela** signalen eller öppna
 **omslaget** (J-kortet viks ut) och läsa text, credits och berättelser.
@@ -19,11 +20,12 @@ demosignal – genereras i koden från `releases.js`. Inga byggsteg, inga CDN:er
 | `index.html`        | Stomme: laddare, meny, statusrad, arkivlista, omslag.                 |
 | `css/site.css`      | Gränssnittet ovanpå scenen.                                           |
 | `js/main.js`        | Scen, ljussättning, kamera, bläddring, interaktion och koreografi.    |
+| `js/hall.js`        | Hallen: speglande golv, plåtvägg med rör och neonskylt, lampor, rök.  |
 | `js/models.js`      | 3D-modeller: däck, kassett, fodral (skalet tonas i släppets färg).    |
 | `js/textures.js`    | Procedurella texturer: omslag, ryggar, etiketter, borstad metall.    |
 | `js/audio.js`       | Ljudmotor: uppspelning, demosignal, bandbrus, VU, mekaniska ljud.     |
 | `js/ui.js`, `js/tween.js` | DOM-lager och animationer.                                      |
-| `vendor/three/`     | three.js r170 (MIT), självhostad.                                     |
+| `vendor/three/`     | three.js r170 (MIT) med de tillägg som används, självhostat.          |
 | `fonts/`            | Space Grotesk, Space Mono, Bebas Neue (OFL), självhostade.            |
 
 ## Lägg till ett nytt släpp
@@ -58,7 +60,7 @@ laddningen spelas upp på däckets display i bilden, i perspektiv. Hörnen för
 displayen ligger i `assets/still.json`. Vid "klicka för att gå in" tar den
 levande scenen över med en störningsblixt. Ljud på/av väljs i samma steg.
 
-Ändrar du kameran (`FRAME` i `js/main.js`), däcket eller ljuset: ta en ny bild.
+Ändrar du kameran (`FRAME` i `js/main.js`), hallen, däcket eller ljuset: ta en ny bild.
 `index.html?still=1&3d=1` ritar scenen utan gränssnitt och lägger displayens
 hörn i `window.__still`. Fotografera i 2400×1000, spara som `assets/still.jpg`
 och skriv `window.__still` till `assets/still.json`.

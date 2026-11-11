@@ -57,7 +57,7 @@ export function makeDeck() {
   const panel = T.drawPanel({ W, H, vfd, knob, power, keys: keyLayout });
   const panelMap = T.toTexture(panel.map), panelRough = T.toTexture(panel.rough, { color: false });
   for (const t of [panelMap, panelRough]) { t.repeat.set(1 / W, 1 / H); t.offset.set(0.5, 0.5); }
-  const panelMat = new THREE.MeshStandardMaterial({ map: panelMap, roughnessMap: panelRough, metalness: 0.92, roughness: 1, envMapIntensity: 1.1 });
+  const panelMat = new THREE.MeshStandardMaterial({ map: panelMap, roughnessMap: panelRough, metalness: 0.84, roughness: 1, envMapIntensity: 1.1 });
   const plate = shadow(new THREE.Mesh(plateGeo, [panelMat, dark]));
   plate.position.set(0, cy, 0.2 - (PLATE - 0.15));
   g.add(plate);
@@ -131,8 +131,16 @@ export function makeDeck() {
   vfdMesh.position.set(vfd.x, cy + vfd.y, 0.207); g.add(vfdMesh);
   const vfdGlass = new THREE.Mesh(new THREE.PlaneGeometry(vfd.w + 0.5, vfd.h + 0.5), new THREE.MeshPhysicalMaterial({ color: 0x050607, transparent: true, opacity: 0.16, roughness: 0.03, clearcoat: 1, envMapIntensity: 2, depthWrite: false }));
   vfdGlass.position.set(vfd.x, cy + vfd.y, 0.24); g.add(vfdGlass);
-  const vfdLight = new THREE.PointLight(0x5fe8ff, 0, 30, 2);
+  const vfdLight = new THREE.PointLight(0xff4a3a, 0, 30, 2);
   vfdLight.position.set(vfd.x, cy + vfd.y, 4); g.add(vfdLight);
+
+  // Neonlist runt lockets kant
+  const rimMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.25, 0.3, 1.7), toneMapped: false });
+  const rimY = FOOT + H + 0.1, zf = -1.0, zb = -1.9 - D + 0.5;
+  for (const [w, d, x, z] of [[W - 1.4, 0.2, 0, zf], [W - 1.4, 0.2, 0, zb], [0.2, zf - zb, -W / 2 + 0.7, (zf + zb) / 2], [0.2, zf - zb, W / 2 - 0.7, (zf + zb) / 2]]) {
+    const r = new THREE.Mesh(new THREE.BoxGeometry(w, 0.2, d), rimMat); r.position.set(x, rimY, z); g.add(r);
+  }
+  const rimLight = new THREE.PointLight(0xc23cff, 1.2, 40, 1.6); rimLight.position.set(0, rimY + 5, -8); g.add(rimLight);
 
   // Fötter
   for (const [fx, fz] of [[-19, -3], [19, -3], [-19, -22], [19, -22]]) {
@@ -141,7 +149,7 @@ export function makeDeck() {
   }
 
   return {
-    group: g, interactive, keys, doorPivot, tapeAnchor, knobPivot, led, vfdLight,
+    group: g, interactive, keys, doorPivot, tapeAnchor, knobPivot, led, vfdLight, rim: { mat: rimMat, light: rimLight },
     vfd: { canvas: vfdCanvas, ctx: vfdCanvas.getContext('2d'), tex: vfdTex },
     center: new THREE.Vector3(0, cy, 0),
     slotWorld: holeWorld,
@@ -149,7 +157,7 @@ export function makeDeck() {
 }
 
 /* ============================================================== VFD-RITNING */
-const VFD_ON = '#7ef4ff', VFD_GHOST = 'rgba(126,244,255,0.075)', VFD_HOT = '#ff5646', VFD_AMB = '#ffc86b';
+const VFD_ON = '#ff5a48', VFD_GHOST = 'rgba(255,90,72,0.07)', VFD_HOT = '#fff0d8', VFD_AMB = '#ffb060';
 const MODES = [['notape', 'NO TAPE'], ['stop', 'STOP'], ['play', '▶ PLAY'], ['pause', 'PAUSE'], ['rew', '◀◀'], ['ff', '▶▶']];
 
 export function drawVFD(v, s) {
