@@ -4,9 +4,11 @@ Ett övergivet kontrollrum. Rummet är **en bild** (`assets/kontrollrum.webp`,
 1672 × 941) som ritas med WebGL så att den kan leva: varje lampa i bilden kan
 släckas och tändas för sig, golvet skimrar och damm svävar i ljusstrålen.
 
-- **Välja signal:** larmtablån (klicka på tablån i pulten, eller knapparna 1–8).
-  Varje släpp i `releases.js` är en ruta. Släppta lyser, nästa kommande blinkar
-  rött med lappen "Ej i drift", låsta är tomma.
+- **Välja signal:** pulten har två tablåer. Den vänstra är **Låtar** (alla släpp
+  med `type: "song"`), den högra är **Extramaterial** (intervjuer och
+  berättelser). Knapparna 1–8 väljer bland låtarna. Släppta rutor lyser, nästa
+  kommande blinkar rött med lappen "Ej i drift", låsta är tomma. En berättelse
+  utan ljudfil öppnas direkt i skrivarna för läsning.
 - **När en signal spelas** startar anläggningen: lysrören flimrar igång,
   oscilloskopet ritar ljudet, nålarna rör sig och varningslamporna följer basen.
   När den stannar slocknar rummet igen.
@@ -32,7 +34,7 @@ måste måtten i `js/kr/live.js` (klickytor, skärm, knappar) och `js/kr/plate.j
 filen är retuscherad: kassetterna är borttagna och kassettdäcket i pulten är
 ersatt med DREKMOR-skylten.
 
-Tangenter: 1–8 välj · Mellanslag spela/paus · T tablå · S skrivare · O om ·
+Tangenter: 1–8 välj låt · Mellanslag spela/paus · T låtar · E extramaterial · S skrivare · O om ·
 ←/→ föregående/nästa · J/L spola · ↑/↓ volym · M ljud · Esc stäng.
 
 ---

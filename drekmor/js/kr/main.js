@@ -19,6 +19,8 @@ const rnd = (n) => { const s = Math.sin(n * 127.1) * 43758.5453; return s - Math
 
 const RELEASES = window.RELEASES || [];
 const AVAIL = RELEASES.filter((r) => r.status === 'available');
+// vänster tablå och knapparna 1–8 = låtarna, höger tablå = extramaterialet
+const SONGS = RELEASES.filter((r) => r.type === 'song'), EXTRAS = RELEASES.filter((r) => r.type !== 'song');
 RELEASES.forEach((r) => { r._lines = (r.status === 'available' && r.text ? r.text : '').split('\n').map((l) => l.length); });
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -35,13 +37,19 @@ const panels = new Panels(RELEASES, {
   select: (r) => select(r),
   toggle: () => toggle(),
   stop: () => stop(),
-  show: (n) => show(n),
+  show: (n, m) => show(n, m),
   close: () => close(),
 });
-function show(name) {
+function show(name, mode = 'songs') {
   if (!S.entered) return;
-  if (name === 'tabla' && V.portrait) { $('#tabla .tile.is-available')?.focus(); return; }
-  panels.show(name); V.zoomT = 1.1; sfx('key');
+  if (name === 'tabla' && V.portrait) { // på stående skärm ligger båda tablåerna redan framme under rummet
+    const m = $(`#tabla .mod[data-group="${mode}"]`);
+    m?.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'start' });
+    (m?.querySelector('.tile.is-available') || m?.querySelector('.tile'))?.focus({ preventScroll: true });
+    return;
+  }
+  const swap = panels.open === 'tabla' && name === 'tabla';
+  panels.show(name, mode); V.zoomT = 1.1; if (!swap) sfx('key');
 }
 function close() { if (!panels.open) return; panels.hide(); V.zoomT = 1.035; }
 
@@ -53,6 +61,9 @@ audio.onfallback = (r) => { if (S.cur === r) { S.missing = true; hud(); } };
 function select(r) {
   if (!S.entered) return;
   if (r.status !== 'available') { sfx('denied'); panels.deny(r); return; }
+  if (r.type !== 'song' && !r.audio) { // en berättelse utan ljud: läses i skrivarna
+    audio.unload(); S.cur = r; S.missing = false; sfx('clunk'); setPlaying(false); show('rec'); return;
+  }
   if (S.cur === r) { toggle(); return; }
   S.cur = r; S.missing = false;
   audio.load(r); sfx('clunk');
@@ -159,7 +170,7 @@ function lights(dt, t, lv) {
 }
 
 /* ================================================================== vyn */
-const MARKS = [{ hot: 'tablaL', label: 'Tablå', act: () => show('tabla') }, { hot: 'rec', label: 'Skrivare', act: () => show('rec') }, { hot: 'door', label: 'Om Drekmor', act: () => show('om') }];
+const MARKS = [{ hot: 'tablaL', label: 'Låtar', act: () => show('tabla', 'songs') }, { hot: 'tablaR', label: 'Extramaterial', act: () => show('tabla', 'extra') }, { hot: 'rec', label: 'Skrivare', act: () => show('rec') }, { hot: 'door', label: 'Om Drekmor', act: () => show('om') }];
 const tip = document.createElement('span'); tip.className = 'mark mark--tip'; tip.hidden = true;
 
 function buildWorld() {
@@ -173,14 +184,14 @@ function buildWorld() {
     b.addEventListener('click', act);
     world.appendChild(b); return b;
   };
-  hot('tablaL', HOT.tablaL, 'Tablån: välj signal', () => show('tabla'));
+  hot('tablaL', HOT.tablaL, 'Låtar: välj signal', () => show('tabla', 'songs'));
   BTN.forEach((bt, i) => {
-    const r = RELEASES[i]; if (!r) return;
+    const r = SONGS[i]; if (!r) return;
     const b = hot('btn' + i, [bt.x - 1.2, bt.y - 20, bt.w + 2.4, bt.h + 24], r.status === 'available' ? `${i + 1} · ${r.title}` : `${i + 1} · Ej i drift`, () => select(r), 'hot--btn');
     b.dataset.btn = i;
   });
   hot('scope', HOT.scope, 'Spela / paus', () => toggle());
-  hot('tablaR', HOT.tablaR, 'Tablån: välj signal', () => show('tabla'));
+  hot('tablaR', HOT.tablaR, 'Extramaterial: intervjuer och berättelser', () => show('tabla', 'extra'));
   hot('rec', HOT.rec, 'Skrivarna: låten och journalen', () => show('rec'));
   hot('door', HOT.door, 'Om Drekmor', () => show('om'));
   for (const mk of MARKS) {
@@ -241,9 +252,10 @@ addEventListener('keydown', (e) => {
   const tag = e.target.tagName;
   if (e.key === ' ' && tag === 'BUTTON') return;
   if (e.key === ' ') { e.preventDefault(); toggle(); return; }
-  if (/^[1-8]$/.test(e.key)) { const r = RELEASES[+e.key - 1]; if (r) select(r); return; }
+  if (/^[1-8]$/.test(e.key)) { const r = SONGS[+e.key - 1]; if (r) select(r); return; }
   switch (e.key.toLowerCase()) {
-    case 't': panels.open === 'tabla' ? close() : show('tabla'); break;
+    case 't': panels.open === 'tabla' && panels.tabla.dataset.mode === 'songs' ? close() : show('tabla', 'songs'); break;
+    case 'e': panels.open === 'tabla' && panels.tabla.dataset.mode === 'extra' ? close() : show('tabla', 'extra'); break;
     case 's': case 'i': panels.open === 'rec' ? close() : show('rec'); break;
     case 'o': panels.open === 'om' ? close() : show('om'); break;
     case 'm': mute(!audio.muted); break;
@@ -291,7 +303,7 @@ function frame(ms) {
     if (S.playing || frameNo % 2 === 0) {
       plate.paint((c, layer) => drawLive(c, layer, {
         t: clock, on: S.en, playing: S.playing, wave: audio.ready ? audio.bufL : null, lv, needles, cur: S.cur,
-        releases: RELEASES, covers, hist, progress: S.cur ? audio.progress : 0, twinkles: twinkles.list, hotBtn: S.hotBtn,
+        songs: SONGS, extras: EXTRAS, covers, hist, progress: S.cur ? audio.progress : 0, twinkles: twinkles.list, hotBtn: S.hotBtn,
       }));
     }
     plate.render({ t: clock, ...L, glitch: S.glitch, hover: S.lastHover, hoverS: S.hoverS * 0.5 });
@@ -303,7 +315,7 @@ function frame(ms) {
   panels.tick(hist, S.cur ? audio.progress : 0, S.playing);
 }
 function tipUpdate() {
-  const key = S.hoverKey, has = key && !MARKS.some((m) => m.hot === key && !(V.portrait && key === 'tablaL'));
+  const key = S.hoverKey, has = key && !MARKS.some((m) => m.hot === key && !(V.portrait && key.startsWith('tabla')));
   if (!has || panels.open) { tip.hidden = true; return; }
   tip.hidden = false; tip.textContent = S.hoverLabel; place(tip, S.hover);
 }

@@ -31,6 +31,8 @@ function cell(side, c, r) {
 }
 /** Var på vänstra tablån släpp nummer i har sin ruta. */
 export const tileOf = (i) => cell('L', (i % 4) * 2, 2 + Math.floor(i / 4) * 2);
+/** Var på högra tablån extramaterial nummer i har sin ruta. */
+export const extraOf = (i) => cell('R', (i % 5) * 2, 2 + Math.floor(i / 5) * 2);
 
 function rr(c, x, y, w, h, r) {
   c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
@@ -61,7 +63,7 @@ export class Twinkles {
 }
 
 /**
- * st: { t, on, power, playing, wave, lv:{l,r,bass}, needles:[6], cur, releases, covers, hist, progress, twinkles, hotBtn }
+ * st: { t, on, playing, wave, lv:{l,r,bass}, needles:[6], cur, songs, extras, covers, hist, progress, twinkles, hotBtn }
  */
 export function drawLive(c, layer, st) {
   if (layer === 'ytor') surfaces(c, st); else lights(c, st);
@@ -74,7 +76,7 @@ function surfaces(c, st) {
 
   // --- knapparna 1–8: bara släppta signaler lyser
   BTN.forEach((b, i) => {
-    const r = st.releases[i];
+    const r = st.songs[i];
     if (r && r.status === 'available') return;
     c.fillStyle = 'rgba(30,15,7,0.93)'; c.fillRect(b.x - 2, b.y - 2, b.w + 4, b.h + 4);
     c.fillStyle = 'rgba(64,32,16,1)'; c.fillRect(b.x + 0.5, b.y + 0.5, b.w - 1, b.h - 1);
@@ -167,27 +169,29 @@ function lights(c, st) {
 
   // --- knapparna 1–8
   BTN.forEach((b, i) => {
-    const r = st.releases[i]; if (!r || r.status !== 'available') return;
+    const r = st.songs[i]; if (!r || r.status !== 'available') return;
     const act = st.cur === r, hot = st.hotBtn === i;
     const a = act ? (st.playing ? 0.5 + st.lv.bass * 0.7 : 0.38 + 0.12 * Math.sin(st.t * 3)) : hot ? 0.3 : 0;
     if (a > 0) { glow(c, b.x + b.w / 2, b.y + b.h / 2, 17, '255,170,70', a * on); c.fillStyle = `rgba(255,214,150,${a * 0.7 * on})`; c.fillRect(b.x + 2, b.y + 2, b.w - 4, b.h - 4); }
   });
 
   // --- tablåerna: släppta signaler lyser, den valda pulserar, nästa blinkar rött
-  let next = true;
-  st.releases.forEach((r, i) => {
-    if (i >= 24) return;
-    const [x, y] = tileOf(i);
-    if (r.status === 'available') {
-      const act = st.cur === r;
-      const a = act ? (st.playing ? 0.75 + st.lv.bass * 0.5 : 0.6 + 0.25 * Math.sin(st.t * 3)) : 0.34 + 0.06 * Math.sin(st.t * 1.3 + i);
-      glow(c, x, y, act ? 13 : 9, '255,180,80', a * 0.55 * on);
-      c.fillStyle = `rgba(255,214,140,${a * on})`; c.fillRect(x - 4.6, y - 2.4, 9.2, 4.8);
-    } else if (r.status === 'coming' && next) {
-      next = false;
-      const a = (Math.sin(st.t * 2.6) > 0.2 ? 0.8 : 0.08) * on;
-      glow(c, x, y, 10, '255,50,30', a * 0.5); c.fillStyle = `rgba(255,70,45,${a})`; c.fillRect(x - 4.6, y - 2.4, 9.2, 4.8);
-    }
-  });
+  for (const [list, at] of [[st.songs, tileOf], [st.extras, extraOf]]) {
+    let next = true;
+    list.forEach((r, i) => {
+      if (i >= 24) return;
+      const [x, y] = at(i);
+      if (r.status === 'available') {
+        const act = st.cur === r;
+        const a = act ? (st.playing ? 0.75 + st.lv.bass * 0.5 : 0.6 + 0.25 * Math.sin(st.t * 3)) : 0.34 + 0.06 * Math.sin(st.t * 1.3 + i);
+        glow(c, x, y, act ? 13 : 9, '255,180,80', a * 0.55 * on);
+        c.fillStyle = `rgba(255,214,140,${a * on})`; c.fillRect(x - 4.6, y - 2.4, 9.2, 4.8);
+      } else if (r.status === 'coming' && next) {
+        next = false;
+        const a = (Math.sin(st.t * 2.6 + (at === extraOf ? 1.7 : 0)) > 0.2 ? 0.8 : 0.08) * on;
+        glow(c, x, y, 10, '255,50,30', a * 0.5); c.fillStyle = `rgba(255,70,45,${a})`; c.fillRect(x - 4.6, y - 2.4, 9.2, 4.8);
+      }
+    });
+  }
   for (const t of st.twinkles) { c.fillStyle = `rgba(255,200,110,${t.a * 0.55 * on})`; c.fillRect(t.x - 4.2, t.y - 2.1, 8.4, 4.2); }
 }

@@ -34,6 +34,11 @@ export class Panels {
     this.releases = releases; this.h = h; this.open = null; this.cur = null; this.playing = false;
     document.documentElement.style.setProperty('--enamel', `url(${enamel()})`);
     this.tabla = $('#tabla'); this.rec = $('#rec'); this.om = $('#om');
+    // vänster tablå i pulten = låtarna, höger = extramaterialet (intervjuer och berättelser)
+    this.groups = [
+      { key: 'songs', label: 'Låtar', list: releases.filter((r) => r.type === 'song') },
+      { key: 'extra', label: 'Extramaterial', list: releases.filter((r) => r.type !== 'song') },
+    ];
     this.cols = 0; this.buildTabla();
     this.trace = $('#rec-trace'); this.tctx = this.trace.getContext('2d');
     this.journal = $('#rec-journal'); this.lastScroll = 0;
@@ -49,34 +54,39 @@ export class Panels {
 
   /* ------------------------------------------------------------ tablån -- */
   buildTabla() {
-    const cols = matchMedia('(max-width: 720px)').matches ? 2 : 4;
-    if (cols === this.cols) return; this.cols = cols;
-    const grid = $('#tiles'); grid.innerHTML = ''; grid.style.setProperty('--cols', cols);
-    const R = this.releases, minRows = cols === 4 ? 6 : Math.ceil(R.length / 2);
-    const rows = Math.max(minRows, Math.ceil(R.length / cols));
-    let next = true; this.tiles = new Map();
-    for (let r = 0; r < rows; r++) {
-      grid.appendChild(el('span', 'rowl', 'ABCDEFGHJKLMNPQRSTUVWXYZ'[r] || ''));
-      for (let c = 0; c < cols; c++) {
-        const i = r * cols + c, rel = R[i];
-        if (!rel) { grid.appendChild(el('span', 'tile is-blank')); continue; }
-        const b = el('button', 'tile'); b.type = 'button'; b.dataset.id = rel.id;
-        const kind = TYPE[rel.type] || '';
-        if (rel.status === 'available') {
-          b.classList.add('is-available');
-          b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span><span class="tile__k">${esc(kind)}${rel.duration ? ' · ' + esc(rel.duration) : ''}</span>`;
-          b.setAttribute('aria-label', `${rel.id} ${rel.title}, ${kind.toLowerCase()}. Spela.`);
-        } else if (rel.status === 'coming') {
-          b.classList.add('is-coming'); if (next) { b.classList.add('is-next'); next = false; }
-          b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span><span class="tile__tape">Ej i drift</span>`;
-          b.setAttribute('aria-label', `${rel.id} ${rel.title}. Inte släppt än.`);
-        } else {
-          b.classList.add('is-locked');
-          b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span>`;
-          b.setAttribute('aria-label', `${rel.id}. Låst.`);
+    const portrait = document.body.classList.contains('portrait');
+    const cols = matchMedia('(max-width: 720px)').matches ? 2 : 4, key = cols + (portrait ? 'p' : 'm');
+    if (key === this.cols) return; this.cols = key;
+    const host = $('#mods'); host.innerHTML = ''; this.tiles = new Map();
+    for (const g of this.groups) {
+      const mod = el('div', 'mod', `<span class="plate plate--tag mod__tag">${g.label}</span><i class="screw s1"></i><i class="screw s2"></i><i class="screw s3"></i><i class="screw s4"></i>`);
+      mod.dataset.group = g.key;
+      const grid = el('div', 'tiles'); grid.style.setProperty('--cols', cols); mod.appendChild(grid); host.appendChild(mod);
+      const R = g.list, rows = Math.max(portrait ? 1 : 5, Math.ceil(R.length / cols));
+      let next = true;
+      for (let r = 0; r < rows; r++) {
+        grid.appendChild(el('span', 'rowl', 'ABCDEFGHJKLMNPQRSTUVWXYZ'[r] || ''));
+        for (let c = 0; c < cols; c++) {
+          const rel = R[r * cols + c];
+          if (!rel) { grid.appendChild(el('span', 'tile is-blank')); continue; }
+          const b = el('button', 'tile'); b.type = 'button'; b.dataset.id = rel.id;
+          const kind = TYPE[rel.type] || '', reads = rel.type === 'story' && !rel.audio;
+          if (rel.status === 'available') {
+            b.classList.add('is-available');
+            b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span><span class="tile__k">${esc(kind)}${rel.duration ? ' · ' + esc(rel.duration) : ''}</span>`;
+            b.setAttribute('aria-label', `${rel.id} ${rel.title}, ${kind.toLowerCase()}. ${reads ? 'Läs' : 'Spela'}.`);
+          } else if (rel.status === 'coming') {
+            b.classList.add('is-coming'); if (next) { b.classList.add('is-next'); next = false; }
+            b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span>${g.key === 'extra' ? `<span class="tile__k">${esc(kind)}</span>` : ''}<span class="tile__tape">Ej i drift</span>`;
+            b.setAttribute('aria-label', `${rel.id} ${rel.title}. Inte släppt än.`);
+          } else {
+            b.classList.add('is-locked');
+            b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span>`;
+            b.setAttribute('aria-label', `${rel.id}. Låst.`);
+          }
+          b.addEventListener('click', () => this.h.select(rel));
+          grid.appendChild(b); this.tiles.set(rel.id, b);
         }
-        b.addEventListener('click', () => this.h.select(rel));
-        grid.appendChild(b); this.tiles.set(rel.id, b);
       }
     }
     this.mark();
@@ -133,7 +143,11 @@ export class Panels {
   }
 
   /* ------------------------------------------------------- öppna/stäng -- */
-  show(name) {
+  show(name, mode = 'songs') {
+    if (name === 'tabla') {
+      this.tabla.dataset.mode = mode;
+      this.tabla.setAttribute('aria-label', mode === 'extra' ? 'Tablå: extramaterial' : 'Tablå: välj låt');
+    }
     if (this.open === name) return;
     this.hide(true);
     const p = this[name]; if (!p) return;
@@ -141,7 +155,8 @@ export class Panels {
     this.returnTo = document.activeElement;
     this.open = name; p.hidden = false; void p.offsetWidth; p.classList.add('is-open');
     document.body.dataset.panel = name;
-    const f = name === 'tabla' ? (this.tiles.get(this.cur?.id) || p.querySelector('.tile.is-available')) : p.querySelector('[data-close]');
+    const m = name === 'tabla' && p.querySelector(`.mod[data-group="${mode}"]`);
+    const f = (m && (m.querySelector('.tile.is-active') || m.querySelector('.tile.is-available'))) || p.querySelector('[data-close]');
     f?.focus({ preventScroll: true });
   }
   hide(silent) {

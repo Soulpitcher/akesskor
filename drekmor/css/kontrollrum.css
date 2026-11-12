@@ -89,7 +89,7 @@ body.is-in .top { opacity: 1; }
 .mark--tip { pointer-events: none; border-color: rgba(255, 190, 100, 0.6); }
 body:not(.has-signal).is-in .mark[data-hot="tablaL"] { animation: nudge 2.6s ease-in-out infinite; }
 @keyframes nudge { 0%, 100% { border-color: rgba(236, 229, 207, 0.24); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7); } 50% { border-color: rgba(255, 190, 100, 0.9); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7), 0 0 18px rgba(255, 170, 70, 0.45); } }
-body.portrait .mark[data-hot="tablaL"] { display: none; }
+body.portrait .mark[data-hot="tablaL"], body.portrait .mark[data-hot="tablaR"] { display: none; }
 
 /* --------------------------------------------------------------- statusrad */
 .hud {
@@ -143,7 +143,10 @@ body[data-panel] .hud { opacity: 0; pointer-events: none; }
 .cab__head { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
 
 /* modulen: svart bakelit med lysrutor */
-.mod { position: relative; padding: 18px 18px 18px 8px; border-radius: 3px; background: linear-gradient(#141412, #080807); box-shadow: inset 0 0 0 1px #2c2c27, inset 0 0 0 2px #000, 0 1px 0 rgba(255, 255, 255, 0.2), 0 8px 18px rgba(0, 0, 0, 0.55); }
+.mods { position: relative; padding-top: 14px; }
+#tabla[data-mode="songs"] .mod[data-group="extra"], #tabla[data-mode="extra"] .mod[data-group="songs"] { display: none; }
+.mod__tag { position: absolute; left: 50%; top: -14px; transform: translateX(-50%); z-index: 1; }
+.mod { position: relative; padding: 26px 18px 18px 8px; border-radius: 3px; background: linear-gradient(#141412, #080807); box-shadow: inset 0 0 0 1px #2c2c27, inset 0 0 0 2px #000, 0 1px 0 rgba(255, 255, 255, 0.2), 0 8px 18px rgba(0, 0, 0, 0.55); }
 .screw { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #aaa593, #5c594b 55%, #1d1c17); box-shadow: 0 1px 1px rgba(0, 0, 0, 0.8); }
 .screw::after { content: ""; position: absolute; left: 1.5px; right: 1.5px; top: 4px; height: 1px; background: rgba(0, 0, 0, 0.7); transform: rotate(-28deg); }
 .s1 { left: 5px; top: 5px; } .s2 { right: 5px; top: 5px; } .s3 { left: 5px; bottom: 5px; } .s4 { right: 5px; bottom: 5px; }
@@ -280,6 +283,8 @@ body.portrait #tabla, body.portrait #tabla[hidden] {
 body.portrait:not(.is-in) #tabla { opacity: 0; pointer-events: none; }
 body.portrait #tabla > .cab { transform: none; width: 100%; min-height: 100%; border-radius: 0; padding: 14px 12px calc(86px + var(--safe-b)); }
 body.portrait #tabla .cab__head { display: none; }
+body.portrait #tabla .mod { display: block !important; scroll-margin-top: 26px; }
+body.portrait #tabla .mod + .mod { margin-top: 34px; }
 body.portrait .ctl { gap: 30px; margin-top: 16px; }
 body.portrait .hud { bottom: calc(10px + var(--safe-b)); width: calc(100vw - 20px); gap: 10px; padding-left: 14px; }
 body.portrait .hud__title { flex: 1; font-size: 16px; gap: 8px; }

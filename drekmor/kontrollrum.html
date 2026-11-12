@@ -36,16 +36,13 @@
   </footer>
 
   <!-- ============================== TABLÅN =============================== -->
-  <section class="panel" id="tabla" hidden role="dialog" aria-label="Larmtablå: välj signal">
+  <section class="panel" id="tabla" hidden role="dialog" aria-label="Tablå: välj låt" data-mode="songs">
     <div class="cab">
       <div class="cab__head">
         <span class="plate plate--name">Drekmor</span>
         <button class="plate plate--btn cab__close" type="button" data-close>Stäng</button>
       </div>
-      <div class="mod">
-        <i class="screw s1"></i><i class="screw s2"></i><i class="screw s3"></i><i class="screw s4"></i>
-        <div class="tiles" id="tiles"></div>
-      </div>
+      <div class="mods" id="mods"></div>
       <div class="ctl">
         <div class="pbw"><button class="pb pb--w" id="pb-play" type="button" aria-labelledby="pb-play-l"></button><span id="pb-play-l">Spela</span></div>
         <div class="pbw"><button class="pb pb--k" id="pb-stop" type="button" aria-labelledby="pb-stop-l"></button><span id="pb-stop-l">Stopp</span></div>
@@ -98,9 +95,10 @@
       </p>
       <p>Press och bokning: <a href="mailto:info@drekmor.com">info@drekmor.com</a></p>
       <dl class="keys">
-        <div><dt>1–8</dt><dd>Välj signal</dd></div>
+        <div><dt>1–8</dt><dd>Välj låt</dd></div>
         <div><dt>Mellanslag</dt><dd>Spela / paus</dd></div>
-        <div><dt>T</dt><dd>Tablån</dd></div>
+        <div><dt>T</dt><dd>Låtar</dd></div>
+        <div><dt>E</dt><dd>Extramaterial</dd></div>
         <div><dt>S</dt><dd>Skrivarna</dd></div>
         <div><dt>← →</dt><dd>Föregående / nästa</dd></div>
         <div><dt>M</dt><dd>Ljud av / på</dd></div>
