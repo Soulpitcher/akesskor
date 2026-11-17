@@ -1,15 +1,15 @@
 /* =============================================================================
    Kontrollrummet – närbilderna: larmtablån (välj signal), skrivarna (låten och
-   journalen) och anslaget (om Drekmor). Vanlig HTML, så att allt går att läsa,
+   journalen), bildskärmen, lappar och kartor samt anslaget (om Drekmor). Vanlig HTML, så att allt går att läsa,
    markera och nå med tangentbord och skärmläsare.
    ============================================================================= */
 
 const $ = (s, el = document) => el.querySelector(s);
 const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const TYPE = { song: 'Låt', interview: 'Intervju', story: 'Berättelse' };
-const LINKS = { spotify: 'Spotify', apple: 'Apple Music', youtube: 'YouTube', tidal: 'Tidal', deezer: 'Deezer', bandcamp: 'Bandcamp' };
-const MONTHS = ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november', 'december'];
+const TYPE = { song: 'Track', interview: 'Interview', story: 'Story' };
+const LINKS = { spotify: 'Spotify', apple: 'Apple Music', youtube_video: 'YouTube', youtube: 'YouTube', tidal: 'Tidal', deezer: 'Deezer', amazon: 'Amazon Music', bandcamp: 'Bandcamp' };
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const date = (d) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ''); return m ? `${+m[3]} ${MONTHS[+m[2] - 1]} ${m[1]}` : ''; };
 export const fmt = (s) => { s = Math.max(0, Math.floor(s || 0)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 
@@ -33,11 +33,11 @@ export class Panels {
   constructor(releases, h) {
     this.releases = releases; this.h = h; this.open = null; this.cur = null; this.playing = false;
     document.documentElement.style.setProperty('--enamel', `url(${enamel()})`);
-    this.tabla = $('#tabla'); this.rec = $('#rec'); this.om = $('#om');
+    this.tabla = $('#tabla'); this.rec = $('#rec'); this.om = $('#om'); this.tv = $('#tv'); this.note = $('#note');
     // vänster tablå i pulten = låtarna, höger = extramaterialet (intervjuer och berättelser)
     this.groups = [
-      { key: 'songs', label: 'Låtar', list: releases.filter((r) => r.type === 'song') },
-      { key: 'extra', label: 'Extramaterial', list: releases.filter((r) => r.type !== 'song') },
+      { key: 'songs', label: 'Tracks', list: releases.filter((r) => r.type === 'song') },
+      { key: 'extra', label: 'Extras', list: releases.filter((r) => r.type !== 'song') },
     ];
     this.cols = 0; this.buildTabla();
     this.trace = $('#rec-trace'); this.tctx = this.trace.getContext('2d');
@@ -45,7 +45,7 @@ export class Panels {
     this.journal.addEventListener('wheel', () => (this.lastScroll = performance.now()), { passive: true });
     this.journal.addEventListener('touchmove', () => (this.lastScroll = performance.now()), { passive: true });
     document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => this.h.close()));
-    for (const p of [this.tabla, this.rec, this.om]) p.addEventListener('pointerdown', (e) => { if (e.target === p) this.h.close(); });
+    for (const p of [this.tabla, this.rec, this.om, this.tv, this.note]) p.addEventListener('pointerdown', (e) => { if (e.target === p) this.h.close(); });
     $('#pb-play').addEventListener('click', () => this.h.toggle());
     $('#pb-stop').addEventListener('click', () => this.h.stop());
     $('#pb-rec').addEventListener('click', () => this.h.show('rec'));
@@ -74,15 +74,15 @@ export class Panels {
           if (rel.status === 'available') {
             b.classList.add('is-available');
             b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span><span class="tile__k">${esc(kind)}${rel.duration ? ' · ' + esc(rel.duration) : ''}</span>`;
-            b.setAttribute('aria-label', `${rel.id} ${rel.title}, ${kind.toLowerCase()}. ${reads ? 'Läs' : 'Spela'}.`);
+            b.setAttribute('aria-label', `${rel.id} ${rel.title}, ${kind.toLowerCase()}. ${reads ? 'Read' : 'Play'}.`);
           } else if (rel.status === 'coming') {
             b.classList.add('is-coming'); if (next) { b.classList.add('is-next'); next = false; }
-            b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span>${g.key === 'extra' ? `<span class="tile__k">${esc(kind)}</span>` : ''}<span class="tile__tape">Ej i drift</span>`;
-            b.setAttribute('aria-label', `${rel.id} ${rel.title}. Inte släppt än.`);
+            b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span>${g.key === 'extra' ? `<span class="tile__k">${esc(kind)}</span>` : ''}<span class="tile__tape">Out of order</span>`;
+            b.setAttribute('aria-label', `${rel.id} ${rel.title}. Not released yet.`);
           } else {
             b.classList.add('is-locked');
             b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span>`;
-            b.setAttribute('aria-label', `${rel.id}. Låst.`);
+            b.setAttribute('aria-label', `${rel.id}. Locked.`);
           }
           b.addEventListener('click', () => this.h.select(rel));
           grid.appendChild(b); this.tiles.set(rel.id, b);
@@ -94,7 +94,7 @@ export class Panels {
   mark() {
     for (const [id, b] of this.tiles) { const on = this.cur?.id === id; b.classList.toggle('is-active', on); b.classList.toggle('is-playing', on && this.playing); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
     $('#pb-play').classList.toggle('is-on', this.playing);
-    $('#pb-play-l').textContent = this.playing ? 'Paus' : 'Spela';
+    $('#pb-play-l').textContent = this.playing ? 'Pause' : 'Play';
   }
   deny(rel) { const b = this.tiles.get(rel.id); if (!b) return; b.classList.remove('is-denied'); void b.offsetWidth; b.classList.add('is-denied'); }
 
@@ -102,21 +102,24 @@ export class Panels {
   fillRec(rel) {
     const sig = $('#rec-signal'), j = this.journal;
     if (!rel) {
-      sig.innerHTML = '<p class="stamp">Ingen signal</p>';
-      j.innerHTML = '<p class="typed typed--dim">Välj en signal på tablån.</p>';
+      sig.innerHTML = '<p class="stamp">No signal</p>';
+      j.innerHTML = '<p class="typed typed--dim">Pick a signal on the alarm panel.</p>';
       return;
     }
-    sig.innerHTML = `${rel.cover ? `<img class="paper__cover" src="${esc(rel.cover)}" alt="Omslag: ${esc(rel.title)}">` : ''}
+    sig.innerHTML = `${rel.cover ? `<img class="paper__cover" src="${esc(rel.cover)}" alt="Artwork: ${esc(rel.title)}">` : ''}
       <p class="paper__id">${esc(rel.id)} · ${esc(TYPE[rel.type] || '')}${rel.duration ? ' · ' + esc(rel.duration) : ''}</p>
       <h2 class="paper__title" id="rec-title">${esc(rel.title)}</h2>`;
-    const links = Object.entries(rel.links || {}).filter(([k, v]) => v && LINKS[k]).map(([k, v]) => `<a href="${esc(v)}" target="_blank" rel="noopener">${LINKS[k]}</a>`).join('');
+    const links = Object.entries(rel.links || {}).filter(([k, v]) => v && LINKS[k] && !(k === 'youtube' && rel.links.youtube_video)).map(([k, v]) => `<a href="${esc(v)}" target="_blank" rel="noopener">${LINKS[k]}</a>`).join('');
     const credits = (rel.credits || []).map((c) => `<div><dt>${esc(c.role)}</dt><dd>${esc(c.name)}</dd></div>`).join('');
     j.innerHTML = `
       ${rel.notes ? `<p class="typed typed--lead">${esc(rel.notes)}</p>` : ''}
-      ${date(rel.releaseDate) ? `<p class="typed typed--dim">Släppt ${date(rel.releaseDate)}</p>` : ''}
+      ${date(rel.releaseDate) ? `<p class="typed typed--dim">Released ${date(rel.releaseDate)}</p>` : ''}
       ${credits ? `<dl class="credits">${credits}</dl>` : ''}
       ${links ? `<p class="outs">${links}</p>` : ''}
-      ${rel.text ? `<h3 class="typed-h">${rel.type === 'song' ? 'Text' : rel.type === 'interview' ? 'Utskrift' : 'Berättelse'}</h3><pre class="lyrics">${esc(rel.text)}</pre>` : ''}`;
+      ${rel.video ? `<p class="outs"><button class="linkish" type="button" data-video="${esc(rel.id)}">Watch the video on the monitor</button></p>` : ''}
+      ${rel.audio && rel.status === 'available' ? `<p class="outs"><a href="${esc(rel.audio)}" download>Download MP3</a></p>` : ''}
+      ${rel.text ? `<h3 class="typed-h">${rel.type === 'song' ? 'Lyrics' : rel.type === 'interview' ? 'Transcript' : 'Story'}</h3><pre class="lyrics">${esc(rel.text)}</pre>` : ''}`;
+    j.querySelector('[data-video]')?.addEventListener('click', () => this.h.show('tv', rel.id));
     j.scrollTop = 0;
   }
   setCurrent(rel, playing) {
@@ -146,7 +149,7 @@ export class Panels {
   show(name, mode = 'songs') {
     if (name === 'tabla') {
       this.tabla.dataset.mode = mode;
-      this.tabla.setAttribute('aria-label', mode === 'extra' ? 'Tablå: extramaterial' : 'Tablå: välj låt');
+      this.tabla.setAttribute('aria-label', mode === 'extra' ? 'Alarm panel: extras' : 'Alarm panel: pick a track');
     }
     if (this.open === name) return;
     this.hide(true);
@@ -156,12 +159,12 @@ export class Panels {
     this.open = name; p.hidden = false; void p.offsetWidth; p.classList.add('is-open');
     document.body.dataset.panel = name;
     const m = name === 'tabla' && p.querySelector(`.mod[data-group="${mode}"]`);
-    const f = (m && (m.querySelector('.tile.is-active') || m.querySelector('.tile.is-available'))) || p.querySelector('[data-close]');
+    const f = (m && (m.querySelector('.tile.is-active') || m.querySelector('.tile.is-available'))) || p.querySelector('[data-close], .sheet__close');
     f?.focus({ preventScroll: true });
   }
   hide(silent) {
     if (!this.open) return;
-    const p = this[this.open]; this.open = null; delete document.body.dataset.panel;
+    const p = this[this.open]; this.onhide?.(this.open); this.open = null; delete document.body.dataset.panel;
     p.classList.remove('is-open');
     setTimeout(() => { if (!p.classList.contains('is-open')) p.hidden = true; }, 380);
     if (!silent) this.returnTo?.focus?.({ preventScroll: true });

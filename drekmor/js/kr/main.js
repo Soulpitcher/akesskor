@@ -10,6 +10,8 @@ import { AudioEngine } from '../audio.js';
 import { Plate, PW, PH, LI } from './plate.js';
 import { drawLive, HOT, BTN, Twinkles } from './live.js';
 import { Panels, fmt } from './panels.js';
+import { Monitor } from './tv.js';
+import { Eggs, ANOMALIES } from './eggs.js';
 
 const $ = (s) => document.querySelector(s);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -25,12 +27,13 @@ RELEASES.forEach((r) => { r._lines = (r.status === 'available' && r.text ? r.tex
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const audio = new AudioEngine();
-const S = { entered: false, en: 0, pw: 0, cur: null, playing: false, hover: null, hoverS: 0, hotBtn: -1, glitch: 0, missing: false };
+const S = { entered: false, en: 0, pw: 0, cur: null, playing: false, video: false, hover: null, hoverS: 0, hotBtn: -1, glitch: 0, missing: false, black: 0, dim: 0, reelA: 0 };
 const stage = $('#stage'), world = $('#world'), marks = $('#marks');
 const V = { sw: 1, sh: 1, zoom: 1.035, zoomT: 1.035, px: 0, py: 0, pxT: 0, pyT: 0, tx: 0, ty: 0, s: 1, portrait: false };
 let plate = null;
 const covers = new Map(), twinkles = new Twinkles(), hist = [];
 const needles = new Float32Array(6);
+let eggs = null, loop = null;
 
 /* ================================================================ panelerna */
 const panels = new Panels(RELEASES, {
@@ -40,8 +43,25 @@ const panels = new Panels(RELEASES, {
   show: (n, m) => show(n, m),
   close: () => close(),
 });
+const monitor = new Monitor(RELEASES, {
+  audio, sfx: (n) => sfx(n), found: (id) => eggs?.log(id),
+  onplay: (on) => {
+    S.video = on;
+    if (on) { if (S.playing) { audio.pause(); setPlaying(false); } powerUp(); }
+    else if (!S.playing) powerDown();
+  },
+});
+panels.onhide = (n) => { if (n === 'tv') monitor.stop(); };
+const noteSheet = $('#note-sheet');
+function note(html) {
+  noteSheet.innerHTML = `<button class="sheet__close" type="button" aria-label="Close">Close ✕</button>${html}`;
+  noteSheet.querySelector('.sheet__close').addEventListener('click', close);
+  show('note');
+}
+
 function show(name, mode = 'songs') {
   if (!S.entered) return;
+  if (name === 'tv') { panels.show('tv'); monitor.open(mode !== 'songs' ? mode : null); V.zoomT = 1.1; return; }
   if (name === 'tabla' && V.portrait) { // på stående skärm ligger båda tablåerna redan framme under rummet
     const m = $(`#tabla .mod[data-group="${mode}"]`);
     m?.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'start' });
@@ -64,6 +84,7 @@ function select(r) {
   if (r.type !== 'song' && !r.audio) { // en berättelse utan ljud: läses i skrivarna
     audio.unload(); S.cur = r; S.missing = false; sfx('clunk'); setPlaying(false); show('rec'); return;
   }
+  if (monitor.playing) monitor.pause();
   if (S.cur === r) { toggle(); return; }
   S.cur = r; S.missing = false;
   audio.load(r); sfx('clunk');
@@ -74,7 +95,7 @@ function toggle() {
   if (!S.entered) return;
   if (!S.cur) { if (AVAIL[0]) select(AVAIL[0]); return; }
   if (S.playing) { audio.pause(); sfx('key'); setPlaying(false); }
-  else { if (audio.ended) audio.seekTo(0); sfx('key'); setPlaying(audio.play()); }
+  else { if (monitor.playing) monitor.pause(); if (audio.ended) audio.seekTo(0); sfx('key'); setPlaying(audio.play()); }
 }
 function stop() { if (!S.cur) return; audio.pause(); audio.seekTo(0); sfx('key'); setPlaying(false); }
 function step(dir) {
@@ -84,7 +105,7 @@ function step(dir) {
 }
 function setPlaying(on) {
   const was = S.playing; S.playing = !!on;
-  if (S.playing && !was) powerUp(); else if (!S.playing && was) powerDown();
+  if (S.playing && !was) powerUp(); else if (!S.playing && was && !S.video) powerDown();
   panels.setCurrent(S.cur, S.playing); hud();
 }
 
@@ -94,7 +115,7 @@ function hud() {
   $('#hud-id').textContent = S.cur.id; $('#hud-title').textContent = S.cur.title;
   $('#hud-note').hidden = !S.missing;
   h.classList.toggle('is-playing', S.playing);
-  $('#hud-play').setAttribute('aria-label', S.playing ? 'Paus' : 'Spela');
+  $('#hud-play').setAttribute('aria-label', S.playing ? 'Pause' : 'Play');
   document.body.classList.toggle('has-signal', true);
 }
 let lastHud = 0;
@@ -113,7 +134,34 @@ $('#seek').addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { au
 $('#snd').addEventListener('click', () => mute(!audio.muted));
 function mute(m) {
   audio.setMuted(m); $('#snd').setAttribute('aria-pressed', m ? 'false' : 'true');
-  $('#snd-l').textContent = m ? 'Ljud av' : 'Ljud på'; $('#snd').classList.toggle('is-off', m);
+  $('#snd-l').textContent = m ? 'Sound off' : 'Sound on'; $('#snd').classList.toggle('is-off', m);
+}
+
+/* =============================================================== texterna */
+const toastEl = $('#toast');
+let toastT = 0, busyUntil = 0;
+function toast(text, ms = 3200, action = null, kind = '') {
+  // loggraden väntar tills den pågående bildtexten har lästs klart
+  const now = performance.now();
+  if (kind === 'log' && now < busyUntil) { setTimeout(() => toast(text, ms, action, kind), busyUntil - now + 150); return; }
+  if (text && kind !== 'log') busyUntil = now + ms;
+  clearTimeout(toastT);
+  if (!text) { toastEl.classList.remove('is-on'); return; }
+  toastEl.className = 'toast is-on' + (kind ? ' toast--' + kind : '');
+  toastEl.innerHTML = '';
+  const t = document.createElement('span'); t.textContent = text; toastEl.appendChild(t);
+  if (action) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'toast__btn'; b.textContent = action.label;
+    b.addEventListener('click', () => { toast(null); action.run(); }); toastEl.appendChild(b);
+  }
+  toastT = setTimeout(() => toastEl.classList.remove('is-on'), ms);
+}
+function outline(rects) {
+  for (const r of rects) {
+    const o = document.createElement('i'); o.className = 'fx fx-outline';
+    Object.assign(o.style, { left: r[0] + 'px', top: r[1] + 'px', width: r[2] + 'px', height: r[3] + 'px' });
+    world.appendChild(o); setTimeout(() => o.remove(), 6500);
+  }
 }
 
 /* ============================================================ strömmen i rummet */
@@ -150,9 +198,14 @@ function tubeLevel(tb, now) {
 }
 
 function lights(dt, t, lv) {
-  const I = plate.I;
+  const I = plate.I, fx = eggs ? eggs.fx : {}, now = performance.now();
   let avg = 0;
-  for (const tb of TUBES) { const l = tubeLevel(tb, t); I[tb.i] = l * 0.66; if (tb.id !== 'tubeR2') avg += l / 3; }
+  for (const tb of TUBES) {
+    let l = tubeLevel(tb, t);
+    if (tb.id === 'tubeR2' && fx.tubeDeadUntil > now) l = 0;
+    if (fx.flickUntil > now) l *= Math.random() < 0.45 ? 0.12 : 1;
+    I[tb.i] = l * 0.66; if (tb.id !== 'tubeR2') avg += l / 3;
+  }
   S.pw = damp(S.pw, avg, 9, dt);
   S.en = damp(S.en, S.entered ? 1 : 0, 1.6, dt);
   const en = S.en, P = S.pw, m = (d, s, a) => lerp(lerp(d, s, en), a, P);
@@ -162,15 +215,25 @@ function lights(dt, t, lv) {
   I[LI.redR] = m(0.16 + 0.1 * (1 - br), 0.3 + 0.36 * (1 - br), 0.3 + bass * 1.0);
   I[LI.desk] = m(0, 0.3, 0.55); I[LI.door] = m(0.1, 0.3, 0.42); I[LI.wallL] = m(0, 0.22, 0.42);
   I[LI.rec] = m(0, S.cur ? 0.3 : 0.12, 0.5);
+  // avvikelserna: fyren, larmlamporna, strömavbrottet och tomgången
+  const sk = fx.sky ? fx.sky(now / 1000) : null;
+  if (sk != null) { I[LI.sky] *= sk; I[LI.shaft] *= sk; }
+  const rd = fx.red ? fx.red(now / 1000) : null;
+  if (rd) { I[LI.redL] = rd[0] * 0.6; I[LI.redR] = rd[1] * 0.6; }
+  S.black = damp(S.black, fx.black || 0, fx.black ? 40 : 2.2, dt);
+  S.dim = damp(S.dim, fx.dimT || 0, 0.5, dt);
+  const keep = (1 - S.black) * (1 - S.dim * 0.7);
+  for (let i = 0; i < I.length; i++) if (i !== LI.redL && i !== LI.redR) I[i] *= keep;
+  if (S.black > 0.01) { const e = 0.5 + 0.5 * Math.sin(t * 5); I[LI.redL] = Math.max(I[LI.redL], S.black * (0.4 + e * 0.6)); I[LI.redR] = Math.max(I[LI.redR], S.black * (0.4 + (1 - e) * 0.6)); }
   return {
-    amb: m(0.01, 0.03, 0.62), emis: en, red: en * (0.5 + bass * 1.8 * P),
+    amb: m(0.01, 0.03, 0.62) * keep, emis: en * (1 - S.black * 0.6), red: en * (0.5 + bass * 1.8 * P + (rd ? 1.4 : 0) + S.black * 1.2),
     ambCol: [lerp(0.5, 1, P), lerp(0.7, 1, P), lerp(1.05, 1, P)],
     skyCol: [lerp(0.55, 1, P), lerp(0.76, 1, P), lerp(1.1, 1, P)],
   };
 }
 
 /* ================================================================== vyn */
-const MARKS = [{ hot: 'tablaL', label: 'Låtar', act: () => show('tabla', 'songs') }, { hot: 'tablaR', label: 'Extramaterial', act: () => show('tabla', 'extra') }, { hot: 'rec', label: 'Skrivare', act: () => show('rec') }, { hot: 'door', label: 'Om Drekmor', act: () => show('om') }];
+const MARKS = [{ hot: 'tablaL', label: 'Tracks', act: () => show('tabla', 'songs') }, { hot: 'tablaR', label: 'Extras', act: () => show('tabla', 'extra') }, { hot: 'tv', label: 'Monitor', act: () => show('tv') }, { hot: 'rec', label: 'Recorders', act: () => show('rec') }, { hot: 'door', label: 'About', act: () => show('om') }];
 const tip = document.createElement('span'); tip.className = 'mark mark--tip'; tip.hidden = true;
 
 function buildWorld() {
@@ -184,21 +247,29 @@ function buildWorld() {
     b.addEventListener('click', act);
     world.appendChild(b); return b;
   };
-  hot('tablaL', HOT.tablaL, 'Låtar: välj signal', () => show('tabla', 'songs'));
+  hot('tablaL', HOT.tablaL, 'Tracks: pick a signal', () => show('tabla', 'songs'));
   BTN.forEach((bt, i) => {
     const r = SONGS[i]; if (!r) return;
-    const b = hot('btn' + i, [bt.x - 1.2, bt.y - 20, bt.w + 2.4, bt.h + 24], r.status === 'available' ? `${i + 1} · ${r.title}` : `${i + 1} · Ej i drift`, () => select(r), 'hot--btn');
+    const b = hot('btn' + i, [bt.x - 1.2, bt.y - 20, bt.w + 2.4, bt.h + 24], r.status === 'available' ? `${i + 1} · ${r.title}` : `${i + 1} · Out of order`, () => select(r), 'hot--btn');
     b.dataset.btn = i;
   });
-  hot('scope', HOT.scope, 'Spela / paus', () => toggle());
-  hot('tablaR', HOT.tablaR, 'Extramaterial: intervjuer och berättelser', () => show('tabla', 'extra'));
-  hot('rec', HOT.rec, 'Skrivarna: låten och journalen', () => show('rec'));
-  hot('door', HOT.door, 'Om Drekmor', () => show('om'));
+  hot('scope', HOT.scope, 'Oscilloscope: change display', () => eggs?.scopeClick());
+  hot('tablaR', HOT.tablaR, 'Extras: interviews and stories', () => show('tabla', 'extra'));
+  hot('tv', HOT.tv, 'Monitor: videos', () => show('tv'));
+  hot('rec', HOT.rec, 'Recorders: the track and the log', () => show('rec'));
+  const door = hot('door', HOT.door, 'About Drekmor', () => show('om'));
+  door.addEventListener('pointerenter', () => eggs?.doorHover(true)); door.addEventListener('pointerleave', () => eggs?.doorHover(false));
   for (const mk of MARKS) {
     const n = document.createElement('span'); n.className = 'mark'; n.textContent = mk.label; n.dataset.hot = mk.hot;
     n.addEventListener('click', mk.act); marks.appendChild(n); mk.el = n;
   }
   marks.appendChild(tip);
+  eggs = new Eggs({
+    world, audio, S, toast, note, outline,
+    select: (id) => { const r = RELEASES.find((x) => x.id === id); if (r) select(r); },
+    show: (n) => show(n), playing: () => S.playing,
+    twinkleBurst: () => twinkles.step(1, 2), glitch: (v) => { if (!RM) S.glitch = v; },
+  });
 }
 
 function layout() {
@@ -253,11 +324,18 @@ addEventListener('keydown', (e) => {
   if (e.key === ' ' && tag === 'BUTTON') return;
   if (e.key === ' ') { e.preventDefault(); toggle(); return; }
   if (/^[1-8]$/.test(e.key)) { const r = SONGS[+e.key - 1]; if (r) select(r); return; }
-  switch (e.key.toLowerCase()) {
+  const k = e.key.toLowerCase();
+  if (k.startsWith('arrow') && eggs?.arrow(k)) { e.preventDefault(); return; }
+  if (/^[a-z]$/.test(k) && eggs && tag !== 'INPUT') { eggs.letter(k, () => shortcut(k, e)); return; }
+  shortcut(k, e);
+});
+function shortcut(k, e) {
+  switch (k) {
     case 't': panels.open === 'tabla' && panels.tabla.dataset.mode === 'songs' ? close() : show('tabla', 'songs'); break;
     case 'e': panels.open === 'tabla' && panels.tabla.dataset.mode === 'extra' ? close() : show('tabla', 'extra'); break;
     case 's': case 'i': panels.open === 'rec' ? close() : show('rec'); break;
     case 'o': panels.open === 'om' ? close() : show('om'); break;
+    case 'v': panels.open === 'tv' ? close() : show('tv'); break;
     case 'm': mute(!audio.muted); break;
     case 'arrowright': step(1); break;
     case 'arrowleft': step(-1); break;
@@ -266,7 +344,7 @@ addEventListener('keydown', (e) => {
     case 'l': audio.seek(10); lastHud = 0; break;
     case 'j': audio.seek(-10); lastHud = 0; break;
   }
-});
+}
 
 /* ================================================================= bildrutan */
 let last = 0, frameNo = 0, histT = 0;
@@ -276,7 +354,9 @@ function frame(ms) {
   if (document.hidden) { last = ms; return; }
   const dt = Math.min(0.1, (ms - last) / 1000 || 0.016); last = ms; clock += dt; frameNo++;
   audio.tick(dt);
-  const lv = audio.ready ? audio.levels() : ZERO;
+  let lv = audio.ready ? audio.levels() : ZERO;
+  // en video spelar i rummet: vi hör den inte härifrån, så rummet får en jämn puls
+  if (S.video && !S.playing) { const p = Math.pow(Math.max(0, Math.sin(clock * 3.6)), 4); lv = { l: 0.3 + p * 0.4, r: 0.28 + p * 0.4, bass: 0.15 + p * 0.5 }; }
   if (S.playing && (audio.ended || (!audio.playing && audio.mode !== 'file'))) setPlaying(false);
 
   // nålar, kurvans historik och gnistrande rutor
@@ -298,12 +378,16 @@ function frame(ms) {
 
   view(dt);
   tipUpdate();
+  eggs?.tick(S.playing || S.video || !!panels.open);
+  S.reelA += dt * ((S.playing ? 2.4 : 0) + (eggs ? eggs.reelBoost * 3 : 0));
   if (plate) {
     const L = lights(dt, clock, lv);
     if (S.playing || frameNo % 2 === 0) {
       plate.paint((c, layer) => drawLive(c, layer, {
         t: clock, on: S.en, playing: S.playing, wave: audio.ready ? audio.bufL : null, lv, needles, cur: S.cur,
         songs: SONGS, extras: EXTRAS, covers, hist, progress: S.cur ? audio.progress : 0, twinkles: twinkles.list, hotBtn: S.hotBtn,
+        waveR: audio.ready ? audio.bufR : null, freq: audio.ready ? audio.bufF : null, reelA: S.reelA, mon: monState(),
+        scopeMode: eggs?.scopeMode, scopeText: eggs?.scopeText,
       }));
     }
     plate.render({ t: clock, ...L, glitch: S.glitch, hover: S.lastHover, hoverS: S.hoverS * 0.5 });
@@ -313,6 +397,14 @@ function frame(ms) {
   }
   hudTime(clock);
   panels.tick(hist, S.cur ? audio.progress : 0, S.playing);
+}
+function monState() {
+  if (!S.entered) return { mode: 'off' };
+  if (eggs && eggs.monStaticUntil > performance.now()) return { mode: 'static' };
+  if (eggs?.monMessage) return { mode: 'message', lines: eggs.monMessage.lines };
+  if (monitor.state === 'test') return { mode: 'test' };
+  if (monitor.state === 'video' || monitor.state === 'poster') return { mode: 'video', cover: covers.get(monitor.channels[monitor.ch]?.id) };
+  return { mode: 'loop', el: loop };
 }
 function tipUpdate() {
   const key = S.hoverKey, has = key && !MARKS.some((m) => m.hot === key && !(V.portrait && key.startsWith('tabla')));
@@ -325,6 +417,10 @@ function enter(muted) {
   if (S.entered) return;
   audio.init(); mute(!!muted);
   S.entered = true; document.body.classList.remove('is-gate'); document.body.classList.add('is-in');
+  eggs?.init();
+  // bildskärmen i väggen: en tyst slinga från Silent Alarm
+  loop = document.createElement('video'); loop.muted = true; loop.loop = true; loop.playsInline = true; loop.preload = 'auto';
+  loop.src = loop.canPlayType('video/webm; codecs="vp9"') ? 'assets/monitor-loop.webm' : 'assets/monitor-loop.mp4'; loop.play().catch(() => {});
   if (!RM) S.glitch = 0.8;
   sfx('power');
   $('#gate').addEventListener('transitionend', () => ($('#gate').hidden = true), { once: true });
@@ -344,6 +440,10 @@ async function boot() {
   requestAnimationFrame((ms) => { last = ms; frame(ms); });
   document.body.classList.remove('is-loading'); document.body.classList.add('is-gate');
   $('#gate-load').hidden = true; $('#gate-go').hidden = false;
-  window.__kr = { S, V, audio, select, show, close, enter };
+  window.__kr = { S, V, audio, select, show, close, enter, get eggs() { return eggs; }, monitor };
+  const title = document.title;
+  document.addEventListener('visibilitychange', () => { document.title = document.hidden ? 'Signal lost…' : title; });
+  console.log('%cDREKMOR', 'font: 32px/1 "Bebas Neue", Impact, sans-serif; letter-spacing: .3em; color: #9fe8c8; background: #050706; padding: 10px 18px;');
+  console.log('%cSomething is not right in this room. There are ' + ANOMALIES.length + ' anomalies. The old override code still works.', 'color: #9fe8c8; font-family: monospace;');
 }
 boot();

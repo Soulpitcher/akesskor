@@ -13,7 +13,12 @@ export const HOT = {
   scope:  [548, 513, 100, 80],
   rec:    [1480, 350, 178, 118],
   door:   [486, 390, 142, 112],
+  tv:     [974, 372, 108, 90],
 };
+/** Bildskärmen som är inbyggd i bortre väggen (ersätter den tomma panelen). */
+export const MON = { x: 976, y: 375, w: 104, h: 84, gx: 983, gy: 382, gw: 90, gh: 62 };
+/** Rullbandspelarens två spolar. */
+export const REELS = [[698, 418], [729.5, 418]];
 export const SCOPE = { x: 559, y: 521, w: 78, h: 58, r: 9 };
 export const BTN = [1100, 1117, 1134, 1151, 1168, 1186, 1203.5, 1221.5].map((x, i) => ({ x, y: 561 + i * 0.5, w: 14.5, h: 17 }));
 const PAPER = [{ x: 1499, y: 380, w: 44, h: 66 }, { x: 1585, y: 375, w: 50, h: 69 }];
@@ -63,13 +68,63 @@ export class Twinkles {
 }
 
 /**
- * st: { t, on, playing, wave, lv:{l,r,bass}, needles:[6], cur, songs, extras, covers, hist, progress, twinkles, hotBtn }
+ * st: { t, on, playing, wave, waveR, freq, lv:{l,r,bass}, needles:[6], cur, songs, extras, covers, hist, progress,
+ *       twinkles, hotBtn, reelA, mon:{mode, el, cover, lines}, scopeMode, scopeText }
  */
 export function drawLive(c, layer, st) {
   if (layer === 'ytor') surfaces(c, st); else lights(c, st);
 }
 
+function monitorHousing(c) {
+  const M = MON;
+  c.save();
+  c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(M.x + 2, M.y + 3, M.w, M.h);
+  const g = c.createLinearGradient(0, M.y, 0, M.y + M.h);
+  g.addColorStop(0, '#3b423c'); g.addColorStop(0.5, '#2a302b'); g.addColorStop(1, '#1d211e');
+  c.fillStyle = g; c.fillRect(M.x, M.y, M.w, M.h);
+  c.strokeStyle = 'rgba(190,210,195,0.18)'; c.lineWidth = 1; c.strokeRect(M.x + 0.5, M.y + 0.5, M.w - 1, M.h - 1);
+  c.strokeStyle = 'rgba(0,0,0,0.6)'; c.strokeRect(M.x + 2.5, M.y + 2.5, M.w - 5, M.h - 5);
+  // rost och slitage
+  let seed = 5; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 40; i++) { const x = M.x + r() * M.w, y = M.y + r() * M.h, s = 0.5 + r() * 1.8; c.fillStyle = `rgba(${100 + r() * 40},${52 + r() * 20},${26 + r() * 10},${0.25 + r() * 0.35})`; c.beginPath(); c.ellipse(x, y, s * 1.4, s, r() * 3, 0, 7); c.fill(); }
+  // glaset, lätt välvt
+  rr(c, M.gx - 2, M.gy - 2, M.gw + 4, M.gh + 4, 9); c.fillStyle = '#0b0d0c'; c.fill();
+  rr(c, M.gx, M.gy, M.gw, M.gh, 8);
+  const gg = c.createRadialGradient(M.gx + M.gw / 2, M.gy + M.gh / 2, 4, M.gx + M.gw / 2, M.gy + M.gh / 2, M.gw * 0.62);
+  gg.addColorStop(0, '#131a17'); gg.addColorStop(1, '#040605'); c.fillStyle = gg; c.fill();
+  // skylt och rattar
+  const py = M.y + M.h - 11;
+  c.fillStyle = '#0d0d0b'; c.fillRect(M.x + 30, py, 44, 7);
+  c.fillStyle = 'rgba(236,229,207,0.85)'; c.font = '6px "Bebas Neue", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText('MONITOR 01', M.x + 52, py + 3.8);
+  for (const kx of [M.x + 12, M.x + 20, M.x + 86, M.x + 94]) { c.fillStyle = '#121310'; c.beginPath(); c.arc(kx, py + 3.5, 3, 0, 7); c.fill(); c.fillStyle = 'rgba(210,205,190,0.35)'; c.fillRect(kx - 0.4, py + 0.8, 0.8, 2.4); }
+  for (const [sx, sy] of [[M.x + 4, M.y + 4], [M.x + M.w - 4, M.y + 4], [M.x + 4, M.y + M.h - 4], [M.x + M.w - 4, M.y + M.h - 4]]) { c.fillStyle = '#6d6a5c'; c.beginPath(); c.arc(sx, sy, 1.3, 0, 7); c.fill(); }
+  c.restore();
+}
+
+function reels(c, st) {
+  REELS.forEach(([x, y], k) => {
+    const R = 13.5, a = (st.reelA || 0) * (k ? 0.82 : 1);
+    const g = c.createRadialGradient(x - 3, y - 4, 1, x, y, R);
+    g.addColorStop(0, '#dcdad0'); g.addColorStop(1, '#8f8d83');
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, R, 0, 7); c.fill();
+    c.strokeStyle = 'rgba(40,38,32,0.6)'; c.lineWidth = 0.8; c.stroke();
+    // bandet som ligger lindat
+    c.fillStyle = 'rgba(48,36,28,0.9)'; c.beginPath(); c.arc(x, y, 7.5 + (k ? 1.5 : 0), 0, 7); c.fill();
+    for (let i = 0; i < 3; i++) {
+      const t = a + i * 2.094;
+      c.fillStyle = '#1c1b17'; c.beginPath(); c.arc(x + Math.cos(t) * 9.6, y + Math.sin(t) * 9.6, 2.6, 0, 7); c.fill();
+    }
+    c.fillStyle = '#c9c6ba'; c.beginPath(); c.arc(x, y, 3.2, 0, 7); c.fill();
+    c.strokeStyle = '#3a3830'; c.lineWidth = 1; c.beginPath();
+    for (let i = 0; i < 3; i++) { const t = a + i * 2.094; c.moveTo(x, y); c.lineTo(x + Math.cos(t) * 3, y + Math.sin(t) * 3); }
+    c.stroke();
+  });
+}
+
 function surfaces(c, st) {
+  monitorHousing(c);
+  reels(c, st);
   // --- oscilloskopets glas: bildens stilla kurva täcks, vår egen ritas i ljuslagret
   rr(c, SCOPE.x, SCOPE.y, SCOPE.w, SCOPE.h, SCOPE.r);
   c.fillStyle = 'rgba(6,20,15,0.97)'; c.fill();
@@ -135,9 +190,69 @@ function surfaces(c, st) {
   });
 }
 
+const noise = document.createElement('canvas'); noise.width = 48; noise.height = 34;
+const nctx = noise.getContext('2d'), nimg = nctx.createImageData(48, 34);
+function monitorScreen(c, st) {
+  const M = MON, m = st.mon || {}, on = st.on;
+  c.save(); rr(c, M.gx, M.gy, M.gw, M.gh, 8); c.clip();
+  c.globalCompositeOperation = 'source-over';
+  c.fillStyle = '#000'; c.fillRect(M.gx, M.gy, M.gw, M.gh);
+  const flick = 0.86 + Math.random() * 0.14;
+  if (m.mode === 'static' || (m.mode === 'loop' && !(m.el && m.el.readyState >= 2))) {
+    for (let i = 0; i < nimg.data.length; i += 4) { const v = Math.random() * 200; nimg.data[i] = nimg.data[i + 1] = nimg.data[i + 2] = v; nimg.data[i + 3] = 255; }
+    nctx.putImageData(nimg, 0, 0);
+    c.imageSmoothingEnabled = false; c.globalAlpha = 0.5 * on; c.drawImage(noise, M.gx, M.gy, M.gw, M.gh); c.imageSmoothingEnabled = true;
+  } else if (m.mode === 'loop') {
+    c.globalAlpha = 0.62 * on * flick; c.drawImage(m.el, M.gx - 2, M.gy - 2, M.gw + 4, M.gh + 4);
+    c.globalCompositeOperation = 'multiply'; c.globalAlpha = 1; c.fillStyle = 'rgb(150,215,190)'; c.fillRect(M.gx, M.gy, M.gw, M.gh);
+    c.globalCompositeOperation = 'source-over';
+  } else if (m.mode === 'video' && m.cover) {
+    c.globalAlpha = (0.55 + Math.sin(st.t * 23) * 0.06 + Math.random() * 0.12) * on; c.drawImage(m.cover, M.gx, M.gy - 14, M.gw, M.gw);
+    const y = M.gy + ((st.t * 30) % (M.gh + 20)) - 10; c.globalAlpha = 0.12; c.fillStyle = '#fff'; c.fillRect(M.gx, y, M.gw, 6);
+  } else if (m.mode === 'test') {
+    const cols = ['#c0c0c0', '#c0c000', '#00c0c0', '#00c000', '#c000c0', '#c00000', '#0000c0'];
+    c.globalAlpha = 0.7 * on * flick; cols.forEach((k, i) => { c.fillStyle = k; c.fillRect(M.gx + i * M.gw / 7, M.gy, M.gw / 7 + 1, M.gh * 0.7); });
+    c.fillStyle = '#111'; c.fillRect(M.gx, M.gy + M.gh * 0.7, M.gw, M.gh * 0.3);
+  } else if (m.mode === 'message') {
+    c.globalAlpha = on; c.fillStyle = '#071510'; c.fillRect(M.gx, M.gy, M.gw, M.gh);
+    c.fillStyle = `rgba(120,255,190,${0.75 + Math.random() * 0.2})`; c.font = '7.2px "Space Mono", monospace'; c.textAlign = 'left'; c.textBaseline = 'top';
+    (m.lines || []).forEach((l, i) => c.fillText(l, M.gx + 6, M.gy + 7 + i * 9.6));
+  }
+  // linjer och glasets reflex
+  c.globalAlpha = 0.35; c.fillStyle = '#000';
+  for (let y = M.gy; y < M.gy + M.gh; y += 2) c.fillRect(M.gx, y, M.gw, 1);
+  c.globalAlpha = 1;
+  const rg = c.createLinearGradient(M.gx, M.gy, M.gx + M.gw * 0.6, M.gy + M.gh);
+  rg.addColorStop(0, 'rgba(220,255,240,0.08)'); rg.addColorStop(0.4, 'rgba(220,255,240,0)');
+  c.fillStyle = rg; c.fillRect(M.gx, M.gy, M.gw, M.gh);
+  c.restore();
+  if (m.mode && m.mode !== 'off') glow(c, M.gx + M.gw / 2, M.gy + M.gh / 2, 70, m.mode === 'loop' ? '90,200,170' : '170,180,200', 0.07 * on);
+}
+
+/** Text och logotyp i oscilloskopet: varje bokstav byggd av streck, som en vektorskärm. */
+const GLYPH = {
+  D: [[0, 0, 0, 1], [0, 0, 0.6, 0], [0.6, 0, 0.9, 0.3], [0.9, 0.3, 0.9, 0.7], [0.9, 0.7, 0.6, 1], [0.6, 1, 0, 1]],
+  R: [[0, 0, 0, 1], [0, 0, 0.8, 0], [0.8, 0, 0.8, 0.5], [0.8, 0.5, 0, 0.5], [0.3, 0.5, 0.9, 1]],
+  E: [[0, 0, 0, 1], [0, 0, 0.85, 0], [0, 0.5, 0.65, 0.5], [0, 1, 0.85, 1]],
+  K: [[0, 0, 0, 1], [0, 0.55, 0.85, 0], [0.25, 0.4, 0.9, 1]],
+  M: [[0, 1, 0, 0], [0, 0, 0.45, 0.55], [0.45, 0.55, 0.9, 0], [0.9, 0, 0.9, 1]],
+  O: [[0, 0, 0.9, 0], [0.9, 0, 0.9, 1], [0.9, 1, 0, 1], [0, 1, 0, 0]],
+};
+function vectorText(c, text, x0, y0, h, a) {
+  const w = h * 0.62, gap = h * 0.3;
+  const segs = [];
+  [...text].forEach((ch, i) => (GLYPH[ch] || []).forEach(([x1, y1, x2, y2]) => segs.push([x0 + i * (w + gap) + x1 * w, y0 + y1 * h, x0 + i * (w + gap) + x2 * w, y0 + y2 * h])));
+  for (const [lw, al] of [[3.2, 0.14], [1.6, 0.35], [0.8, 1]]) {
+    c.strokeStyle = `rgba(130,255,205,${al * a})`; c.lineWidth = lw; c.lineCap = 'round'; c.beginPath();
+    segs.forEach(([x1, y1, x2, y2]) => { c.moveTo(x1 + (Math.random() - 0.5) * 0.3, y1); c.lineTo(x2, y2 + (Math.random() - 0.5) * 0.3); });
+    c.stroke();
+  }
+}
+
 function lights(c, st) {
   const on = st.on;
   if (on <= 0.001) return;
+  monitorScreen(c, st);
 
   // --- oscilloskopet
   const S = SCOPE, mid = S.y + S.h / 2;
@@ -148,19 +263,38 @@ function lights(c, st) {
   for (let i = 1; i < 8; i++) { const x = S.x + S.w * i / 8; c.moveTo(x, S.y); c.lineTo(x, S.y + S.h); }
   for (let i = 1; i < 6; i++) { const y = S.y + S.h * i / 6; c.moveTo(S.x, y); c.lineTo(S.x + S.w, y); }
   c.stroke();
-  const N = 78, pts = [];
-  for (let i = 0; i < N; i++) {
-    const u = i / (N - 1); let v;
-    if (st.playing && st.wave) v = st.wave[Math.floor(u * 620)] * 1.5;
-    else {
-      // ingen signal: en ensam puls som vandrar över skärmen
-      const ph = (st.t * 0.42) % 1.5, d = (u - ph) * 16;
-      v = Math.exp(-d * d) * Math.sin(d * 5) * 0.55 + (Math.sin(i * 12.9898 + st.t * 40) * 43758.5453 % 1) * 0.012;
+  const mode = st.scopeMode || 'wave', pts = [];
+  const live = st.playing && st.wave;
+  if (st.scopeText) {
+    vectorText(c, st.scopeText, S.x + 6, mid - 6, 12, on);
+  } else if (mode === 'xy') {
+    // XY-läge: vänster kanal mot höger, som en Lissajous-figur
+    for (let i = 0; i < 400; i += 2) {
+      const l = live ? st.wave[i] * 1.6 : Math.sin(st.t * 2.1 + i * 0.05) * 0.5, r = live && st.waveR ? st.waveR[i] * 1.6 : Math.sin(st.t * 1.4 + i * 0.075) * 0.5;
+      pts.push([S.x + S.w / 2 + Math.max(-1, Math.min(1, l)) * S.w * 0.42, mid - Math.max(-1, Math.min(1, r)) * S.h * 0.42]);
     }
-    pts.push([S.x + 3 + u * (S.w - 6), mid - Math.max(-1, Math.min(1, v)) * (S.h * 0.42)]);
+  } else if (mode === 'spec') {
+    // spektrum: en stapel per frekvensband
+    const f = st.freq, n = 26, bw = (S.w - 8) / n;
+    for (let i = 0; i < n; i++) {
+      const v = live && f ? f[Math.floor(Math.pow(i / n, 1.6) * 90) + 1] / 255 : 0.04 + Math.random() * 0.03;
+      c.fillStyle = `rgba(120,255,200,${0.85 * on})`; c.fillRect(S.x + 4 + i * bw, S.y + S.h - 4 - v * (S.h - 10), bw - 1, v * (S.h - 10));
+    }
+  } else {
+    const N = 78;
+    for (let i = 0; i < N; i++) {
+      const u = i / (N - 1); let v;
+      if (live) v = st.wave[Math.floor(u * 620)] * 1.5;
+      else {
+        // ingen signal: en ensam puls som vandrar över skärmen
+        const ph = (st.t * 0.42) % 1.5, d = (u - ph) * 16;
+        v = Math.exp(-d * d) * Math.sin(d * 5) * 0.55 + (Math.sin(i * 12.9898 + st.t * 40) * 43758.5453 % 1) * 0.012;
+      }
+      pts.push([S.x + 3 + u * (S.w - 6), mid - Math.max(-1, Math.min(1, v)) * (S.h * 0.42)]);
+    }
   }
   const line = (w, a) => { c.strokeStyle = `rgba(120,255,200,${a * on})`; c.lineWidth = w; c.lineJoin = 'round'; c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.stroke(); };
-  line(4.2, 0.12); line(2.2, 0.3); line(0.95, 1);
+  if (pts.length) { line(4.2, 0.12); line(2.2, 0.3); line(0.95, 1); }
   // glasets reflex
   const rg = c.createLinearGradient(S.x, S.y, S.x + S.w * 0.7, S.y + S.h);
   rg.addColorStop(0, `rgba(200,255,230,${0.07 * on})`); rg.addColorStop(0.35, 'rgba(200,255,230,0)');
