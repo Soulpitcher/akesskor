@@ -324,25 +324,28 @@ body:not(.is-in) .egg, body[data-panel] .egg { pointer-events: none; }
 .fx { position: absolute; display: block; pointer-events: none; }
 .fx-ripple { width: 10px; height: 4px; margin: -2px 0 0 -5px; border: 1px solid rgba(220, 240, 255, 0.6); border-radius: 50%; animation: ripple 1.6s ease-out both; }
 @keyframes ripple { to { transform: scale(9); opacity: 0; } }
-.fx-drop { width: 2px; height: 4px; margin-left: -1px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: rgba(210, 235, 255, 0.85); box-shadow: 0 0 3px rgba(200, 230, 255, 0.7); animation: drop 0.95s cubic-bezier(0.5, 0, 1, 1) both; }
+.fx-drop { width: 3px; height: 5px; margin-left: -1.5px; mix-blend-mode: screen; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: rgba(210, 235, 255, 0.85); box-shadow: 0 0 3px rgba(200, 230, 255, 0.7); animation: drop 0.95s cubic-bezier(0.5, 0, 1, 1) both; }
 @keyframes drop { 0% { transform: translateY(0) scaleY(0.6); opacity: 0; } 15% { opacity: 1; } 96% { transform: translateY(var(--fall)) scaleY(2.4); opacity: 1; } 100% { transform: translateY(var(--fall)) scaleY(0.3) scaleX(4); opacity: 0; } }
-.fx-steam { width: 10px; height: 18px; margin: -18px 0 0 -5px; border-radius: 50%; background: radial-gradient(closest-side, rgba(240, 240, 235, 0.32), transparent); filter: blur(1.5px); animation: steam 2.8s ease-out both; }
+.fx-steam { width: 16px; height: 26px; margin: -26px 0 0 -8px; border-radius: 50%; background: radial-gradient(closest-side, rgba(250, 248, 240, 0.85), rgba(240, 236, 225, 0.35) 55%, transparent); filter: blur(1.6px); mix-blend-mode: screen; animation: steam 2.8s ease-out both; }
 @keyframes steam { 0% { transform: translate(0, 0) scale(0.6); opacity: 0; } 25% { opacity: 1; } 100% { transform: translate(var(--dx), -46px) scale(2.2, 1.6); opacity: 0; } }
-.fx-spark { width: 2px; height: 2px; border-radius: 50%; background: #fff6c8; box-shadow: 0 0 4px #ffcf6a, 0 0 8px #ff9a2a; animation: spark 0.7s ease-in both; }
+.fx-spark { width: 3px; height: 3px; border-radius: 50%; background: #fffdf0; box-shadow: 0 0 3px 2px #ffe08a, 0 0 12px 4px rgba(255, 150, 40, 0.85); mix-blend-mode: screen; animation: spark 0.9s cubic-bezier(0.2, 0.6, 0.6, 1) both; }
 @keyframes spark { to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
 .fx-dust { width: 2px; height: 2px; border-radius: 50%; background: rgba(200, 190, 170, 0.7); animation: dust 2.6s ease-in both; }
 @keyframes dust { to { transform: translate(var(--dx), 160px); opacity: 0; } }
 .fx-beam { width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 246, 214, 0.5), rgba(255, 236, 190, 0.12) 60%, transparent); animation: beam 3.2s ease-in-out both; }
 @keyframes beam { 0% { opacity: 0; transform: translate(30px, 10px) scale(0.6); } 15% { opacity: 1; } 45% { transform: translate(-30px, -6px) scale(0.9); } 70% { transform: translate(14px, 20px) scale(0.8); opacity: 0.9; } 100% { opacity: 0; transform: translate(40px, 0) scale(0.5); } }
-.fx-rat { width: 34px; height: 12px; margin-top: -10px; animation: run 2.4s cubic-bezier(0.4, 0, 0.7, 1) both; }
-.fx-rat::before { /* kropp, huvud och svans som skugga */
-  content: ""; position: absolute; inset: 0; border-radius: 60% 80% 40% 50% / 70% 80% 30% 40%; background: #0a0807;
-  box-shadow: 14px 1px 0 -3px #0a0807, -16px 5px 0 -5px #0a0807, -26px 6px 0 -5.5px #0a0807;
+.fx-rat { width: 40px; height: 14px; margin-top: -12px; animation: run 2.4s linear both; }
+.fx-rat::before { /* kropp, huvud och svans; kanten fångar ljuset från golvet */
+  content: ""; position: absolute; inset: 0; border-radius: 60% 80% 40% 50% / 70% 80% 30% 40%; background: #241c15;
+  box-shadow: inset 0 2px 2px rgba(220, 200, 170, 0.55), 15px 1px 0 -3px #241c15, -18px 6px 0 -5.5px #241c15, -30px 7px 0 -6px #241c15;
+  filter: drop-shadow(0 -1px 0 rgba(230, 210, 180, 0.6)) drop-shadow(0 0 4px rgba(200, 220, 255, 0.25));
   animation: scurry 0.12s steps(2) infinite;
 }
-.fx-rat::after { content: ""; position: absolute; left: -4px; right: -4px; bottom: -4px; height: 4px; border-radius: 50%; background: rgba(0, 0, 0, 0.5); filter: blur(2px); }
+.fx-eye { position: absolute; right: -9px; top: 2px; width: 2px; height: 2px; border-radius: 50%; background: #ffd9a8; box-shadow: 0 0 4px 1px rgba(255, 170, 90, 0.8); }
+.fx-rat--l .fx-eye { right: auto; left: -9px; }
+.fx-rat::after { /* spegling i det blöta golvet */ content: ""; position: absolute; left: -2px; right: -2px; top: 15px; height: 6px; border-radius: 50%; background: rgba(180, 200, 230, 0.18); filter: blur(2px); }
 .fx-rat--l::before { transform: scaleX(-1); }
-@keyframes run { 0% { transform: translateX(0); } 40% { transform: translateX(calc(var(--run) * 0.45)); } 55% { transform: translateX(calc(var(--run) * 0.47)); } 100% { transform: translateX(var(--run)); } }
+@keyframes run { 0% { transform: translateX(0); } 38% { transform: translateX(calc(var(--run) * 0.46)); } 52% { transform: translateX(calc(var(--run) * 0.47)); } 100% { transform: translateX(var(--run)); } }
 @keyframes scurry { 50% { translate: 0 -1px; } }
 .fx-outline { border: 1px dashed rgba(130, 255, 205, 0.85); box-shadow: 0 0 10px rgba(130, 255, 205, 0.4), inset 0 0 10px rgba(130, 255, 205, 0.2); animation: outline 6.5s ease-out both; }
 @keyframes outline { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }

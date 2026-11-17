@@ -214,7 +214,9 @@ export class Eggs {
   /* ----------------------------------------------------------- effekterna -- */
   add(cls, x, y, css = {}, life = 3000) {
     const d = document.createElement('i'); d.className = 'fx ' + cls;
-    Object.assign(d.style, { left: x + 'px', top: y + 'px' }, css);
+    d.style.left = x + 'px'; d.style.top = y + 'px';
+    // egna CSS-variabler (--dx, --run …) måste sättas med setProperty
+    for (const [k, v] of Object.entries(css)) { if (k.startsWith('--')) d.style.setProperty(k, v); else d.style[k] = v; }
     this.layer.appendChild(d); setTimeout(() => d.remove(), life); return d;
   }
   note(id) { this.a.note(NOTES[id]); this.log(id); }
@@ -236,8 +238,9 @@ export class Eggs {
   }
   rat(dir) {
     if (!this.once('rat', 25)) return;
-    const y = rand(880, 925), x0 = dir > 0 ? -40 : 1712;
-    this.add('fx-rat' + (dir < 0 ? ' fx-rat--l' : ''), x0, y, { '--run': (dir > 0 ? 1760 : -1760) + 'px' }, 2600);
+    const y = rand(856, 896), x0 = dir > 0 ? -40 : 1712;
+    const r = this.add('fx-rat' + (dir < 0 ? ' fx-rat--l' : ''), x0, y, { '--run': (dir > 0 ? 1760 : -1760) + 'px' }, 2600);
+    const eye = document.createElement('span'); eye.className = 'fx-eye'; r.appendChild(eye);
     for (let i = 0; i < 9; i++) this.hit({ type: 'bandpass', f: rand(2500, 4200), q: 6, dur: 0.02, gain: 0.05 }, i * 0.09 + rand(0, 0.03));
     setTimeout(() => this.a.toast('We scurry, we scurry…'), 400);
     this.log('critters');
