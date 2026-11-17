@@ -9,7 +9,7 @@
 import { AudioEngine } from '../audio.js';
 import { Plate, PW, PH, LI } from './plate.js';
 import { drawLive, HOT, BTN, Twinkles } from './live.js';
-import { Panels, fmt } from './panels.js';
+import { Panels, fmt, eta } from './panels.js';
 import { Monitor } from './tv.js';
 import { Eggs, ANOMALIES } from './eggs.js';
 
@@ -80,7 +80,7 @@ audio.onfallback = (r) => { if (S.cur === r) { S.missing = true; hud(); } };
 
 function select(r) {
   if (!S.entered) return;
-  if (r.status !== 'available') { sfx('denied'); panels.deny(r); return; }
+  if (r.status !== 'available') { sfx('denied'); panels.deny(r); toast(r.status === 'coming' ? `${r.id} · ${eta(r, true)}` : `${r.id} · Locked. Access denied.`, 2800); return; }
   if (r.type !== 'song' && !r.audio) { // en berättelse utan ljud: läses i skrivarna
     audio.unload(); S.cur = r; S.missing = false; sfx('clunk'); setPlaying(false); show('rec'); return;
   }
@@ -357,7 +357,12 @@ function frame(ms) {
   let lv = audio.ready ? audio.levels() : ZERO;
   // en video spelar i rummet: vi hör den inte härifrån, så rummet får en jämn puls
   if (S.video && !S.playing) { const p = Math.pow(Math.max(0, Math.sin(clock * 3.6)), 4); lv = { l: 0.3 + p * 0.4, r: 0.28 + p * 0.4, bass: 0.15 + p * 0.5 }; }
-  if (S.playing && (audio.ended || (!audio.playing && audio.mode !== 'file'))) setPlaying(false);
+  if (S.playing && (audio.ended || (!audio.playing && audio.mode !== 'file'))) {
+    // låten är slut: släpp motorn och gå vidare till nästa släppta låt efter en kort paus
+    audio.pause(); setPlaying(false);
+    const done = S.cur, i = AVAIL.indexOf(done), next = AVAIL[(i + 1) % AVAIL.length];
+    if (next && next !== done && next.type === 'song') setTimeout(() => { if (S.cur === done && !S.playing && !S.video) select(next); }, 2200);
+  }
 
   // nålar, kurvans historik och gnistrande rutor
   const tg = S.playing ? [lv.l, lv.r, Math.min(1, lv.bass * 1.5), (lv.l + lv.r) / 2, lv.l, lv.r] : null;
@@ -378,7 +383,7 @@ function frame(ms) {
 
   view(dt);
   tipUpdate();
-  eggs?.tick(S.playing || S.video || !!panels.open);
+  if (S.entered) eggs?.tick(S.playing || S.video || !!panels.open);
   S.reelA += dt * ((S.playing ? 2.4 : 0) + (eggs ? eggs.reelBoost * 3 : 0));
   if (plate) {
     const L = lights(dt, clock, lv);

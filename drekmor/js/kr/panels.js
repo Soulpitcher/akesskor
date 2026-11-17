@@ -11,6 +11,16 @@ const TYPE = { song: 'Track', interview: 'Interview', story: 'Story' };
 const LINKS = { spotify: 'Spotify', apple: 'Apple Music', youtube_video: 'YouTube', youtube: 'YouTube', tidal: 'Tidal', deezer: 'Deezer', amazon: 'Amazon Music', bandcamp: 'Bandcamp' };
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const date = (d) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ''); return m ? `${+m[3]} ${MONTHS[+m[2] - 1]} ${m[1]}` : ''; };
+/** Text för ett kommande släpp: nedräkning om datumet är satt, annars "Date TBA". */
+export function eta(rel, long) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(rel.releaseDate || '');
+  if (!m) return long ? 'Not released yet. Date to be announced.' : 'Date TBA';
+  const d = new Date(+m[1], +m[2] - 1, +m[3]), now = new Date(); now.setHours(0, 0, 0, 0);
+  const days = Math.round((d - now) / 86400000);
+  if (days > 1) return long ? `Not released yet. Arrives in ${days} days (${date(rel.releaseDate)}).` : `Online in ${days} days`;
+  if (days === 1) return long ? 'Not released yet. Arrives tomorrow.' : 'Online tomorrow';
+  return long ? 'Arriving any moment now.' : 'Stand by';
+}
 export const fmt = (s) => { s = Math.max(0, Math.floor(s || 0)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 
 /** Sliten emaljplåt, ritad en gång och använd som bakgrund på skåpen. */
@@ -76,9 +86,10 @@ export class Panels {
             b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span><span class="tile__k">${esc(kind)}${rel.duration ? ' · ' + esc(rel.duration) : ''}</span>`;
             b.setAttribute('aria-label', `${rel.id} ${rel.title}, ${kind.toLowerCase()}. ${reads ? 'Read' : 'Play'}.`);
           } else if (rel.status === 'coming') {
-            b.classList.add('is-coming'); if (next) { b.classList.add('is-next'); next = false; }
-            b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span>${g.key === 'extra' ? `<span class="tile__k">${esc(kind)}</span>` : ''}<span class="tile__tape">Out of order</span>`;
-            b.setAttribute('aria-label', `${rel.id} ${rel.title}. Not released yet.`);
+            const isNext = next; next = false;
+            b.classList.add('is-coming'); if (isNext) b.classList.add('is-next');
+            b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span>${g.key === 'extra' ? `<span class="tile__k">${esc(kind)}</span>` : ''}<span class="tile__tape">${esc(isNext ? eta(rel) : 'Out of order')}</span>`;
+            b.setAttribute('aria-label', `${rel.id} ${rel.title}. ${eta(rel, true)}`);
           } else {
             b.classList.add('is-locked');
             b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span>`;

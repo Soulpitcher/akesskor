@@ -18,7 +18,8 @@
                 "interview" = intervju   (spelas upp + transkript i omslaget)
                 "story"     = berättelse (läses – text om Drekmor-världen)
    status       "available" = går att spela / läsa nu
-                "coming"    = teaser, syns i arkivet men är inte släppt än
+                "coming"    = teaser, syns i arkivet men är inte släppt än.
+                              Med releaseDate ifyllt räknar tablån ner dagarna.
                 "locked"    = låst kassett (hänglås) – mystik / kommande signal
    accent       Kassettens färg (hex). Ger varje släpp sitt eget uttryck.
    featured     används inte längre: alla släpp står på rad framför däcket, fyra per sida, i filens ordning
@@ -320,8 +321,11 @@ It will never, never, never be the same`
   },
 
   /* ------------------------------------------------------------------ D-04
-     Låst kassett – mysterium / nästa hemlighet.                             */
-  { id: "D-04", title: "Locked / Unknown Signal", type: "story", status: "locked", accent: "#5b6169", featured: true, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "The signal is encrypted. For now.", credits: [], text: "" },
+     Nästa singel. Inget datum bekräftat än: lämna releaseDate tom så står det
+     "Date TBA". Fyll i datumet ("ÅÅÅÅ-MM-DD") när det är klart, så räknar
+     tablån ner dagarna. Titel, omslag, ljud och text läggs in först på
+     släppdagen, samtidigt som status ändras till "available".               */
+  { id: "D-04", title: "Unknown Signal", type: "song", status: "coming", accent: "#5b6169", featured: true, releaseDate: "", duration: "", audio: null, cover: null, links: {}, notes: "The next signal. The date is not confirmed yet.", credits: [], text: "" },
 
   /* ------------------------------------------------------------------ D-05…
      Platser för berättelser, intervjuer och kommande låtar.

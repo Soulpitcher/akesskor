@@ -70,7 +70,7 @@ export class Monitor {
   }
   setPlaying(on) { if (on === this.playing) return; this.playing = on; this.h.onplay(on); }
 
-  pause() { try { this.frame?.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*'); } catch (e) {} }
+  pause() { try { this.frame?.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*'); } catch (e) {} this.setPlaying(false); }
 
   stop(keepState) {
     this.frame = null; this.screen.innerHTML = '';
