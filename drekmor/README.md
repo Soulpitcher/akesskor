@@ -46,6 +46,29 @@ Alla mått är i bildens pixlar vid 1672 × 941. Den nuvarande filen är
 retuscherad: kassetterna är borttagna och kassettdäcket i pulten är ersatt med
 DREKMOR-skylten. Bildskärmen i väggen ritas ovanpå bilden.
 
+## Inför lansering (kontrollrummet)
+
+Sidan är inte publicerad. Det här behöver göras när ni bestämt er, lämpligen
+inför nästa släpp:
+
+1. **Ljudfiler:** lägg `d01-blacked-out-beacon.mp3` och `d02-midnight-call.mp3`
+   i `assets/` (Silent Alarm finns redan). Saknas en fil spelar rummet en
+   demosignal och statusraden visar "Demo signal".
+2. **Nästa singel (D-04 i `releases.js`):** fyll i `releaseDate` när datumet är
+   bekräftat, så räknar tablån ner. På släppdagen: titel, omslag, ljud, text,
+   medverkande, länkar och eventuell `video`, och `status: "available"`.
+3. **Adress:** bestäm var sidan ska ligga. Ska den ersätta nuvarande
+   drekmor.com behöver `kontrollrum.html` bli `index.html` i det Vercel-projekt
+   som har domänen, tillsammans med `css/`, `js/`, `fonts/`, `assets/` och
+   `releases.js`. Release-sidorna på drekmor.com (`/silent-alarm` osv.) bör
+   ligga kvar eller pekas om, så att gamla länkar fungerar.
+4. **Sökmotorer:** ta bort `<meta name="robots" content="noindex">` och
+   kontrollera `canonical`, `og:url` och `og:image` i `kontrollrum.html`.
+5. **Prova på riktig domän:** YouTube-videorna på bildskärmen, nedladdning av
+   MP3, mobil (iPhone och Android) och en äldre dator.
+6. **Trafik:** varje hel lyssning är cirka 10 MB. Kontrollera vad som ingår i
+   er Vercel-plan.
+
 Tangenter: 1–8 välj låt · Mellanslag spela/paus · T tracks · E extras · S recorders ·
 V monitor · O about · ←/→ föregående/nästa · J/L spola · ↑/↓ volym · M ljud · Esc stäng.
 
