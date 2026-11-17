@@ -263,7 +263,8 @@ export class Eggs {
   geiger(on) {
     clearInterval(this.gT); if (!on) return;
     let n = 0;
-    const tick = () => { n++; this.hit({ type: 'highpass', f: 3200, dur: 0.006, gain: 0.32 }); clearInterval(this.gT); this.gT = setTimeout(tick, Math.max(25, rand(40, 420) / (1 + n * 0.06))); };
+    const t0 = performance.now();
+    const tick = () => { n++; this.hit({ type: 'highpass', f: 3200, dur: 0.006, gain: 0.32 }); clearInterval(this.gT); if (performance.now() - t0 < 6000) this.gT = setTimeout(tick, Math.max(25, rand(40, 420) / (1 + n * 0.06))); };
     tick();
   }
   buzz() {

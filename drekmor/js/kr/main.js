@@ -258,7 +258,7 @@ function buildWorld() {
   hot('tv', HOT.tv, 'Monitor: videos', () => show('tv'));
   hot('rec', HOT.rec, 'Recorders: the track and the log', () => show('rec'));
   const door = hot('door', HOT.door, 'About Drekmor', () => show('om'));
-  door.addEventListener('pointerenter', () => eggs?.doorHover(true)); door.addEventListener('pointerleave', () => eggs?.doorHover(false));
+  door.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') eggs?.doorHover(true); }); door.addEventListener('pointerleave', () => eggs?.doorHover(false));
   for (const mk of MARKS) {
     const n = document.createElement('span'); n.className = 'mark'; n.textContent = mk.label; n.dataset.hot = mk.hot;
     n.addEventListener('click', mk.act); marks.appendChild(n); mk.el = n;
