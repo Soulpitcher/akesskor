@@ -319,6 +319,7 @@ addEventListener('resize', layout);
 addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.key === 'Escape') { close(); return; }
+  if (e.key === 'Tab') { trapTab(e); return; }
   if (!S.entered) return;
   const tag = e.target.tagName;
   if (e.key === ' ' && tag === 'BUTTON') return;
@@ -329,6 +330,20 @@ addEventListener('keydown', (e) => {
   if (/^[a-z]$/.test(k) && eggs && tag !== 'INPUT') { eggs.letter(k, () => shortcut(k, e)); return; }
   shortcut(k, e);
 });
+// Tab stannar inne i den öppna panelen (och i ingången), som i en vanlig dialogruta.
+// Musen påverkas inte: statusraden går fortfarande att klicka på.
+function trapTab(e) {
+  const box = panels.open ? panels[panels.open] : !S.entered ? $('#gate') : null;
+  if (!box) return;
+  const list = [...box.querySelectorAll('button, a[href], [tabindex]:not([tabindex="-1"]), iframe')]
+    .filter((el) => !el.disabled && !el.closest('[hidden]') && el.getClientRects().length);
+  if (!list.length) return;
+  const i = list.indexOf(document.activeElement), n = list.length;
+  if (i < 0 || (e.shiftKey && i === 0) || (!e.shiftKey && i === n - 1)) {
+    e.preventDefault();
+    list[i < 0 ? (e.shiftKey ? n - 1 : 0) : e.shiftKey ? n - 1 : 0].focus({ preventScroll: true });
+  }
+}
 function shortcut(k, e) {
   switch (k) {
     case 't': panels.open === 'tabla' && panels.tabla.dataset.mode === 'songs' ? close() : show('tabla', 'songs'); break;
@@ -418,10 +433,15 @@ function tipUpdate() {
 }
 
 /* =================================================================== start */
-function enter(muted) {
+// medan ingången visas går rummet bakom inte att nå med tangentbordet
+const behind = () => [stage, $('.top'), $('#hud')];
+function enter(muted, byKey) {
   if (S.entered) return;
   audio.init(); mute(!!muted);
   S.entered = true; document.body.classList.remove('is-gate'); document.body.classList.add('is-in');
+  for (const el of behind()) el.inert = false;
+  // den som gick in med tangentbordet hamnar på första klickytan i stället för ingenstans
+  if (byKey) world.querySelector('.hot')?.focus({ preventScroll: true });
   eggs?.init();
   // bildskärmen i väggen: en tyst slinga från Silent Alarm
   loop = document.createElement('video'); loop.muted = true; loop.loop = true; loop.playsInline = true; loop.preload = 'auto';
@@ -431,8 +451,8 @@ function enter(muted) {
   $('#gate').addEventListener('transitionend', () => ($('#gate').hidden = true), { once: true });
   setTimeout(() => ($('#gate').hidden = true), 1400);
 }
-$('#enter').addEventListener('click', () => enter(false));
-$('#enter-mute').addEventListener('click', () => enter(true));
+$('#enter').addEventListener('click', (e) => enter(false, e.detail === 0));
+$('#enter-mute').addEventListener('click', (e) => enter(true, e.detail === 0));
 
 async function boot() {
   buildWorld();
@@ -445,6 +465,7 @@ async function boot() {
   requestAnimationFrame((ms) => { last = ms; frame(ms); });
   document.body.classList.remove('is-loading'); document.body.classList.add('is-gate');
   $('#gate-load').hidden = true; $('#gate-go').hidden = false;
+  if (!S.entered) { for (const el of behind()) el.inert = true; $('#enter').focus({ preventScroll: true }); }
   window.__kr = { S, V, audio, select, show, close, enter, get eggs() { return eggs; }, monitor };
   const title = document.title;
   document.addEventListener('visibilitychange', () => { document.title = document.hidden ? 'Signal lost…' : title; });
