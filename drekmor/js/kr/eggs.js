@@ -481,13 +481,13 @@ export class Eggs {
     this.lastInput = performance.now();
     if (this.stillThere) { this.stillThere = false; this.fx.dimT = 0; this.monMessage = null; }
   }
-  tick(busy) {
+  tick(busy, dt = 0.016) {
     const t = performance.now(), idle = (t - this.lastInput) / 1000;
     if (this.scopeText && t > this.scopeTextUntil) this.scopeText = null;
     if (this.monMessage && this.monMessage.until && t > this.monMessage.until) this.monMessage = null;
     if (this.fx.red && t > this.fx.redUntil) this.fx.red = null;
     if (this.fx.sky && t > this.fx.skyUntil) this.fx.sky = null;
-    this.reelBoost = Math.max(0, this.reelBoost - 0.016 * 2.5);
+    this.reelBoost = Math.max(0, this.reelBoost - dt * 2.5);
     if (busy) { this.lastInput = Math.max(this.lastInput, t - 30000); return; }
     if (idle > 50 && !this.rang) this.ring();
     if (idle > 150 && !this.stillThere) {

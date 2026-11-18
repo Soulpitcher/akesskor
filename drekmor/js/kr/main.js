@@ -278,7 +278,7 @@ function layout() {
   const r = stage.getBoundingClientRect(); V.sw = r.width; V.sh = r.height;
   if (V.portrait && panels.open === 'tabla') panels.hide(true);
   panels.buildTabla();
-  plate?.resize(V.sw, V.sh, Math.min(2, devicePixelRatio || 1));
+  plate?.resize(V.sw, V.sh, Q.dpr);
   view(0, true);
 }
 function view(dt, force) {
@@ -364,10 +364,30 @@ function shortcut(k, e) {
 /* ================================================================= bildrutan */
 let last = 0, frameNo = 0, histT = 0;
 const ZERO = { l: 0, r: 0, bass: 0 };
+/* Upplösning: rummet ritas i upp till dubbel skärmskärpa. Hinner datorn inte med
+   (under ungefär 40 bilder i sekunden) sänks skärpan ett steg i taget.
+   Blev det inte snabbare av sänkningen är det skärmen som begränsar (till exempel
+   strömsparläge på 30 bilder i sekunden), och då återställs skärpan. */
+const Q = { dpr: Math.min(2, devicePixelRatio || 1), acc: 0, n: 0, wait: 1.5, prev: 0, done: false };
+function quality(raw) {
+  if (Q.done || !plate || !S.entered || raw > 1) return;     // längre uppehåll (felsökning, sömn) räknas inte
+  if ((Q.wait -= raw) > 0) return;                           // låt rummet starta först
+  Q.acc += raw; Q.n++;
+  if (Q.acc < 2) return;
+  const avg = Q.acc / Q.n; Q.acc = Q.n = 0;
+  if (Q.prev && avg > Q.prev.avg * 0.85) { Q.dpr = Q.prev.dpr; Q.done = true; plate.resize(V.sw, V.sh, Q.dpr); return; }
+  if (avg <= 1 / 40) { Q.prev = 0; return; }                 // hinner med: fortsätt bara att lyssna
+  if (Q.dpr <= 0.75) { Q.done = true; return; }
+  Q.prev = { dpr: Q.dpr, avg };
+  Q.dpr = Math.max(0.75, Q.dpr > 1 ? Q.dpr - 0.5 : 0.75);
+  plate.resize(V.sw, V.sh, Q.dpr); Q.wait = 1;
+}
 function frame(ms) {
   requestAnimationFrame(frame);
   if (document.hidden) { last = ms; return; }
-  const dt = Math.min(0.1, (ms - last) / 1000 || 0.016); last = ms; clock += dt; frameNo++;
+  const raw = (ms - last) / 1000;
+  const dt = Math.min(0.1, raw || 0.016); last = ms; clock += dt; frameNo++;
+  if (raw > 0) quality(raw);
   audio.tick(dt);
   let lv = audio.ready ? audio.levels() : ZERO;
   // en video spelar i rummet: vi hör den inte härifrån, så rummet får en jämn puls
@@ -398,7 +418,7 @@ function frame(ms) {
 
   view(dt);
   tipUpdate();
-  if (S.entered) eggs?.tick(S.playing || S.video || !!panels.open);
+  if (S.entered) eggs?.tick(S.playing || S.video || !!panels.open, dt);
   S.reelA += dt * ((S.playing ? 2.4 : 0) + (eggs ? eggs.reelBoost * 3 : 0));
   if (plate) {
     const L = lights(dt, clock, lv);
@@ -466,7 +486,7 @@ async function boot() {
   document.body.classList.remove('is-loading'); document.body.classList.add('is-gate');
   $('#gate-load').hidden = true; $('#gate-go').hidden = false;
   if (!S.entered) { for (const el of behind()) el.inert = true; $('#enter').focus({ preventScroll: true }); }
-  window.__kr = { S, V, audio, select, show, close, enter, get eggs() { return eggs; }, monitor };
+  window.__kr = { S, V, Q, audio, select, show, close, enter, get eggs() { return eggs; }, monitor };
   const title = document.title;
   document.addEventListener('visibilitychange', () => { document.title = document.hidden ? 'Signal lost…' : title; });
   console.log('%cDREKMOR', 'font: 32px/1 "Bebas Neue", Impact, sans-serif; letter-spacing: .3em; color: #9fe8c8; background: #050706; padding: 10px 18px;');
