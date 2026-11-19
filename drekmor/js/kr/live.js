@@ -6,6 +6,8 @@
      'ljus' – sådant som lyser av sig självt (kurvan, tända knappar, tablårutor)
    ============================================================================= */
 
+import { drawIdent } from './ident.js';
+
 /** Klickytor i bilden: [x, y, bredd, höjd]. */
 export const HOT = {
   tablaL: [283, 518, 218, 104],
@@ -197,9 +199,8 @@ const nctx = noise.getContext('2d'), nimg = nctx.createImageData(48, 34);
 const SW = 174, SH = 138;
 const scr = document.createElement('canvas'); scr.width = SW; scr.height = SH;
 const sctx = scr.getContext('2d');
-const IDENT = { cols: 4, w: 300, h: 238, frames: 16, fps: 8.33 };
 const rand = (a, b) => a + Math.random() * (b - a);
-const mf = { t: 0, roll: null, nextRoll: 6, drop: null, nextDrop: 11, jit: null, stutter: 0, frame: 0, twitch: null, nextTwitch: 9 };
+const mf = { t: 0, it: 0, roll: null, nextRoll: 6, drop: null, nextDrop: 11, jit: null, stutter: 0, twitch: null, nextTwitch: 9 };
 
 function screenContent(m, t, rm) {
   const g = sctx;
@@ -208,11 +209,9 @@ function screenContent(m, t, rm) {
   if (m.mode === 'static') {
     for (let i = 0; i < nimg.data.length; i += 4) { const v = Math.random() * 210; nimg.data[i] = nimg.data[i + 1] = nimg.data[i + 2] = v; nimg.data[i + 3] = 255; }
     nctx.putImageData(nimg, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(noise, 0, 0, SW, SH); g.imageSmoothingEnabled = true;
-  } else if (m.mode === 'ident' && m.sprite?.complete && m.sprite.naturalWidth) {
-    // D-loggan snurrar; ibland hakar den upp sig på samma bildruta
-    if (!rm && Math.random() > mf.stutter) mf.frame = Math.floor(t * IDENT.fps) % IDENT.frames;
-    const i = rm ? 0 : mf.frame, sx = (i % IDENT.cols) * IDENT.w, sy = Math.floor(i / IDENT.cols) * IDENT.h;
-    g.drawImage(m.sprite, sx, sy, IDENT.w, IDENT.h, -4, -3, SW + 8, SH + 6);
+  } else if (m.mode === 'ident') {
+    // D-loggan vänder sig; ibland hakar den upp sig en stund (mf.it står still)
+    drawIdent(g, SW, SH, mf.it, rm);
   } else if (m.mode === 'video' && m.cover) {
     g.globalAlpha = 0.85; g.drawImage(m.cover, 0, (SH - SW) / 2, SW, SW);
     g.globalAlpha = 0.14; g.fillStyle = '#fff'; g.fillRect(0, ((t * 60) % (SH + 40)) - 20, SW, 12);
@@ -237,7 +236,8 @@ function faults(t, rm) {
   if (mf.drop && t > mf.drop.until) mf.drop = null;
   if (!mf.jit && Math.random() < dt * 0.9) mf.jit = { until: t + rand(0.05, 0.22), bands: Array.from({ length: 1 + Math.floor(Math.random() * 3) }, () => ({ y: rand(0, SH), h: rand(4, 26), dx: rand(-9, 9) })) };
   if (mf.jit && t > mf.jit.until) mf.jit = null;
-  mf.stutter = Math.random() < dt * 0.25 ? 0.92 : Math.max(0, mf.stutter - dt * 2);
+  mf.stutter = Math.random() < dt * 0.08 ? rand(0.35, 0.7) : Math.max(0, mf.stutter - dt);
+  if (mf.stutter <= 0) mf.it += dt;
 }
 
 function monitorScreen(c, st) {
@@ -250,8 +250,8 @@ function monitorScreen(c, st) {
     if (mf.twitch && t > mf.twitch.until) mf.twitch = null;
     if (mf.twitch && on > 0.5) {
       c.save(); rr(c, M.gx, M.gy, M.gw, M.gh, M.r); c.clip();
-      c.fillStyle = 'rgba(170,210,235,0.22)'; c.fillRect(M.gx, M.gy + M.gh * mf.twitch.y, M.gw, 1.2);
-      c.fillStyle = 'rgba(170,210,235,0.05)'; c.fillRect(M.gx, M.gy + M.gh * mf.twitch.y - 3, M.gw, 7);
+      c.fillStyle = 'rgba(170,235,210,0.22)'; c.fillRect(M.gx, M.gy + M.gh * mf.twitch.y, M.gw, 1.2);
+      c.fillStyle = 'rgba(170,235,210,0.05)'; c.fillRect(M.gx, M.gy + M.gh * mf.twitch.y - 3, M.gw, 7);
       c.restore();
     }
     return;
@@ -264,8 +264,8 @@ function monitorScreen(c, st) {
   // påslagning: en prick blir ett streck som vecklar ut sig till hela bilden
   if (since < 0.45 && !rm) {
     const k = since / 0.45, lw = Math.min(1, k / 0.35) * M.gw, lh = k < 0.35 ? 1.2 : 1.2 + ((k - 0.35) / 0.65) * M.gh;
-    c.fillStyle = `rgba(225,240,255,${0.9 * on})`; c.fillRect(cx - lw / 2, cy - lh / 2, lw, lh);
-    glow(c, cx, cy, 30, '200,225,255', 0.5 * on);
+    c.fillStyle = `rgba(220,255,238,${0.9 * on})`; c.fillRect(cx - lw / 2, cy - lh / 2, lw, lh);
+    glow(c, cx, cy, 30, '190,255,225', 0.5 * on);
     c.restore(); return;
   }
   const fadeIn = rm ? 1 : Math.min(1, (since - 0.45) / 0.5);
@@ -291,10 +291,10 @@ function monitorScreen(c, st) {
     blit(yy); if (off) { blit(yy - M.gh); c.globalAlpha = 1; c.fillStyle = '#000'; c.fillRect(M.gx, yy - 2.5, M.gw, 3); }
     if (mf.drop) {
       c.globalAlpha = mf.drop.kind === 'flash' ? 0.5 * on : 0.6 * on;
-      if (mf.drop.kind === 'flash') { c.fillStyle = '#dfefff'; c.fillRect(M.gx, M.gy, M.gw, M.gh); }
+      if (mf.drop.kind === 'flash') { c.fillStyle = '#dcffee'; c.fillRect(M.gx, M.gy, M.gw, M.gh); }
       else { screenContent({ mode: 'static' }, t, rm); c.drawImage(scr, M.gx, M.gy, M.gw, M.gh); }
     }
-    if (fadeIn < 1) { c.globalAlpha = (1 - fadeIn) * 0.7 * on; c.fillStyle = '#dceaff'; c.fillRect(M.gx, M.gy, M.gw, M.gh); }
+    if (fadeIn < 1) { c.globalAlpha = (1 - fadeIn) * 0.7 * on; c.fillStyle = '#dcffee'; c.fillRect(M.gx, M.gy, M.gw, M.gh); }
   }
   // brumrand som långsamt vandrar uppåt, skanlinjer och glasets kanter
   c.globalAlpha = 1;
@@ -306,7 +306,7 @@ function monitorScreen(c, st) {
   rg.addColorStop(0, 'rgba(220,240,255,0.07)'); rg.addColorStop(0.4, 'rgba(220,240,255,0)'); c.fillStyle = rg; c.fillRect(M.gx, M.gy, M.gw, M.gh);
   c.restore();
   // skenet på väggen runt skärmen
-  const tint = m.mode === 'message' ? '90,220,160' : m.mode === 'test' ? '200,200,210' : '80,150,215';
+  const tint = m.mode === 'test' ? '200,200,210' : m.mode === 'video' ? '150,175,190' : '80,215,165';
   glow(c, cx, cy, 78, tint, (mf.drop?.kind === 'black' ? 0.01 : 0.075) * on * flick);
 }
 

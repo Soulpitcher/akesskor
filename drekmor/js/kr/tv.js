@@ -6,9 +6,12 @@
    postMessage, så att rummet vet när en video går.
    ============================================================================= */
 
+import { drawIdent } from './ident.js';
+
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const YT = 'https://www.youtube-nocookie.com';
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export class Monitor {
   /** h: { audio, onplay(bool), sfx(name), found(id) } */
@@ -28,10 +31,31 @@ export class Monitor {
     addEventListener('message', (e) => this.onMessage(e));
   }
 
-  /** Öppna skärmen på en viss kanal (släppets id) eller den senast valda. */
+  /** Öppna skärmen på en viss kanal (släppets id), annars på D-loggan tills man väljer kanal. */
   open(id) {
     const i = id ? this.channels.findIndex((c) => c.id === id) : -1;
-    this.tune(i >= 0 ? i : this.ch, true);
+    if (i >= 0) this.tune(i, true); else this.idle();
+  }
+
+  /** D-loggan snurrar på skärmen, samma som på skärmen i väggen. */
+  idle() {
+    this.stop(true);
+    this.state = 'ident';
+    this.buttons.forEach((b) => b.classList.remove('is-on'));
+    const cv = document.createElement('canvas'); cv.className = 'tvtest'; cv.width = 960; cv.height = 720;
+    cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', 'The Drekmor logo turning on the screen. Pick a channel below.');
+    this.screen.prepend(cv);
+    const g = cv.getContext('2d'), t0 = performance.now();
+    const draw = () => {
+      const t = (performance.now() - t0) / 1000;
+      drawIdent(g, 960, 720, t, RM);
+      g.fillStyle = `rgba(120,240,190,${RM ? 0.7 : 0.45 + 0.25 * (Math.sin(t * 2.4) > 0)})`;
+      g.font = '22px "Space Mono", monospace'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+      g.fillText('SELECT CHANNEL', 480, 680);
+      this.raf = requestAnimationFrame(draw);
+    };
+    draw();
+    this.static(300);
   }
 
   tune(i, quiet) {

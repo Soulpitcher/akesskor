@@ -14,10 +14,11 @@ släckas och tändas för sig, golvet skimrar och damm svävar i ljusstrålen.
 - **Låtinformationen:** de två skrivarfönstren på väggen. *Signal* visar
   omslaget, titeln och kurvan som pennan ritar. *Log* visar medverkande,
   datum, länkar, nedladdning av MP3 och texten.
-- **Bildskärmen** i bortre väggen är avstängd tills någon klickar på den. Då
-  slås den på med en gammal bildrörsknäpp och visar bandets snurrande D-logga,
-  med fel som hör till en sliten skärm: bilden rullar ibland, ränder hoppar i
-  sidled och signalen faller bort en kort stund. Strax efter öppnas närbilden: en kanal per släpp som har
+- **Bildskärmen** i bortre väggen slås på med en gammal bildrörsknäpp strax
+  efter att man gått in, och visar bandets gröna D-logga som vänder sig, med fel
+  som hör till en sliten skärm: bilden rullar ibland, ränder hoppar i sidled och
+  signalen faller bort en kort stund. Klick öppnar närbilden, där loggan snurrar
+  tills man väljer kanal: en kanal per släpp som har
   `video` i `releases.js`, plus en testbild. Videorna bäddas in från
   youtube-nocookie.com och laddas först när man trycker på play. Medan en video
   går pausas musiken och rummet pulserar i jämn takt (sidan kan inte läsa
@@ -37,6 +38,7 @@ släckas och tändas för sig, golvet skimrar och damm svävar i ljusstrålen.
 | `js/kr/live.js`        | Det som rör sig i bilden: kurva, nålar, papper, knappar, bildskärm, spolar. Klickytornas lägen. |
 | `js/kr/panels.js`      | Närbilderna: tablån, skrivarna och anslaget (vanlig HTML).      |
 | `js/kr/tv.js`          | Bildskärmens närbild: kanaler, YouTube, testbild.               |
+| `js/kr/ident.js`       | D-loggan på bildskärmen (väggen och närbilden).                 |
 | `js/kr/eggs.js`        | Avvikelserna: platser, effekter, ljud, lappar och loggen.       |
 
 Delar `releases.js`, `js/audio.js`, `fonts/` och omslagen med arkivsidan nedan.

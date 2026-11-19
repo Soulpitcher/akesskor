@@ -34,8 +34,6 @@ let plate = null;
 const covers = new Map(), twinkles = new Twinkles(), hist = [];
 const needles = new Float32Array(6);
 let eggs = null;
-// D-loggan som snurrar på bildskärmen i väggen (16 bildrutor i ett rutnät)
-const ident = new Image(); ident.decoding = 'async';
 
 /* ================================================================ panelerna */
 const panels = new Panels(RELEASES, {
@@ -64,8 +62,7 @@ function note(html) {
 function show(name, mode = 'songs') {
   if (!S.entered) return;
   if (name === 'tv') {
-    // första gången slås skärmen på i rummet; närbilden öppnas när den har värmts upp
-    if (monPower() && !panels.open && !RM) { V.zoomT = 1.1; setTimeout(() => { if (!panels.open) show('tv', mode); }, 1000); return; }
+    monPower();
     panels.show('tv'); monitor.open(mode !== 'songs' ? mode : null); V.zoomT = 1.1; return;
   }
   if (name === 'tabla' && V.portrait) { // på stående skärm ligger båda tablåerna redan framme under rummet
@@ -444,17 +441,21 @@ function frame(ms) {
   hudTime(clock);
   panels.tick(hist, S.cur ? audio.progress : 0, S.playing);
 }
-/** Bildskärmen i väggen är avstängd tills någon slår på den. */
-function monPower() { if (S.monOn) return false; S.monOn = true; S.monAt = clock; sfx('crt'); return true; }
+/** Bildskärmen i väggen slås på strax efter att man gått in (och är avstängd vid ingången). */
+function monPower(delay = 0) {
+  if (S.monOn) return false;
+  S.monOn = true; S.monAt = clock + delay;
+  setTimeout(() => sfx('crt'), delay * 1000); return true;
+}
 function monState() {
   if (!S.entered) return { mode: 'off' };
   const since = clock - S.monAt;
   if (eggs && eggs.monStaticUntil > performance.now()) return { mode: 'static', since: 99 };
   if (eggs?.monMessage) return { mode: 'message', lines: eggs.monMessage.lines, since: 99 };
-  if (!S.monOn) return { mode: 'off' };
+  if (!S.monOn || since < 0) return { mode: 'off' };
   if (monitor.state === 'test') return { mode: 'test', since };
   if (monitor.state === 'video' || monitor.state === 'poster') return { mode: 'video', cover: covers.get(monitor.channels[monitor.ch]?.id), since };
-  return { mode: 'ident', sprite: ident, since };
+  return { mode: 'ident', since };
 }
 function tipUpdate() {
   const key = S.hoverKey, has = key && !MARKS.some((m) => m.hot === key && !(V.portrait && key.startsWith('tabla')));
@@ -475,6 +476,7 @@ function enter(muted, byKey) {
   eggs?.init();
   if (!RM) S.glitch = 0.8;
   sfx('power');
+  monPower(0.9); // bildskärmen i väggen värms upp strax efter rummet
   $('#gate').addEventListener('transitionend', () => ($('#gate').hidden = true), { once: true });
   setTimeout(() => ($('#gate').hidden = true), 1400);
 }
@@ -488,7 +490,6 @@ async function boot() {
   plate = Plate.create($('#gl'), img);
   if (!plate) { document.body.classList.add('nogl'); world.style.backgroundImage = `url(${img.src})`; }
   layout();
-  ident.src = 'assets/monitor-ident.jpg';
   for (const r of RELEASES) if (r.cover && r.status === 'available') { const c = new Image(); c.onload = () => covers.set(r.id, c); c.src = r.cover; }
   requestAnimationFrame((ms) => { last = ms; frame(ms); });
   document.body.classList.remove('is-loading'); document.body.classList.add('is-gate');

@@ -30,5 +30,5 @@ ljudfilen och texten redan finns – ändra till `"available"` på släppdagen.
 | Fil                                   | Innehåll                                                   |
 |---------------------------------------|------------------------------------------------------------|
 | `crew-*.jpg`, `drekmor-pressrelease.pdf`, `drekmor-favicon.jpg` | Från drekmor.com (id-korten, pressrelease, ikon). |
-| `monitor-ident.jpg`                   | Bandets snurrande D-logga för väggskärmen: 16 bildrutor i ett rutnät 4 × 4 (300 × 238 per ruta), från bandets GIF. |
+| `monitor-d.png`                       | D:et ur bandets gröna logga, med genomskinlig bakgrund. Rutnätet ritas i koden och D:et vänds där (`js/kr/ident.js`). |
 | `kontrollrum.webp`                    | Kontrollrummet (bandets egen bild, med bildskärmen målad i bortre väggen). Byts bilden måste den vara 1672 × 941 och ha allt på samma plats, annars behöver koordinaterna i `js/kr/live.js` och `js/kr/eggs.js` ses över. |
