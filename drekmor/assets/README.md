@@ -14,8 +14,8 @@ Nedskalade till 1500×1500 JPG. Nya omslag: kvadrat, minst 1000×1000.
 
 | Fil                                 | Släpp               |
 |-------------------------------------|---------------------|
-| `d01-blacked-out-beacon.mp3`        | Blacked Out Beacon  |
-| `d02-midnight-call.mp3`             | Midnight Call       |
+| `d01-blacked-out-beacon.mp3` (på plats) | Blacked Out Beacon  |
+| `d02-midnight-call.mp3` (på plats)  | Midnight Call       |
 | `d03-silent-alarm.mp3` (på plats)   | Silent Alarm        |
 
 Så länge en fil saknas spelar däcket en demosignal istället, så inget går

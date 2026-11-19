@@ -51,9 +51,9 @@ DREKMOR-skylten. Bildskärmen i väggen ritas ovanpå bilden.
 Sidan är inte publicerad. Det här behöver göras när ni bestämt er, lämpligen
 inför nästa släpp:
 
-1. **Ljudfiler:** lägg `d01-blacked-out-beacon.mp3` och `d02-midnight-call.mp3`
-   i `assets/` (Silent Alarm finns redan). Saknas en fil spelar rummet en
-   demosignal och statusraden visar "Demo signal".
+1. **Ljudfiler:** alla tre släppta låtar ligger i `assets/` (320 kbps). Varje
+   ny låt behöver sin MP3 där. Saknas en fil spelar rummet en demosignal och
+   statusraden visar "Demo signal".
 2. **Nästa singel (D-04 i `releases.js`):** fyll i `releaseDate` när datumet är
    bekräftat, så räknar tablån ner. På släppdagen: titel, omslag, ljud, text,
    medverkande, länkar och eventuell `video`, och `status: "available"`.
