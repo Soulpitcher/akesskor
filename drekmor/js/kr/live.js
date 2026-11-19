@@ -13,10 +13,10 @@ export const HOT = {
   scope:  [548, 513, 100, 80],
   rec:    [1480, 350, 178, 118],
   door:   [486, 390, 142, 112],
-  tv:     [974, 372, 108, 90],
+  tv:     [1000, 376, 132, 114],
 };
-/** Bildskärmen som är inbyggd i bortre väggen (ersätter den tomma panelen). */
-export const MON = { x: 976, y: 375, w: 104, h: 84, gx: 983, gy: 382, gw: 90, gh: 62 };
+/** Bildskärmen i bortre väggen: höljet, glaset (g*) och de tre lamporna ovanför glaset. */
+export const MON = { x: 1000, y: 376, w: 132, h: 114, gx: 1023, gy: 399, gw: 87, gh: 69, r: 6, lamps: [[1060, 386], [1066.3, 386], [1072.5, 386]] };
 /** Rullbandspelarens två spolar. */
 export const REELS = [[698, 418], [729.5, 418]];
 export const SCOPE = { x: 559, y: 521, w: 78, h: 58, r: 9 };
@@ -75,31 +75,30 @@ export function drawLive(c, layer, st) {
   if (layer === 'ytor') surfaces(c, st); else lights(c, st);
 }
 
-function monitorHousing(c) {
-  const M = MON;
+/** Bildskärmens glas när den är avstängd: mörkt, lätt välvt glas som rummet lyser på.
+    Täcker bilden som är målad på skärmen. Lamporna ovanför släcks också. */
+function monitorGlass(c) {
+  const M = MON, cx = M.gx + M.gw / 2, cy = M.gy + M.gh / 2;
   c.save();
-  c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(M.x + 2, M.y + 3, M.w, M.h);
-  const g = c.createLinearGradient(0, M.y, 0, M.y + M.h);
-  g.addColorStop(0, '#3b423c'); g.addColorStop(0.5, '#2a302b'); g.addColorStop(1, '#1d211e');
-  c.fillStyle = g; c.fillRect(M.x, M.y, M.w, M.h);
-  c.strokeStyle = 'rgba(190,210,195,0.18)'; c.lineWidth = 1; c.strokeRect(M.x + 0.5, M.y + 0.5, M.w - 1, M.h - 1);
-  c.strokeStyle = 'rgba(0,0,0,0.6)'; c.strokeRect(M.x + 2.5, M.y + 2.5, M.w - 5, M.h - 5);
-  // rost och slitage
-  let seed = 5; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  for (let i = 0; i < 40; i++) { const x = M.x + r() * M.w, y = M.y + r() * M.h, s = 0.5 + r() * 1.8; c.fillStyle = `rgba(${100 + r() * 40},${52 + r() * 20},${26 + r() * 10},${0.25 + r() * 0.35})`; c.beginPath(); c.ellipse(x, y, s * 1.4, s, r() * 3, 0, 7); c.fill(); }
-  // glaset, lätt välvt
-  rr(c, M.gx - 2, M.gy - 2, M.gw + 4, M.gh + 4, 9); c.fillStyle = '#0b0d0c'; c.fill();
-  rr(c, M.gx, M.gy, M.gw, M.gh, 8);
-  const gg = c.createRadialGradient(M.gx + M.gw / 2, M.gy + M.gh / 2, 4, M.gx + M.gw / 2, M.gy + M.gh / 2, M.gw * 0.62);
-  gg.addColorStop(0, '#131a17'); gg.addColorStop(1, '#040605'); c.fillStyle = gg; c.fill();
-  // skylt och rattar
-  const py = M.y + M.h - 11;
-  c.fillStyle = '#0d0d0b'; c.fillRect(M.x + 30, py, 44, 7);
-  c.fillStyle = 'rgba(236,229,207,0.85)'; c.font = '6px "Bebas Neue", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
-  c.fillText('MONITOR 01', M.x + 52, py + 3.8);
-  for (const kx of [M.x + 12, M.x + 20, M.x + 86, M.x + 94]) { c.fillStyle = '#121310'; c.beginPath(); c.arc(kx, py + 3.5, 3, 0, 7); c.fill(); c.fillStyle = 'rgba(210,205,190,0.35)'; c.fillRect(kx - 0.4, py + 0.8, 0.8, 2.4); }
-  for (const [sx, sy] of [[M.x + 4, M.y + 4], [M.x + M.w - 4, M.y + 4], [M.x + 4, M.y + M.h - 4], [M.x + M.w - 4, M.y + M.h - 4]]) { c.fillStyle = '#6d6a5c'; c.beginPath(); c.arc(sx, sy, 1.3, 0, 7); c.fill(); }
+  rr(c, M.gx - 1.5, M.gy - 1.5, M.gw + 3, M.gh + 3, M.r + 1.5);
+  const g = c.createRadialGradient(cx - 6, cy - 8, 4, cx, cy, M.gw * 0.66);
+  g.addColorStop(0, '#1b2220'); g.addColorStop(0.6, '#0d1211'); g.addColorStop(1, '#030505');
+  c.fillStyle = g; c.fill();
+  // välvningen: en mjuk reflex av taklysröret uppe till vänster och en svagare nere till höger
+  c.clip();
+  const r1 = c.createRadialGradient(M.gx + M.gw * 0.32, M.gy + M.gh * 0.2, 1, M.gx + M.gw * 0.32, M.gy + M.gh * 0.2, M.gw * 0.42);
+  r1.addColorStop(0, 'rgba(190,205,200,0.16)'); r1.addColorStop(1, 'rgba(190,205,200,0)');
+  c.fillStyle = r1; c.fillRect(M.gx, M.gy, M.gw, M.gh);
+  c.fillStyle = 'rgba(230,236,226,0.07)'; c.beginPath(); c.ellipse(M.gx + M.gw * 0.42, M.gy + 6, M.gw * 0.3, 1.6, -0.04, 0, 7); c.fill();
+  const r2 = c.createRadialGradient(M.gx + M.gw * 0.8, M.gy + M.gh * 0.86, 1, M.gx + M.gw * 0.8, M.gy + M.gh * 0.86, M.gw * 0.25);
+  r2.addColorStop(0, 'rgba(160,175,170,0.06)'); r2.addColorStop(1, 'rgba(160,175,170,0)');
+  c.fillStyle = r2; c.fillRect(M.gx, M.gy, M.gw, M.gh);
+  // damm på glaset
+  let seed = 9; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 60; i++) { c.fillStyle = `rgba(200,200,186,${0.03 + r() * 0.07})`; c.fillRect(M.gx + r() * M.gw, M.gy + r() * M.gh, 0.6 + r() * 0.9, 0.6 + r() * 0.6); }
   c.restore();
+  // lamporna: släckta
+  for (const [x, y] of M.lamps) { c.fillStyle = 'rgba(58,38,20,0.96)'; c.fillRect(x - 2, y - 2.6, 4, 5.2); c.fillStyle = 'rgba(98,66,34,0.7)'; c.fillRect(x - 1.4, y - 2, 2.8, 1.2); }
 }
 
 function reels(c, st) {
@@ -123,7 +122,7 @@ function reels(c, st) {
 }
 
 function surfaces(c, st) {
-  monitorHousing(c);
+  monitorGlass(c);
   reels(c, st);
   // --- oscilloskopets glas: bildens stilla kurva täcks, vår egen ritas i ljuslagret
   rr(c, SCOPE.x, SCOPE.y, SCOPE.w, SCOPE.h, SCOPE.r);
@@ -192,41 +191,135 @@ function surfaces(c, st) {
 
 const noise = document.createElement('canvas'); noise.width = 48; noise.height = 34;
 const nctx = noise.getContext('2d'), nimg = nctx.createImageData(48, 34);
-function monitorScreen(c, st) {
-  const M = MON, m = st.mon || {}, on = st.on;
-  c.save(); rr(c, M.gx, M.gy, M.gw, M.gh, 8); c.clip();
-  c.globalCompositeOperation = 'source-over';
-  c.fillStyle = '#000'; c.fillRect(M.gx, M.gy, M.gw, M.gh);
-  const flick = 0.86 + Math.random() * 0.14;
-  if (m.mode === 'static' || (m.mode === 'loop' && !(m.el && m.el.readyState >= 2))) {
-    for (let i = 0; i < nimg.data.length; i += 4) { const v = Math.random() * 200; nimg.data[i] = nimg.data[i + 1] = nimg.data[i + 2] = v; nimg.data[i + 3] = 255; }
-    nctx.putImageData(nimg, 0, 0);
-    c.imageSmoothingEnabled = false; c.globalAlpha = 0.5 * on; c.drawImage(noise, M.gx, M.gy, M.gw, M.gh); c.imageSmoothingEnabled = true;
-  } else if (m.mode === 'loop') {
-    c.globalAlpha = 0.62 * on * flick; c.drawImage(m.el, M.gx - 2, M.gy - 2, M.gw + 4, M.gh + 4);
-    c.globalCompositeOperation = 'multiply'; c.globalAlpha = 1; c.fillStyle = 'rgb(150,215,190)'; c.fillRect(M.gx, M.gy, M.gw, M.gh);
-    c.globalCompositeOperation = 'source-over';
+/* Bildskärmens innehåll ritas först i en egen duk (dubbel upplösning) och läggs sedan
+   på glaset med skärmens fel: bilden rullar ibland, ränder hoppar i sidled, signalen
+   faller bort en kort stund och ljuset fladdrar. Den är gammal och inte riktigt hel. */
+const SW = 174, SH = 138;
+const scr = document.createElement('canvas'); scr.width = SW; scr.height = SH;
+const sctx = scr.getContext('2d');
+const IDENT = { cols: 4, w: 300, h: 238, frames: 16, fps: 8.33 };
+const rand = (a, b) => a + Math.random() * (b - a);
+const mf = { t: 0, roll: null, nextRoll: 6, drop: null, nextDrop: 11, jit: null, stutter: 0, frame: 0, twitch: null, nextTwitch: 9 };
+
+function screenContent(m, t, rm) {
+  const g = sctx;
+  g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+  g.fillStyle = '#020405'; g.fillRect(0, 0, SW, SH);
+  if (m.mode === 'static') {
+    for (let i = 0; i < nimg.data.length; i += 4) { const v = Math.random() * 210; nimg.data[i] = nimg.data[i + 1] = nimg.data[i + 2] = v; nimg.data[i + 3] = 255; }
+    nctx.putImageData(nimg, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(noise, 0, 0, SW, SH); g.imageSmoothingEnabled = true;
+  } else if (m.mode === 'ident' && m.sprite?.complete && m.sprite.naturalWidth) {
+    // D-loggan snurrar; ibland hakar den upp sig på samma bildruta
+    if (!rm && Math.random() > mf.stutter) mf.frame = Math.floor(t * IDENT.fps) % IDENT.frames;
+    const i = rm ? 0 : mf.frame, sx = (i % IDENT.cols) * IDENT.w, sy = Math.floor(i / IDENT.cols) * IDENT.h;
+    g.drawImage(m.sprite, sx, sy, IDENT.w, IDENT.h, -4, -3, SW + 8, SH + 6);
   } else if (m.mode === 'video' && m.cover) {
-    c.globalAlpha = (0.55 + Math.sin(st.t * 23) * 0.06 + Math.random() * 0.12) * on; c.drawImage(m.cover, M.gx, M.gy - 14, M.gw, M.gw);
-    const y = M.gy + ((st.t * 30) % (M.gh + 20)) - 10; c.globalAlpha = 0.12; c.fillStyle = '#fff'; c.fillRect(M.gx, y, M.gw, 6);
+    g.globalAlpha = 0.85; g.drawImage(m.cover, 0, (SH - SW) / 2, SW, SW);
+    g.globalAlpha = 0.14; g.fillStyle = '#fff'; g.fillRect(0, ((t * 60) % (SH + 40)) - 20, SW, 12);
   } else if (m.mode === 'test') {
     const cols = ['#c0c0c0', '#c0c000', '#00c0c0', '#00c000', '#c000c0', '#c00000', '#0000c0'];
-    c.globalAlpha = 0.7 * on * flick; cols.forEach((k, i) => { c.fillStyle = k; c.fillRect(M.gx + i * M.gw / 7, M.gy, M.gw / 7 + 1, M.gh * 0.7); });
-    c.fillStyle = '#111'; c.fillRect(M.gx, M.gy + M.gh * 0.7, M.gw, M.gh * 0.3);
+    cols.forEach((k, i) => { g.fillStyle = k; g.fillRect(i * SW / 7, 0, SW / 7 + 1, SH * 0.7); });
+    g.fillStyle = '#111'; g.fillRect(0, SH * 0.7, SW, SH * 0.3);
   } else if (m.mode === 'message') {
-    c.globalAlpha = on; c.fillStyle = '#071510'; c.fillRect(M.gx, M.gy, M.gw, M.gh);
-    c.fillStyle = `rgba(120,255,190,${0.75 + Math.random() * 0.2})`; c.font = '7.2px "Space Mono", monospace'; c.textAlign = 'left'; c.textBaseline = 'top';
-    (m.lines || []).forEach((l, i) => c.fillText(l, M.gx + 6, M.gy + 7 + i * 9.6));
+    g.fillStyle = '#071510'; g.fillRect(0, 0, SW, SH);
+    g.fillStyle = `rgba(120,255,190,${0.75 + Math.random() * 0.2})`; g.font = '14px "Space Mono", monospace'; g.textAlign = 'left'; g.textBaseline = 'top';
+    (m.lines || []).forEach((l, i) => g.fillText(l, 12, 13 + i * 19));
   }
-  // linjer och glasets reflex
-  c.globalAlpha = 0.35; c.fillStyle = '#000';
-  for (let y = M.gy; y < M.gy + M.gh; y += 2) c.fillRect(M.gx, y, M.gw, 1);
+}
+
+/** Tidtabell för skärmens fel. Ingen rörelse alls med reducerad rörelse. */
+function faults(t, rm) {
+  const dt = Math.min(0.1, Math.max(0, t - mf.t)); mf.t = t;
+  if (rm) { mf.roll = mf.drop = mf.jit = null; return; }
+  if (!mf.roll && t > mf.nextRoll) { mf.roll = { t0: t, dur: rand(0.5, 1.3), turns: Math.random() < 0.3 ? 2 : 1 }; mf.nextRoll = t + rand(8, 19); }
+  if (mf.roll && t > mf.roll.t0 + mf.roll.dur) mf.roll = null;
+  if (!mf.drop && t > mf.nextDrop) { mf.drop = { until: t + rand(0.07, 0.3), kind: ['static', 'black', 'flash'][Math.floor(Math.random() * 3)] }; mf.nextDrop = t + rand(9, 24); }
+  if (mf.drop && t > mf.drop.until) mf.drop = null;
+  if (!mf.jit && Math.random() < dt * 0.9) mf.jit = { until: t + rand(0.05, 0.22), bands: Array.from({ length: 1 + Math.floor(Math.random() * 3) }, () => ({ y: rand(0, SH), h: rand(4, 26), dx: rand(-9, 9) })) };
+  if (mf.jit && t > mf.jit.until) mf.jit = null;
+  mf.stutter = Math.random() < dt * 0.25 ? 0.92 : Math.max(0, mf.stutter - dt * 2);
+}
+
+function monitorScreen(c, st) {
+  const M = MON, m = st.mon || {}, on = st.on, t = st.t, rm = !!st.rm;
+  const cx = M.gx + M.gw / 2, cy = M.gy + M.gh / 2;
+  faults(t, rm);
+  if (!m.mode || m.mode === 'off') {
+    // avstängd, men inte helt död: ibland rycker ett streck till över glaset
+    if (!rm && !mf.twitch && t > mf.nextTwitch) { mf.twitch = { until: t + rand(0.05, 0.11), y: rand(0.2, 0.8) }; mf.nextTwitch = t + rand(10, 26); }
+    if (mf.twitch && t > mf.twitch.until) mf.twitch = null;
+    if (mf.twitch && on > 0.5) {
+      c.save(); rr(c, M.gx, M.gy, M.gw, M.gh, M.r); c.clip();
+      c.fillStyle = 'rgba(170,210,235,0.22)'; c.fillRect(M.gx, M.gy + M.gh * mf.twitch.y, M.gw, 1.2);
+      c.fillStyle = 'rgba(170,210,235,0.05)'; c.fillRect(M.gx, M.gy + M.gh * mf.twitch.y - 3, M.gw, 7);
+      c.restore();
+    }
+    return;
+  }
+  screenContent(m, t, rm);
+  const since = m.since ?? 99;
+  c.save(); rr(c, M.gx, M.gy, M.gw, M.gh, M.r); c.clip();
+  c.fillStyle = '#000'; c.fillRect(M.gx, M.gy, M.gw, M.gh);
+
+  // påslagning: en prick blir ett streck som vecklar ut sig till hela bilden
+  if (since < 0.45 && !rm) {
+    const k = since / 0.45, lw = Math.min(1, k / 0.35) * M.gw, lh = k < 0.35 ? 1.2 : 1.2 + ((k - 0.35) / 0.65) * M.gh;
+    c.fillStyle = `rgba(225,240,255,${0.9 * on})`; c.fillRect(cx - lw / 2, cy - lh / 2, lw, lh);
+    glow(c, cx, cy, 30, '200,225,255', 0.5 * on);
+    c.restore(); return;
+  }
+  const fadeIn = rm ? 1 : Math.min(1, (since - 0.45) / 0.5);
+  const flick = rm ? 0.92 : 0.8 + Math.random() * 0.12 + Math.sin(t * 1.7) * 0.05;
+  const a = on * flick * (m.mode === 'message' ? 1 : 0.86);
+
+  if (mf.drop && mf.drop.kind === 'black') { /* signalen borta en stund */ }
+  else {
+    const off = mf.roll ? ((t - mf.roll.t0) / mf.roll.dur) * mf.roll.turns * M.gh : 0, wob = rm ? 0 : Math.sin(t * 11) * 0.25;
+    c.globalAlpha = a * fadeIn;
+    const blit = (y0) => {
+      if (!mf.jit) { c.drawImage(scr, M.gx + wob, y0, M.gw, M.gh); return; }
+      // ränder som hoppar i sidled
+      let y = 0; const bands = [...mf.jit.bands].sort((p, q) => p.y - q.y);
+      for (const b of bands) {
+        if (b.y > y) c.drawImage(scr, 0, y, SW, b.y - y, M.gx + wob, y0 + (y * M.gh) / SH, M.gw, ((b.y - y) * M.gh) / SH);
+        const hh = Math.min(b.h, SH - b.y); if (hh > 0) c.drawImage(scr, 0, b.y, SW, hh, M.gx + wob + b.dx / 2, y0 + (b.y * M.gh) / SH, M.gw, (hh * M.gh) / SH);
+        y = Math.max(y, b.y + b.h);
+      }
+      if (y < SH) c.drawImage(scr, 0, y, SW, SH - y, M.gx + wob, y0 + (y * M.gh) / SH, M.gw, ((SH - y) * M.gh) / SH);
+    };
+    const yy = M.gy + (off % M.gh);
+    blit(yy); if (off) { blit(yy - M.gh); c.globalAlpha = 1; c.fillStyle = '#000'; c.fillRect(M.gx, yy - 2.5, M.gw, 3); }
+    if (mf.drop) {
+      c.globalAlpha = mf.drop.kind === 'flash' ? 0.5 * on : 0.6 * on;
+      if (mf.drop.kind === 'flash') { c.fillStyle = '#dfefff'; c.fillRect(M.gx, M.gy, M.gw, M.gh); }
+      else { screenContent({ mode: 'static' }, t, rm); c.drawImage(scr, M.gx, M.gy, M.gw, M.gh); }
+    }
+    if (fadeIn < 1) { c.globalAlpha = (1 - fadeIn) * 0.7 * on; c.fillStyle = '#dceaff'; c.fillRect(M.gx, M.gy, M.gw, M.gh); }
+  }
+  // brumrand som långsamt vandrar uppåt, skanlinjer och glasets kanter
   c.globalAlpha = 1;
+  if (!rm) { const hy = M.gy + M.gh - ((t * 9) % (M.gh + 24)); const hg = c.createLinearGradient(0, hy - 12, 0, hy + 12); hg.addColorStop(0, 'rgba(0,0,0,0)'); hg.addColorStop(0.5, 'rgba(0,0,0,0.28)'); hg.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = hg; c.fillRect(M.gx, hy - 12, M.gw, 24); }
+  c.fillStyle = 'rgba(0,0,0,0.32)'; for (let y = M.gy; y < M.gy + M.gh; y += 1.6) c.fillRect(M.gx, y, M.gw, 0.7);
+  const vg = c.createRadialGradient(cx, cy, M.gw * 0.3, cx, cy, M.gw * 0.62);
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.55)'); c.fillStyle = vg; c.fillRect(M.gx, M.gy, M.gw, M.gh);
   const rg = c.createLinearGradient(M.gx, M.gy, M.gx + M.gw * 0.6, M.gy + M.gh);
-  rg.addColorStop(0, 'rgba(220,255,240,0.08)'); rg.addColorStop(0.4, 'rgba(220,255,240,0)');
-  c.fillStyle = rg; c.fillRect(M.gx, M.gy, M.gw, M.gh);
+  rg.addColorStop(0, 'rgba(220,240,255,0.07)'); rg.addColorStop(0.4, 'rgba(220,240,255,0)'); c.fillStyle = rg; c.fillRect(M.gx, M.gy, M.gw, M.gh);
   c.restore();
-  if (m.mode && m.mode !== 'off') glow(c, M.gx + M.gw / 2, M.gy + M.gh / 2, 70, m.mode === 'loop' ? '90,200,170' : '170,180,200', 0.07 * on);
+  // skenet på väggen runt skärmen
+  const tint = m.mode === 'message' ? '90,220,160' : m.mode === 'test' ? '200,200,210' : '80,150,215';
+  glow(c, cx, cy, 78, tint, (mf.drop?.kind === 'black' ? 0.01 : 0.075) * on * flick);
+}
+
+/** Lamporna ovanför glaset: tända när skärmen är på. Den högra har glappkontakt. */
+function monitorLamps(c, st) {
+  const m = st.mon || {}; if (!m.mode || m.mode === 'off') return;
+  MON.lamps.forEach(([x, y], i) => {
+    const bad = i === 2 && !st.rm && (Math.sin(st.t * 7.3) + Math.sin(st.t * 2.1)) > 1.2 && Math.random() < 0.85;
+    const a = (bad ? 0.12 : 0.92) * st.on;
+    c.fillStyle = `rgba(255,170,70,${a})`; c.fillRect(x - 1.6, y - 2.2, 3.2, 4.4);
+    c.fillStyle = `rgba(255,230,170,${a * 0.8})`; c.fillRect(x - 0.8, y - 1.6, 1.6, 1.6);
+    glow(c, x, y, 7, '255,160,60', 0.3 * a);
+  });
 }
 
 /** Text och logotyp i oscilloskopet: varje bokstav byggd av streck, som en vektorskärm. */
@@ -253,6 +346,7 @@ function lights(c, st) {
   const on = st.on;
   if (on <= 0.001) return;
   monitorScreen(c, st);
+  monitorLamps(c, st);
 
   // --- oscilloskopet
   const S = SCOPE, mid = S.y + S.h / 2;

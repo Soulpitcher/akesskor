@@ -27,13 +27,15 @@ RELEASES.forEach((r) => { r._lines = (r.status === 'available' && r.text ? r.tex
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const audio = new AudioEngine();
-const S = { entered: false, en: 0, pw: 0, cur: null, playing: false, video: false, hover: null, hoverS: 0, hotBtn: -1, glitch: 0, missing: false, black: 0, dim: 0, reelA: 0 };
+const S = { entered: false, monOn: false, monAt: 0, en: 0, pw: 0, cur: null, playing: false, video: false, hover: null, hoverS: 0, hotBtn: -1, glitch: 0, missing: false, black: 0, dim: 0, reelA: 0 };
 const stage = $('#stage'), world = $('#world'), marks = $('#marks');
 const V = { sw: 1, sh: 1, zoom: 1.035, zoomT: 1.035, px: 0, py: 0, pxT: 0, pyT: 0, tx: 0, ty: 0, s: 1, portrait: false };
 let plate = null;
 const covers = new Map(), twinkles = new Twinkles(), hist = [];
 const needles = new Float32Array(6);
-let eggs = null, loop = null;
+let eggs = null;
+// D-loggan som snurrar på bildskärmen i väggen (16 bildrutor i ett rutnät)
+const ident = new Image(); ident.decoding = 'async';
 
 /* ================================================================ panelerna */
 const panels = new Panels(RELEASES, {
@@ -61,7 +63,11 @@ function note(html) {
 
 function show(name, mode = 'songs') {
   if (!S.entered) return;
-  if (name === 'tv') { panels.show('tv'); monitor.open(mode !== 'songs' ? mode : null); V.zoomT = 1.1; return; }
+  if (name === 'tv') {
+    // första gången slås skärmen på i rummet; närbilden öppnas när den har värmts upp
+    if (monPower() && !panels.open && !RM) { V.zoomT = 1.1; setTimeout(() => { if (!panels.open) show('tv', mode); }, 1000); return; }
+    panels.show('tv'); monitor.open(mode !== 'songs' ? mode : null); V.zoomT = 1.1; return;
+  }
   if (name === 'tabla' && V.portrait) { // på stående skärm ligger båda tablåerna redan framme under rummet
     const m = $(`#tabla .mod[data-group="${mode}"]`);
     m?.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'start' });
@@ -427,7 +433,7 @@ function frame(ms) {
         t: clock, on: S.en, playing: S.playing, wave: audio.ready ? audio.bufL : null, lv, needles, cur: S.cur,
         songs: SONGS, extras: EXTRAS, covers, hist, progress: S.cur ? audio.progress : 0, twinkles: twinkles.list, hotBtn: S.hotBtn,
         waveR: audio.ready ? audio.bufR : null, freq: audio.ready ? audio.bufF : null, reelA: S.reelA, mon: monState(),
-        scopeMode: eggs?.scopeMode, scopeText: eggs?.scopeText,
+        scopeMode: eggs?.scopeMode, scopeText: eggs?.scopeText, rm: RM,
       }));
     }
     plate.render({ t: clock, ...L, glitch: S.glitch, hover: S.lastHover, hoverS: S.hoverS * 0.5 });
@@ -438,13 +444,17 @@ function frame(ms) {
   hudTime(clock);
   panels.tick(hist, S.cur ? audio.progress : 0, S.playing);
 }
+/** Bildskärmen i väggen är avstängd tills någon slår på den. */
+function monPower() { if (S.monOn) return false; S.monOn = true; S.monAt = clock; sfx('crt'); return true; }
 function monState() {
   if (!S.entered) return { mode: 'off' };
-  if (eggs && eggs.monStaticUntil > performance.now()) return { mode: 'static' };
-  if (eggs?.monMessage) return { mode: 'message', lines: eggs.monMessage.lines };
-  if (monitor.state === 'test') return { mode: 'test' };
-  if (monitor.state === 'video' || monitor.state === 'poster') return { mode: 'video', cover: covers.get(monitor.channels[monitor.ch]?.id) };
-  return { mode: 'loop', el: loop };
+  const since = clock - S.monAt;
+  if (eggs && eggs.monStaticUntil > performance.now()) return { mode: 'static', since: 99 };
+  if (eggs?.monMessage) return { mode: 'message', lines: eggs.monMessage.lines, since: 99 };
+  if (!S.monOn) return { mode: 'off' };
+  if (monitor.state === 'test') return { mode: 'test', since };
+  if (monitor.state === 'video' || monitor.state === 'poster') return { mode: 'video', cover: covers.get(monitor.channels[monitor.ch]?.id), since };
+  return { mode: 'ident', sprite: ident, since };
 }
 function tipUpdate() {
   const key = S.hoverKey, has = key && !MARKS.some((m) => m.hot === key && !(V.portrait && key.startsWith('tabla')));
@@ -463,9 +473,6 @@ function enter(muted, byKey) {
   // den som gick in med tangentbordet hamnar på första klickytan i stället för ingenstans
   if (byKey) world.querySelector('.hot')?.focus({ preventScroll: true });
   eggs?.init();
-  // bildskärmen i väggen: en tyst slinga från Silent Alarm
-  loop = document.createElement('video'); loop.muted = true; loop.loop = true; loop.playsInline = true; loop.preload = 'auto';
-  loop.src = loop.canPlayType('video/webm; codecs="vp9"') ? 'assets/monitor-loop.webm' : 'assets/monitor-loop.mp4'; loop.play().catch(() => {});
   if (!RM) S.glitch = 0.8;
   sfx('power');
   $('#gate').addEventListener('transitionend', () => ($('#gate').hidden = true), { once: true });
@@ -481,6 +488,7 @@ async function boot() {
   plate = Plate.create($('#gl'), img);
   if (!plate) { document.body.classList.add('nogl'); world.style.backgroundImage = `url(${img.src})`; }
   layout();
+  ident.src = 'assets/monitor-ident.jpg';
   for (const r of RELEASES) if (r.cover && r.status === 'available') { const c = new Image(); c.onload = () => covers.set(r.id, c); c.src = r.cover; }
   requestAnimationFrame((ms) => { last = ms; frame(ms); });
   document.body.classList.remove('is-loading'); document.body.classList.add('is-gate');

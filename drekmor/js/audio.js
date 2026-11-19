@@ -249,6 +249,11 @@ export class AudioEngine {
       case 'denied':
         this.tone(t, { type: 'square', f: 78, dur: 0.2, gain: 0.25, cutoff: 420 });
         this.noiseHit(t, { type: 'highpass', f: 1500, dur: 0.28, gain: 0.12 }); break;
+      case 'crt': // ett gammalt bildrör som slås på: duns, sprak, brum och en svag pipton
+        this.tone(t, { f: 95, to: 36, dur: 0.24, gain: 0.55 });
+        this.noiseHit(t + 0.03, { type: 'highpass', f: 3200, dur: 0.4, gain: 0.09 });
+        this.tone(t + 0.05, { type: 'sawtooth', f: 60, to: 50, dur: 0.8, gain: 0.05, cutoff: 260 });
+        this.tone(t + 0.12, { f: 7600, dur: 1.6, gain: 0.005 }); break;
       case 'power':
         this.tone(t, { f: 120, to: 40, dur: 0.2, gain: 0.7 });
         this.tone(t + 0.08, { f: 55, dur: 0.9, gain: 0.07 });

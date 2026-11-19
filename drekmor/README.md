@@ -14,8 +14,10 @@ släckas och tändas för sig, golvet skimrar och damm svävar i ljusstrålen.
 - **Låtinformationen:** de två skrivarfönstren på väggen. *Signal* visar
   omslaget, titeln och kurvan som pennan ritar. *Log* visar medverkande,
   datum, länkar, nedladdning av MP3 och texten.
-- **Bildskärmen** i bortre väggen (Monitor 01) visar en tyst slinga från
-  Silent Alarm. Klick öppnar den i närbild: en kanal per släpp som har
+- **Bildskärmen** i bortre väggen är avstängd tills någon klickar på den. Då
+  slås den på med en gammal bildrörsknäpp och visar bandets snurrande D-logga,
+  med fel som hör till en sliten skärm: bilden rullar ibland, ränder hoppar i
+  sidled och signalen faller bort en kort stund. Strax efter öppnas närbilden: en kanal per släpp som har
   `video` i `releases.js`, plus en testbild. Videorna bäddas in från
   youtube-nocookie.com och laddas först när man trycker på play. Medan en video
   går pausas musiken och rummet pulserar i jämn takt (sidan kan inte läsa
@@ -44,7 +46,8 @@ ligger på samma ställe (samma komposition och proportioner 16:9). Flyttas någ
 måste måtten i `js/kr/live.js`, `js/kr/plate.js` och `js/kr/eggs.js` justeras.
 Alla mått är i bildens pixlar vid 1672 × 941. Den nuvarande filen är
 retuscherad: kassetterna är borttagna och kassettdäcket i pulten är ersatt med
-DREKMOR-skylten. Bildskärmen i väggen ritas ovanpå bilden.
+DREKMOR-skylten. Bildskärmen i bortre väggen är målad i bilden; sidan lägger
+mörkt glas över den målade bilden på skärmen och ritar sitt eget innehåll där.
 
 ## Inför lansering (kontrollrummet)
 
