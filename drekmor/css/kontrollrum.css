@@ -187,14 +187,17 @@ body[data-panel] .hud { opacity: 0; pointer-events: none; }
   box-shadow: var(--bezel), 0 0 24px rgba(255, 170, 60, 0.38);
 }
 .tile.is-available:hover { filter: brightness(1.07); }
+/* den intryckta låten lyser grönt, som oscilloskopet: svagare när den är pausad */
 .tile.is-active {
-  background: var(--mesh), radial-gradient(110% 140% at 50% 46%, #fff3cf, #ffcb68 38%, #f39c34 72%, #c86d1c);
-  box-shadow: var(--bezel), 0 0 34px rgba(255, 170, 60, 0.62);
+  color: #04170d;
+  background: var(--mesh), radial-gradient(110% 140% at 50% 46%, #c9f5dc, #7fd9a8 38%, #3fa874 72%, #1f6b45);
+  box-shadow: var(--bezel), 0 0 26px rgba(80, 225, 160, 0.4);
 }
-/* den som spelar lyser i takt med musiken (--lvl) och har ibland glappkontakt (--flick) */
+/* medan den spelar lyser den i takt med musiken (--lvl) och har ibland glappkontakt (--flick) */
 .tile.is-playing {
-  filter: brightness(calc((0.9 + var(--lvl, 0.4) * 0.34) * var(--flick, 1)));
-  box-shadow: var(--bezel), 0 0 calc(26px + var(--lvl, 0.4) * 40px) rgba(255, 170, 60, calc((0.45 + var(--lvl, 0.4) * 0.5) * var(--flick, 1)));
+  background: var(--mesh), radial-gradient(110% 140% at 50% 46%, #dcffeb, #83eab3 36%, #38c27f 70%, #1a7a4c);
+  filter: brightness(calc((0.86 + var(--lvl, 0.4) * 0.3) * var(--flick, 1)));
+  box-shadow: var(--bezel), 0 0 calc(26px + var(--lvl, 0.4) * 40px) rgba(80, 235, 165, calc((0.45 + var(--lvl, 0.4) * 0.5) * var(--flick, 1)));
   transition: none;
 }
 .tile.is-coming { cursor: pointer; }

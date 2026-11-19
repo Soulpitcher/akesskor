@@ -10,7 +10,8 @@ släckas och tändas för sig, golvet skimrar och damm svävar i ljusstrålen.
   lysruta: släppta lyser bärnstensgult, nästa kommande pulserar rött med en
   tejplapp (datum eller "Date TBA"), låsta glöder svagt. Tryck på en låt för att
   spela, tryck igen för att pausa, eller tryck på en annan låt för att byta. Den
-  som spelar lyser i takt med musiken och har ibland glappkontakt.
+  intryckta låten lyser grönt; medan den spelar pulserar den i takt med musiken
+  och har ibland glappkontakt.
 - **När en signal spelas** startar anläggningen: lysrören flimrar igång,
   oscilloskopet ritar ljudet, nålarna rör sig, rullbandspelaren snurrar och
   varningslamporna följer basen. När den stannar slocknar rummet igen.
