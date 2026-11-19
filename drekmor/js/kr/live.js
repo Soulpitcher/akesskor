@@ -36,10 +36,23 @@ function cell(side, c, r) {
   const ax = lerp(q.tl[0], q.tr[0], u), ay = lerp(q.tl[1], q.tr[1], u), bx = lerp(q.bl[0], q.br[0], u), by = lerp(q.bl[1], q.br[1], u);
   return [lerp(ax, bx, v), lerp(ay, by, v)];
 }
-/** Var på vänstra tablån släpp nummer i har sin ruta. */
-export const tileOf = (i) => cell('L', (i % 4) * 2, 2 + Math.floor(i / 4) * 2);
-/** Var på högra tablån extramaterial nummer i har sin ruta. */
-export const extraOf = (i) => cell('R', (i % 5) * 2, 2 + Math.floor(i / 5) * 2);
+/* Lamporna för släppen på tablåerna i rummet: samma ordning som i närbilden (fyra i
+   bredd, tre rader). Plats k = modul k % 4 från vänster, cellrad k / 4 uppifrån.
+   Uppmätta celler i bilden [x, y, b, h]; tablåerna lutar, så raderna ligger olika högt. */
+const SLOTS = {
+  L: [
+    [292, 535, 13, 5.5], [323, 534.3, 12, 5.6], [352, 533.6, 12, 5], [380, 533, 11, 4.4],
+    [292, 542.8, 13, 5.2], [323, 541, 12, 5.8], [352, 539.5, 12, 5.4], [380, 538.6, 11, 5.7],
+    [292, 549.2, 13, 4.2], [323, 548, 12, 5], [352, 545.5, 12, 5.5], [380, 545.5, 11, 5.5],
+  ],
+  R: [
+    [1269, 531.5, 11, 4.5], [1298, 533, 12, 4.4], [1328, 534, 12, 4.4], [1358, 536, 12, 4.4],
+    [1269, 537.5, 11, 4.3], [1298, 538.8, 12, 4.8], [1328, 540, 12, 4.8], [1358, 540.8, 12, 4.6],
+    [1269, 542.6, 11, 4.6], [1298, 544.4, 12, 4.8], [1328, 545.5, 12, 4.8], [1358, 545.8, 12, 4.4],
+  ],
+};
+/** Lampans ruta för släpp nummer i på vänster (låtar) eller höger (extra) tablå. */
+const slotOf = (side, i) => SLOTS[side][i];
 
 function rr(c, x, y, w, h, r) {
   c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
@@ -129,6 +142,19 @@ function surfaces(c, st) {
   // --- oscilloskopets glas: bildens stilla kurva täcks, vår egen ritas i ljuslagret
   rr(c, SCOPE.x, SCOPE.y, SCOPE.w, SCOPE.h, SCOPE.r);
   c.fillStyle = 'rgba(6,20,15,0.97)'; c.fill();
+
+  // --- tablåernas lampor: den valda och nästa kommande täcks, de tänds i ljuslagret
+  for (const [list, side] of [[st.songs, 'L'], [st.extras, 'R']]) {
+    let next = true;
+    list.forEach((r, i) => {
+      const q = slotOf(side, i); if (!q) return;
+      const isNext = r.status === 'coming' && next; if (r.status === 'coming') next = false;
+      if (st.cur !== r && !isNext) return;
+      const [x, y, w, h] = q;
+      c.fillStyle = 'rgba(12,10,8,0.97)'; c.fillRect(x - 0.6, y - 0.6, w + 1.2, h + 1.2);
+      c.fillStyle = st.cur === r ? 'rgba(24,52,38,1)' : 'rgba(60,18,12,1)'; c.fillRect(x + 0.4, y + 0.4, w - 0.8, h - 0.8);
+    });
+  }
 
   // --- knapparna 1–8: bara släppta signaler lyser
   BTN.forEach((b, i) => {
@@ -416,22 +442,28 @@ function lights(c, st) {
     if (a > 0) { glow(c, b.x + b.w / 2, b.y + b.h / 2, 17, '255,170,70', a * on); c.fillStyle = `rgba(255,214,150,${a * 0.7 * on})`; c.fillRect(b.x + 2, b.y + 2, b.w - 4, b.h - 4); }
   });
 
-  // --- tablåerna: släppta signaler lyser, den valda pulserar, nästa blinkar rött
-  for (const [list, at] of [[st.songs, tileOf], [st.extras, extraOf]]) {
+  // --- tablåerna: släppta signaler lyser svagt, den valda lyser grönt, nästa blinkar rött
+  for (const [list, side] of [[st.songs, 'L'], [st.extras, 'R']]) {
     let next = true;
     list.forEach((r, i) => {
-      if (i >= 24) return;
-      const [x, y] = at(i);
+      const q = slotOf(side, i); if (!q) return;
+      const [x, y, w, h] = q, cx = x + w / 2, cy = y + h / 2;
       if (r.status === 'available') {
         const act = st.cur === r;
-        const a = act ? (st.playing ? 0.75 + st.lv.bass * 0.5 : 0.6 + 0.25 * Math.sin(st.t * 3)) : 0.34 + 0.06 * Math.sin(st.t * 1.3 + i);
-        glow(c, x, y, act ? 13 : 9, act ? '80,235,165' : '255,180,80', a * 0.55 * on);
-        c.fillStyle = act ? `rgba(160,255,205,${a * on})` : `rgba(255,214,140,${a * on})`; c.fillRect(x - 4.6, y - 2.4, 9.2, 4.8);
+        if (act) {
+          const a = st.playing ? Math.min(1, 0.7 + st.lv.bass * 0.5) : 0.5;
+          glow(c, cx, cy, 14, '80,235,165', a * 0.6 * on);
+          c.fillStyle = `rgba(150,255,200,${a * 0.9 * on})`; c.fillRect(x + 0.8, y + 0.8, w - 1.6, h - 1.6);
+        } else {
+          const a = 0.3 + 0.06 * Math.sin(st.t * 1.3 + i);
+          glow(c, cx, cy, 9, '255,180,80', a * 0.45 * on);
+          c.fillStyle = `rgba(255,214,140,${a * 0.8 * on})`; c.fillRect(x + 0.8, y + 0.8, w - 1.6, h - 1.6);
+        }
       } else if (r.status === 'coming' && next) {
         next = false;
-        const a = (Math.sin(st.t * 2.6 + (at === extraOf ? 1.7 : 0)) > 0.2 ? 0.8 : 0.08) * on;
-        glow(c, x, y, 10, '255,50,30', a * 0.5); c.fillStyle = `rgba(255,70,45,${a})`; c.fillRect(x - 4.6, y - 2.4, 9.2, 4.8);
-      }
+        const a = (Math.sin(st.t * 2.6 + (side === 'R' ? 1.7 : 0)) > 0.2 ? 0.85 : 0.1) * on;
+        glow(c, cx, cy, 11, '255,50,30', a * 0.5); c.fillStyle = `rgba(255,70,45,${a})`; c.fillRect(x + 0.8, y + 0.8, w - 1.6, h - 1.6);
+      } else if (r.status === 'coming') next = false;
     });
   }
   for (const t of st.twinkles) { c.fillStyle = `rgba(255,200,110,${t.a * 0.55 * on})`; c.fillRect(t.x - 4.2, t.y - 2.1, 8.4, 4.2); }
