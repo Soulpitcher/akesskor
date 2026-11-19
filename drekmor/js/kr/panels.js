@@ -56,56 +56,68 @@ export class Panels {
     this.journal.addEventListener('touchmove', () => (this.lastScroll = performance.now()), { passive: true });
     document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => this.h.close()));
     for (const p of [this.tabla, this.rec, this.om, this.tv, this.note]) p.addEventListener('pointerdown', (e) => { if (e.target === p) this.h.close(); });
-    $('#pb-play').addEventListener('click', () => this.h.toggle());
-    $('#pb-stop').addEventListener('click', () => this.h.stop());
-    $('#pb-rec').addEventListener('click', () => this.h.show('rec'));
     this.fillRec(null);
   }
 
   /* ------------------------------------------------------------ tablån -- */
   buildTabla() {
+    // en lysruta per släpp, fyra i bredd (två på smal skärm) och minst tre rader
     const portrait = document.body.classList.contains('portrait');
     const cols = matchMedia('(max-width: 720px)').matches ? 2 : 4, key = cols + (portrait ? 'p' : 'm');
     if (key === this.cols) return; this.cols = key;
     const host = $('#mods'); host.innerHTML = ''; this.tiles = new Map();
     for (const g of this.groups) {
-      const mod = el('div', 'mod', `<span class="plate plate--tag mod__tag">${g.label}</span><i class="screw s1"></i><i class="screw s2"></i><i class="screw s3"></i><i class="screw s4"></i>`);
+      const mod = el('div', 'mod', `<span class="plate plate--title mod__tag">${g.label}</span>`);
       mod.dataset.group = g.key;
-      const grid = el('div', 'tiles'); grid.style.setProperty('--cols', cols); mod.appendChild(grid); host.appendChild(mod);
-      const R = g.list, rows = Math.max(portrait ? 1 : 5, Math.ceil(R.length / cols));
+      const bank = el('div', 'bank', '<i class="screw s1"></i><i class="screw s2"></i><i class="screw s3"></i><i class="screw s4"></i>');
+      const grid = el('div', 'tiles'); grid.style.setProperty('--cols', cols); bank.appendChild(grid); mod.appendChild(bank); host.appendChild(mod);
+      const R = g.list, slots = Math.max(cols * 3, Math.ceil(R.length / cols) * cols);
       let next = true;
-      for (let r = 0; r < rows; r++) {
-        grid.appendChild(el('span', 'rowl', 'ABCDEFGHJKLMNPQRSTUVWXYZ'[r] || ''));
-        for (let c = 0; c < cols; c++) {
-          const rel = R[r * cols + c];
-          if (!rel) { grid.appendChild(el('span', 'tile is-blank')); continue; }
-          const b = el('button', 'tile'); b.type = 'button'; b.dataset.id = rel.id;
-          const kind = TYPE[rel.type] || '', reads = rel.type === 'story' && !rel.audio;
-          if (rel.status === 'available') {
-            b.classList.add('is-available');
-            b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span><span class="tile__k">${esc(kind)}${rel.duration ? ' · ' + esc(rel.duration) : ''}</span>`;
-            b.setAttribute('aria-label', `${rel.id} ${rel.title}, ${kind.toLowerCase()}. ${reads ? 'Read' : 'Play'}.`);
-          } else if (rel.status === 'coming') {
-            const isNext = next; next = false;
-            b.classList.add('is-coming'); if (isNext) b.classList.add('is-next');
-            b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span>${g.key === 'extra' ? `<span class="tile__k">${esc(kind)}</span>` : ''}<span class="tile__tape">${esc(isNext ? eta(rel) : 'Out of order')}</span>`;
-            b.setAttribute('aria-label', `${rel.id} ${rel.title}. ${eta(rel, true)}`);
-          } else {
-            b.classList.add('is-locked');
-            b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span>`;
-            b.setAttribute('aria-label', `${rel.id}. Locked.`);
-          }
-          b.addEventListener('click', () => this.h.select(rel));
-          grid.appendChild(b); this.tiles.set(rel.id, b);
+      for (let k = 0; k < slots; k++) {
+        const rel = R[k];
+        if (!rel) { grid.appendChild(el('span', 'tile is-blank')); continue; }
+        const b = el('button', 'tile'); b.type = 'button'; b.dataset.id = rel.id;
+        const kind = TYPE[rel.type] || '', reads = rel.type === 'story' && !rel.audio;
+        const kindLine = g.key === 'extra' ? `<span class="tile__k">${esc(kind)}</span>` : '';
+        if (rel.status === 'available') {
+          b.classList.add('is-available');
+          b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span>${kindLine}`;
+          b.setAttribute('aria-label', `${rel.id} ${rel.title}, ${kind.toLowerCase()}${rel.duration ? ', ' + rel.duration : ''}. ${reads ? 'Read' : 'Play or pause'}.`);
+        } else if (rel.status === 'coming') {
+          const isNext = next; next = false;
+          b.classList.add('is-coming'); if (isNext) b.classList.add('is-next');
+          b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span><span class="tile__t">${esc(rel.title)}</span>${kindLine}<span class="tile__tape">${esc(isNext ? eta(rel) : 'Out of order')}</span>`;
+          b.setAttribute('aria-label', `${rel.id} ${rel.title}. ${eta(rel, true)}`);
+        } else {
+          b.classList.add('is-locked');
+          b.innerHTML = `<span class="tile__id">${esc(rel.id)}</span>`;
+          b.setAttribute('aria-label', `${rel.id}. Locked.`);
         }
+        b.addEventListener('click', () => this.h.select(rel));
+        grid.appendChild(b); this.tiles.set(rel.id, b);
       }
     }
     this.mark();
   }
   mark() {
-    for (const [id, b] of this.tiles) { const on = this.cur?.id === id; b.classList.toggle('is-active', on); b.classList.toggle('is-playing', on && this.playing); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
-    $('#pb-play').classList.toggle('is-on', this.playing);
-    $('#pb-play-l').textContent = this.playing ? 'Pause' : 'Play';
+    for (const [id, b] of this.tiles) { const on = this.cur?.id === id; b.classList.toggle('is-active', on); b.classList.toggle('is-playing', on && this.playing); b.setAttribute('aria-pressed', on && this.playing ? 'true' : 'false'); }
+  }
+  /** Den spelande rutan lyser i takt med musiken och har ibland glappkontakt. */
+  pulse(level, rm) {
+    // på stående mobil ligger tablån alltid framme under rummet
+    if ((this.open !== 'tabla' && !document.body.classList.contains('portrait')) || !this.cur) return;
+    const b = this.tiles.get(this.cur.id); if (!b) return;
+    const now = performance.now();
+    // jämför med en långsam medelnivå, så att rutan slår i takt även när låten är jämnt stark
+    if (this.playing) this.avg = (this.avg ?? level) * 0.95 + level * 0.05;
+    else this.avg = undefined;
+    const v = this.playing ? Math.max(0, Math.min(1, 0.45 + (level - this.avg) * 3.2)) : 0;
+    this.lv = (this.lv || 0) + (v - (this.lv || 0)) * 0.4;
+    if (!rm && this.playing && !this.flickUntil && Math.random() < 0.004) this.flickUntil = now + 60 + Math.random() * 160;
+    const flick = this.flickUntil > now ? (Math.random() < 0.6 ? 0.45 : 1) : 1;
+    if (this.flickUntil && now > this.flickUntil) this.flickUntil = 0;
+    b.style.setProperty('--lvl', rm ? (this.playing ? 0.4 : 0) : this.lv.toFixed(3));
+    b.style.setProperty('--flick', flick);
   }
   deny(rel) { const b = this.tiles.get(rel.id); if (!b) return; b.classList.remove('is-denied'); void b.offsetWidth; b.classList.add('is-denied'); }
 

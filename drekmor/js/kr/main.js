@@ -92,7 +92,6 @@ function select(r) {
   S.cur = r; S.missing = false;
   audio.load(r); sfx('clunk');
   setPlaying(audio.play());
-  if (panels.open === 'tabla') setTimeout(() => { if (panels.open === 'tabla') close(); }, 620);
 }
 function toggle() {
   if (!S.entered) return;
@@ -440,6 +439,7 @@ function frame(ms) {
   }
   hudTime(clock);
   panels.tick(hist, S.cur ? audio.progress : 0, S.playing);
+  panels.pulse((lv.l + lv.r) / 2, RM);
 }
 /** Bildskärmen i väggen slås på strax efter att man gått in (och är avstängd vid ingången). */
 function monPower(delay = 0) {

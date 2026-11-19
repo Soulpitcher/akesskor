@@ -6,8 +6,11 @@ släckas och tändas för sig, golvet skimrar och damm svävar i ljusstrålen.
 
 - **Välja signal:** pulten har två tablåer. Den vänstra är **Tracks** (alla släpp
   med `type: "song"`), den högra är **Extras** (intervjuer och berättelser).
-  Knapparna 1–8 väljer bland låtarna. Släppta rutor lyser, nästa kommande
-  blinkar rött med lappen "Out of order", låsta är tomma.
+  Knapparna 1–8 väljer bland låtarna. I närbilden är varje släpp en bakbelyst
+  lysruta: släppta lyser bärnstensgult, nästa kommande pulserar rött med en
+  tejplapp (datum eller "Date TBA"), låsta glöder svagt. Tryck på en låt för att
+  spela, tryck igen för att pausa, eller tryck på en annan låt för att byta. Den
+  som spelar lyser i takt med musiken och har ibland glappkontakt.
 - **När en signal spelas** startar anläggningen: lysrören flimrar igång,
   oscilloskopet ritar ljudet, nålarna rör sig, rullbandspelaren snurrar och
   varningslamporna följer basen. När den stannar slocknar rummet igen.
