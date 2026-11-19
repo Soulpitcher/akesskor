@@ -65,7 +65,7 @@ const RELEASES = [
     accent: "#2bb6c9",
     featured: true,
     releaseDate: "2026-07-10",
-    duration: "5:04",
+    duration: "5:02",
     audio: "assets/d01-blacked-out-beacon.mp3",
     cover: "assets/d01-cover.jpg",
     video: "d3er-VK97C0",
@@ -165,7 +165,7 @@ The Blacked out beacon`
     accent: "#a12bd0",
     featured: true,
     releaseDate: "2026-08-21",
-    duration: "4:52",
+    duration: "4:50",
     audio: "assets/d02-midnight-call.mp3",
     cover: "assets/d02-cover.jpg",
     links: {
