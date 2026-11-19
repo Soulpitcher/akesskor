@@ -133,6 +133,12 @@ function surfaces(c, st) {
   // --- knapparna 1–8: bara släppta signaler lyser
   BTN.forEach((b, i) => {
     const r = st.songs[i];
+    // den valda låtens knapp: bildens gula lampa täcks, den lyser grönt i ljuslagret
+    if (r && r.status === 'available' && st.cur === r) {
+      c.fillStyle = 'rgba(10,22,16,0.96)'; c.fillRect(b.x - 1, b.y - 1, b.w + 2, b.h + 2);
+      c.fillStyle = 'rgba(30,62,46,1)'; c.fillRect(b.x + 0.5, b.y + 0.5, b.w - 1, b.h - 1);
+      return;
+    }
     if (r && r.status === 'available') return;
     c.fillStyle = 'rgba(30,15,7,0.93)'; c.fillRect(b.x - 2, b.y - 2, b.w + 4, b.h + 4);
     c.fillStyle = 'rgba(64,32,16,1)'; c.fillRect(b.x + 0.5, b.y + 0.5, b.w - 1, b.h - 1);
@@ -399,7 +405,14 @@ function lights(c, st) {
   BTN.forEach((b, i) => {
     const r = st.songs[i]; if (!r || r.status !== 'available') return;
     const act = st.cur === r, hot = st.hotBtn === i;
-    const a = act ? (st.playing ? 0.5 + st.lv.bass * 0.7 : 0.38 + 0.12 * Math.sin(st.t * 3)) : hot ? 0.3 : 0;
+    if (act) { // grön, som tablåns intryckta ruta: pulserar med basen när låten spelar
+      const g = st.playing ? Math.min(1, 0.62 + st.lv.bass * 0.6) : 0.42;
+      glow(c, b.x + b.w / 2, b.y + b.h / 2, 18, '80,235,165', g * 0.8 * on);
+      c.fillStyle = `rgba(150,255,200,${g * 0.85 * on})`; c.fillRect(b.x + 1.5, b.y + 1.5, b.w - 3, b.h - 3);
+      c.fillStyle = `rgba(230,255,240,${g * 0.5 * on})`; c.fillRect(b.x + 3, b.y + 2.5, b.w - 6, 2.2);
+      return;
+    }
+    const a = hot ? 0.3 : 0;
     if (a > 0) { glow(c, b.x + b.w / 2, b.y + b.h / 2, 17, '255,170,70', a * on); c.fillStyle = `rgba(255,214,150,${a * 0.7 * on})`; c.fillRect(b.x + 2, b.y + 2, b.w - 4, b.h - 4); }
   });
 
@@ -412,8 +425,8 @@ function lights(c, st) {
       if (r.status === 'available') {
         const act = st.cur === r;
         const a = act ? (st.playing ? 0.75 + st.lv.bass * 0.5 : 0.6 + 0.25 * Math.sin(st.t * 3)) : 0.34 + 0.06 * Math.sin(st.t * 1.3 + i);
-        glow(c, x, y, act ? 13 : 9, '255,180,80', a * 0.55 * on);
-        c.fillStyle = `rgba(255,214,140,${a * on})`; c.fillRect(x - 4.6, y - 2.4, 9.2, 4.8);
+        glow(c, x, y, act ? 13 : 9, act ? '80,235,165' : '255,180,80', a * 0.55 * on);
+        c.fillStyle = act ? `rgba(160,255,205,${a * on})` : `rgba(255,214,140,${a * on})`; c.fillRect(x - 4.6, y - 2.4, 9.2, 4.8);
       } else if (r.status === 'coming' && next) {
         next = false;
         const a = (Math.sin(st.t * 2.6 + (at === extraOf ? 1.7 : 0)) > 0.2 ? 0.8 : 0.08) * on;
