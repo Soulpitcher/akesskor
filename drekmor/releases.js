@@ -29,6 +29,8 @@
    video        YouTube-videons id (det som står efter watch?v= i länken), t.ex.
                 "cH26pRl3Q54". Visas på bildskärmen i kontrollrummet. Utelämna om
                 det inte finns någon video.
+   videoLabel   Vad klippet är, som det heter på YouTube, t.ex. "Official video" eller
+                "Official audio". Visas på bildskärmen. Utelämnas = "On YouTube".
    audio        Sökväg till ljudfilen, t.ex. "assets/d01-blacked-out-beacon.mp3".
                 Direktlänk till en fil – inte Spotify/YouTube (de hör hemma i
                 links). Saknas filen spelar däcket en demosignal istället.
@@ -69,6 +71,7 @@ const RELEASES = [
     audio: "assets/d01-blacked-out-beacon.mp3",
     cover: "assets/d01-cover.jpg",
     video: "d3er-VK97C0",
+    videoLabel: "Comic strip video · Director's cut",
     links: {
       spotify: "https://open.spotify.com/artist/1LW39JZPbzFi1peIuaPm0e",
       apple: "https://music.apple.com/us/artist/drekmor/6782703112",
@@ -255,6 +258,7 @@ This is my midnight call`
     audio: "assets/d03-silent-alarm.mp3",
     cover: "assets/d03-cover.jpg",
     video: "cH26pRl3Q54",
+    videoLabel: "Official audio",
     links: {
       spotify: "https://open.spotify.com/artist/1LW39JZPbzFi1peIuaPm0e",
       apple: "https://music.apple.com/se/search?term=Drekmor%20Silent%20Alarm",

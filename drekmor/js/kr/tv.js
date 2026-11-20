@@ -17,7 +17,7 @@ export class Monitor {
   /** h: { audio, onplay(bool), sfx(name), found(id) } */
   constructor(releases, h) {
     this.h = h; this.state = 'idle'; this.playing = false; this.ch = 0;
-    this.channels = releases.filter((r) => r.status === 'available' && r.video).map((r) => ({ id: r.id, title: r.title, video: r.video, cover: r.cover }));
+    this.channels = releases.filter((r) => r.status === 'available' && r.video).map((r) => ({ id: r.id, title: r.title, video: r.video, label: r.videoLabel, cover: r.cover }));
     this.channels.push({ id: 'TEST', title: 'Test transmission', test: true });
     this.screen = $('#tv-screen');
     const bar = $('#tv-ch');
@@ -29,6 +29,9 @@ export class Monitor {
       bar.appendChild(b); return b;
     });
     addEventListener('message', (e) => this.onMessage(e));
+    document.addEventListener('securitypolicyviolation', (e) => {
+      if (this.frame && /youtube/.test(e.blockedURI || '')) this.fail(this.channels[this.ch]);
+    });
   }
 
   /** Öppna skärmen på en viss kanal (släppets id), annars på D-loggan tills man väljer kanal. */
@@ -69,7 +72,7 @@ export class Monitor {
     this.screen.innerHTML = `
       <div class="tvposter">
         ${c.cover ? `<img src="${esc(c.cover)}" alt="">` : ''}
-        <p class="tvposter__id">${esc(c.id)} · Official video</p>
+        <p class="tvposter__id">${esc(c.id)} · ${esc(c.label || 'On YouTube')}</p>
         <p class="tvposter__t">${esc(c.title)}</p>
         <button class="tvplay" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>Play video</button>
       </div>`;
@@ -79,16 +82,34 @@ export class Monitor {
   play() {
     const c = this.channels[this.ch]; if (!c || c.test) return;
     this.state = 'video';
-    const q = new URLSearchParams({ autoplay: '1', rel: '0', modestbranding: '1', playsinline: '1', enablejsapi: '1', origin: location.origin });
+    const q = new URLSearchParams({ autoplay: '1', rel: '0', modestbranding: '1', playsinline: '1', enablejsapi: '1' });
+    if (location.origin && location.origin !== 'null') q.set('origin', location.origin);
     this.screen.innerHTML = `<iframe src="${YT}/embed/${encodeURIComponent(c.video)}?${q}" title="Drekmor – ${esc(c.title)} (video)" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
-    const f = this.screen.querySelector('iframe'); this.frame = f;
+    const f = this.screen.querySelector('iframe'); this.frame = f; this.heard = false;
     f.addEventListener('load', () => { try { f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (e) {} });
     this.setPlaying(true); // autoplay: räkna med att den startar; spelaren rättar oss annars
+    // svarar inte YouTubes spelare (blockerad av sidan den visas i, nätet eller ett tillägg)
+    // blir det inte bara svart: skärmen visar "No signal" och en länk till videon på YouTube
+    clearTimeout(this.failT);
+    this.failT = setTimeout(() => { if (this.frame === f && !this.heard) this.fail(c); }, 12000);
+  }
+
+  fail(c) {
+    if (this.state !== 'video') return;
+    this.frame = null; this.setPlaying(false); this.state = 'poster';
+    this.screen.innerHTML = `
+      <div class="tvposter tvfail">
+        <p class="tvposter__t">No signal</p>
+        <p class="tvposter__id">The video can't be shown on this screen.</p>
+        <a class="tvplay" href="https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>Watch on YouTube</a>
+      </div>`;
+    this.static(260);
   }
 
   onMessage(e) {
     if (!this.frame || e.source !== this.frame.contentWindow) return;
     let d = e.data; try { if (typeof d === 'string') d = JSON.parse(d); } catch (x) { return; }
+    this.heard = true;
     const st = d?.info?.playerState ?? (d?.event === 'onStateChange' ? d.info : undefined);
     if (typeof st === 'number') this.setPlaying(st === 1 || st === 3);
   }
@@ -97,6 +118,7 @@ export class Monitor {
   pause() { try { this.frame?.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*'); } catch (e) {} this.setPlaying(false); }
 
   stop(keepState) {
+    clearTimeout(this.failT);
     this.frame = null; this.screen.innerHTML = '';
     if (this.tone) { try { this.tone.stop(); } catch (e) {} this.tone = null; }
     cancelAnimationFrame(this.raf);
