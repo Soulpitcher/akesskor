@@ -24,7 +24,8 @@ släckas och tändas för sig, golvet skimrar och damm svävar i ljusstrålen.
   signalen faller bort en kort stund. Klick öppnar närbilden, där loggan snurrar
   tills man väljer kanal: en kanal per släpp som har
   `video` i `releases.js`, plus en testbild. Videorna bäddas in från
-  youtube-nocookie.com och laddas först när man trycker på play. Medan en video
+  YouTube med YouTubes vanliga inbäddning och laddas först när man trycker på play.
+  Kan videon inte visas står det "No signal" med en länk till YouTube. Medan en video
   går pausas musiken och rummet pulserar i jämn takt (sidan kan inte läsa
   YouTubes ljud).
 - **Anslaget** bakom dörren: presentation, bandets id-kort, länkar,

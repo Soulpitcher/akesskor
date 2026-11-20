@@ -171,13 +171,16 @@ The Blacked out beacon`
     duration: "4:50",
     audio: "assets/d02-midnight-call.mp3",
     cover: "assets/d02-cover.jpg",
+    video: "iWXvmlJVKP8",
+    videoLabel: "Official audio",
     links: {
       spotify: "https://open.spotify.com/artist/1LW39JZPbzFi1peIuaPm0e",
       apple: "https://music.apple.com/us/artist/drekmor/6782703112",
       youtube: "https://www.youtube.com/@Drekmor-Official",
       tidal: "https://tidal.com/artist/81451660",
       deezer: "https://www.deezer.com/en/artist/398094771",
-      amazon: "https://music.amazon.com/artists/B0H68HV4YW/drekmor"
+      amazon: "https://music.amazon.com/artists/B0H68HV4YW/drekmor",
+      youtube_video: "https://www.youtube.com/watch?v=iWXvmlJVKP8"
     },
     notes: "The second signal. A call in the middle of the night – the line is open. Pick up.",
     credits: [

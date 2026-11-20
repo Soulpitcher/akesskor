@@ -1,7 +1,7 @@
 /* =============================================================================
    Kontrollrummet – bildskärmen i bortre väggen.
    En kanal per släpp med video (fältet `video` i releases.js) och sist en
-   testbild. YouTube bäddas in via youtube-nocookie.com och laddas först när
+   testbild. YouTube bäddas in med YouTubes vanliga inbäddning och laddas först när
    besökaren trycker på play. Spelarens läge (spelar/pausad) läses via
    postMessage, så att rummet vet när en video går.
    ============================================================================= */
@@ -10,7 +10,7 @@ import { drawIdent } from './ident.js';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const YT = 'https://www.youtube-nocookie.com';
+const YT = 'https://www.youtube.com'; // YouTubes vanliga inbäddning, samma som deras "Bädda in"-kod
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export class Monitor {
@@ -77,6 +77,9 @@ export class Monitor {
         <button class="tvplay" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>Play video</button>
       </div>`;
     this.screen.querySelector('.tvplay').addEventListener('click', () => this.play());
+    // kanalbyte: bruset och omslaget en kort stund, sedan startar videon av sig själv i skärmen
+    clearTimeout(this.autoT);
+    this.autoT = setTimeout(() => { if (this.ch === i && this.state === 'poster') this.play(); }, 550);
   }
 
   play() {
@@ -84,7 +87,7 @@ export class Monitor {
     this.state = 'video';
     const q = new URLSearchParams({ autoplay: '1', rel: '0', modestbranding: '1', playsinline: '1', enablejsapi: '1' });
     if (location.origin && location.origin !== 'null') q.set('origin', location.origin);
-    this.screen.innerHTML = `<iframe src="${YT}/embed/${encodeURIComponent(c.video)}?${q}" title="Drekmor – ${esc(c.title)} (video)" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+    this.screen.innerHTML = `<iframe src="${YT}/embed/${encodeURIComponent(c.video)}?${q}" title="Drekmor – ${esc(c.title)} (video)" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
     const f = this.screen.querySelector('iframe'); this.frame = f; this.heard = false;
     f.addEventListener('load', () => { try { f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (e) {} });
     this.setPlaying(true); // autoplay: räkna med att den startar; spelaren rättar oss annars
@@ -118,7 +121,7 @@ export class Monitor {
   pause() { try { this.frame?.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*'); } catch (e) {} this.setPlaying(false); }
 
   stop(keepState) {
-    clearTimeout(this.failT);
+    clearTimeout(this.failT); clearTimeout(this.autoT);
     this.frame = null; this.screen.innerHTML = '';
     if (this.tone) { try { this.tone.stop(); } catch (e) {} this.tone = null; }
     cancelAnimationFrame(this.raf);
