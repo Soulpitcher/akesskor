@@ -36,13 +36,17 @@ export const ANOMALIES = [
   ['corridor', 'Somebody in the corridor'],
   ['knock', 'A knock on the door'],
   ['cables', 'Live wire'],
-  ['reels', 'Backwards'],
+  ['reels', 'Is there anyone listening?'],
   ['geiger', 'Background radiation'],
   ['scope', 'X–Y mode'],
   ['testcard', 'Test transmission'],
   ['idle', 'Are you still there?'],
 ];
 const WORDS = ['drekmor', 'beacon', 'alarm', 'midnight', 'signal'];
+/** Meddelandet på rullbandet: [sekund, rad], i takt med rösten i assets/sfx-tape-message.mp3. */
+const TAPE = [[0.2, 'To anyone…'], [3.6, 'Is there anyone listening?'], [6.5, 'This is Lamar, we…'], [10.8, 'it might be…'], [13.4, 'too late…']];
+/** Det man hör först när bandet spolas tillbaka: slutet, baklänges. */
+const TAPE_REV = '…etal oot …eb thgim ti';
 const KONAMI = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
 const MORSE = { D: '-..', R: '.-.', E: '.', K: '-.-', M: '--', O: '---' };
 
@@ -115,7 +119,7 @@ export class Eggs {
     this.a = api; this.audio = api.audio;
     this.fx = { black: 0, blackT: 0, red: null, sky: null, flickUntil: 0, tubeDeadUntil: 0, dimT: 0 };
     this.scopeMode = 'wave'; this.scopeText = null; this.scopeTextUntil = 0;
-    this.monMessage = null; this.monStaticUntil = 0; this.reelBoost = 0;
+    this.monMessage = null; this.monStaticUntil = 0; this.reelBoost = 0; this.reelSpin = 0;
     this.buf = ''; this.lastKey = 0; this.kon = 0; this.lastInput = performance.now(); this.rang = false; this.stillThere = false;
     this.cool = {}; this.found = new Set();
     try { JSON.parse(localStorage.getItem('drekmor.anomalies') || '[]').forEach((id) => this.found.add(id)); } catch (e) {}
@@ -158,6 +162,7 @@ export class Eggs {
     this.lp = ctx.createBiquadFilter(); this.lp.type = 'lowpass'; this.lp.frequency.value = 20000;
     this.duck = ctx.createGain();
     try { a.music.disconnect(); a.music.connect(this.hp).connect(this.lp).connect(this.duck).connect(a.master); this.chain = true; } catch (e) {}
+    this.loadTape();
     if (new Date().getHours() === 0) setTimeout(() => this.ring(true), 9000); // vid midnatt ringer det direkt
   }
   duckTo(v, tc = 0.08) { if (this.duck) this.duck.gain.setTargetAtTime(v, this.audio.ctx.currentTime, tc); }
@@ -386,23 +391,51 @@ export class Eggs {
     step();
   }
 
+  /* Rullbandspelaren: klick spolar tillbaka bandet (man hör och ser slutet baklänges),
+     sedan klonkar det och ett meddelande spelas upp, med text rad för rad. */
   backwards() {
-    this.reelBoost = 6;
-    this.tone({ type: 'sawtooth', f: 300, to: 2600, dur: 0.9, gain: 0.035, cutoff: 3200 });
-    // en baklänges-svällning: ackord som växer och klipps tvärt
-    if (this.ok) {
-      const ctx = this.audio.ctx, t = this.now(1);
-      [57, 60, 64, 69].forEach((m) => {
-        const o = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter();
-        o.type = 'sawtooth'; o.frequency.value = 440 * Math.pow(2, (m - 69) / 12); f.type = 'lowpass'; f.frequency.value = 1400;
-        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 2.2); g.gain.setValueAtTime(0.0001, t + 2.21);
-        o.connect(f).connect(g).connect(this.audio.sfxBus); o.start(t); o.stop(t + 2.3);
-      });
-    }
-    this.a.toast('.kcab gniog ton er’eW', 2600);
-    setTimeout(() => this.a.toast('We’re not going back.', 3000), 2800);
-    this.log('reels');
+    if (this.tapeBusy) return;
+    this.tapeBusy = true;
+    // avvikelsen loggas när bandet har spelat klart, så att den inte bryter meddelandet
+    this.runTape().finally(() => { this.tapeBusy = false; this.reelSpin = 0; this.log('reels'); });
   }
+  loadTape() {
+    if (this.tapeP || !this.ok) return this.tapeP;
+    const ctx = this.audio.ctx;
+    const get = (u) => fetch(u).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b));
+    this.tapeP = Promise.all([get('assets/sfx-tape-rewind.mp3'), get('assets/sfx-tape-message.mp3')]).catch(() => null);
+    return this.tapeP;
+  }
+  playBuf(buf, gain = 0.9) {
+    const ctx = this.audio.ctx, src = ctx.createBufferSource(), g = ctx.createGain();
+    g.gain.value = gain; src.buffer = buf; src.connect(g).connect(this.audio.sfxBus); src.start(this.now());
+    return buf.duration;
+  }
+  async runTape() {
+    const wait = (s) => new Promise((r) => setTimeout(r, s * 1000));
+    const bufs = await this.loadTape();
+    const sfx = (n) => { if (this.ok) this.audio.sfx(n); };
+    // 1. spola tillbaka: spolarna rusar baklänges och slutet hörs baklänges
+    sfx('key');
+    this.reelSpin = -16; this.duckTo(0.25, 0.2);
+    const rew = bufs ? this.playBuf(bufs[0], 0.8) : 3;
+    this.a.toast(TAPE_REV, rew * 1000);
+    await wait(rew);
+    // 2. stopp, klonk, play
+    this.reelSpin = 0; sfx('clunk');
+    await wait(0.55);
+    this.reelSpin = 2.4; this.duckTo(0.12, 0.3);
+    const len = bufs ? this.playBuf(bufs[1], 1) : 15;
+    TAPE.forEach(([t, line], i) => {
+      const next = TAPE[i + 1] ? TAPE[i + 1][0] : len;
+      setTimeout(() => this.a.toast(line, (next - t) * 1000 + 250), t * 1000);
+    });
+    await wait(len);
+    // 3. bandet tar slut
+    this.reelSpin = 0; sfx('key');
+    this.duckTo(this.hpOn ? 0.22 : 1, 0.6);
+  }
+
 
   scopeClick() {
     this.scopeMode = { wave: 'xy', xy: 'spec', spec: 'wave' }[this.scopeMode];

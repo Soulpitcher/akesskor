@@ -30,5 +30,6 @@ ljudfilen och texten redan finns – ändra till `"available"` på släppdagen.
 | Fil                                   | Innehåll                                                   |
 |---------------------------------------|------------------------------------------------------------|
 | `crew-*.jpg`, `drekmor-pressrelease.pdf`, `drekmor-favicon.jpg` | Från drekmor.com (id-korten, pressrelease, ikon). |
+| `sfx-tape-rewind.mp3`, `sfx-tape-message.mp3` | Rullbandspelaren: bandet som spolas tillbaka och meddelandet "Is there anyone listening?" (bandets filer "Madman – Anyone listening", mono 96 kbps). Undertexterna och deras tider står i `TAPE` i `js/kr/eggs.js`. |
 | `monitor-d.png`                       | D:et ur bandets gröna logga, med genomskinlig bakgrund. Rutnätet ritas i koden och D:et vänds där (`js/kr/ident.js`). |
 | `kontrollrum.webp`                    | Kontrollrummet (bandets egen bild, med bildskärmen målad i bortre väggen). Byts bilden måste den vara 1672 × 941 och ha allt på samma plats, annars behöver koordinaterna i `js/kr/live.js` och `js/kr/eggs.js` ses över. |

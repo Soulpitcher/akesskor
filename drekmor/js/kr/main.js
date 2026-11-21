@@ -421,7 +421,7 @@ function frame(ms) {
   view(dt);
   tipUpdate();
   if (S.entered) eggs?.tick(S.playing || S.video || !!panels.open, dt);
-  S.reelA += dt * ((S.playing ? 2.4 : 0) + (eggs ? eggs.reelBoost * 3 : 0));
+  S.reelA += dt * ((S.playing ? 2.4 : 0) + (eggs ? eggs.reelBoost * 3 + eggs.reelSpin : 0));
   if (plate) {
     const L = lights(dt, clock, lv);
     if (S.playing || frameNo % 2 === 0) {
