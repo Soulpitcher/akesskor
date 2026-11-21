@@ -22,7 +22,11 @@ export const MON = { x: 1000, y: 376, w: 132, h: 114, gx: 1023, gy: 399, gw: 87,
 /** Rullbandspelarens två spolar. */
 export const REELS = [[698, 418], [729.5, 418]];
 export const SCOPE = { x: 559, y: 521, w: 78, h: 58, r: 9 };
-export const BTN = [1100, 1117, 1134, 1151, 1168, 1186, 1203.5, 1221.5].map((x, i) => ({ x, y: 561 + i * 0.5, w: 14.5, h: 17 }));
+/** Lamporna under knapparna 1–8: hela lampglaset med kant, uppmätt i bilden (de sjunker lite åt höger). */
+export const BTN = [
+  [1099.8, 559.4, 14.7, 16.2], [1116.4, 559.8, 15, 15.9], [1132.6, 561, 16.3, 15.5], [1150.75, 561.5, 15.25, 15.4],
+  [1168, 562, 15, 15.5], [1185.75, 562.6, 15.6, 15.5], [1203, 563.4, 16.5, 16], [1221.4, 564, 15.6, 16],
+].map(([x, y, w, h]) => ({ x, y, w, h }));
 const PAPER = [{ x: 1499, y: 380, w: 44, h: 66 }, { x: 1585, y: 375, w: 50, h: 69 }];
 const METERS = [[717, 517, 36, 22], [761, 517, 37, 22], [717, 551, 36, 24], [761, 551, 37, 24], [992, 521, 35, 22], [1033, 521, 37, 22]];
 const TAB = {
@@ -161,14 +165,14 @@ function surfaces(c, st) {
     const r = st.songs[i];
     // den valda låtens knapp: bildens gula lampa täcks, den lyser grönt i ljuslagret
     if (r && r.status === 'available' && st.cur === r) {
-      c.fillStyle = 'rgba(10,22,16,0.96)'; c.fillRect(b.x - 1, b.y - 1, b.w + 2, b.h + 2);
-      c.fillStyle = 'rgba(30,62,46,1)'; c.fillRect(b.x + 0.5, b.y + 0.5, b.w - 1, b.h - 1);
+      c.fillStyle = 'rgba(10,22,16,0.97)'; c.fillRect(b.x - 0.6, b.y - 0.6, b.w + 1.2, b.h + 1.2);
+      c.fillStyle = 'rgba(30,62,46,1)'; c.fillRect(b.x + 1.6, b.y + 1.4, b.w - 3.2, b.h - 3.6);
       return;
     }
     if (r && r.status === 'available') return;
-    c.fillStyle = 'rgba(30,15,7,0.93)'; c.fillRect(b.x - 2, b.y - 2, b.w + 4, b.h + 4);
-    c.fillStyle = 'rgba(64,32,16,1)'; c.fillRect(b.x + 0.5, b.y + 0.5, b.w - 1, b.h - 1);
-    c.fillStyle = 'rgba(104,58,28,0.8)'; c.fillRect(b.x + 1.5, b.y + 1.5, b.w - 3, 2.2);
+    c.fillStyle = 'rgba(30,15,7,0.93)'; c.fillRect(b.x - 0.8, b.y - 0.8, b.w + 1.6, b.h + 1.6);
+    c.fillStyle = 'rgba(64,32,16,1)'; c.fillRect(b.x + 1.4, b.y + 1.2, b.w - 2.8, b.h - 3.2);
+    c.fillStyle = 'rgba(104,58,28,0.8)'; c.fillRect(b.x + 2.2, b.y + 2, b.w - 4.4, 2.2);
   });
 
   // --- visarinstrument: ny tavla och en nål som följer ljudet
@@ -434,12 +438,12 @@ function lights(c, st) {
     if (act) { // grön, som tablåns intryckta ruta: pulserar med basen när låten spelar
       const g = st.playing ? Math.min(1, 0.62 + st.lv.bass * 0.6) : 0.42;
       glow(c, b.x + b.w / 2, b.y + b.h / 2, 18, '80,235,165', g * 0.8 * on);
-      c.fillStyle = `rgba(150,255,200,${g * 0.85 * on})`; c.fillRect(b.x + 1.5, b.y + 1.5, b.w - 3, b.h - 3);
-      c.fillStyle = `rgba(230,255,240,${g * 0.5 * on})`; c.fillRect(b.x + 3, b.y + 2.5, b.w - 6, 2.2);
+      c.fillStyle = `rgba(150,255,200,${g * 0.85 * on})`; c.fillRect(b.x + 2, b.y + 1.8, b.w - 4, b.h - 4.4);
+      c.fillStyle = `rgba(230,255,240,${g * 0.5 * on})`; c.fillRect(b.x + 3.4, b.y + 2.8, b.w - 6.8, 2);
       return;
     }
     const a = hot ? 0.3 : 0;
-    if (a > 0) { glow(c, b.x + b.w / 2, b.y + b.h / 2, 17, '255,170,70', a * on); c.fillStyle = `rgba(255,214,150,${a * 0.7 * on})`; c.fillRect(b.x + 2, b.y + 2, b.w - 4, b.h - 4); }
+    if (a > 0) { glow(c, b.x + b.w / 2, b.y + b.h / 2, 17, '255,170,70', a * on); c.fillStyle = `rgba(255,214,150,${a * 0.7 * on})`; c.fillRect(b.x + 2, b.y + 1.8, b.w - 4, b.h - 4.4); }
   });
 
   // --- tablåerna: släppta signaler lyser svagt, den valda lyser grönt, nästa blinkar rött
