@@ -30,6 +30,5 @@ ljudfilen och texten redan finns – ändra till `"available"` på släppdagen.
 | Fil                                   | Innehåll                                                   |
 |---------------------------------------|------------------------------------------------------------|
 | `crew-*.jpg`, `drekmor-pressrelease.pdf`, `drekmor-favicon.jpg` | Från drekmor.com (id-korten, pressrelease, ikon). |
-| `sfx-siren.mp3`                       | Flyglarmssirenen när larmlamporna blinkar: de första 10 sekunderna av "Nuclear Alarm Siren" av Prestigigator (2012), mono 96 kbps. Kontrollera licensen innan lansering (ange upphovsperson om den kräver det). |
 | `monitor-d.png`                       | D:et ur bandets gröna logga, med genomskinlig bakgrund. Rutnätet ritas i koden och D:et vänds där (`js/kr/ident.js`). |
 | `kontrollrum.webp`                    | Kontrollrummet (bandets egen bild, med bildskärmen målad i bortre väggen). Byts bilden måste den vara 1672 × 941 och ha allt på samma plats, annars behöver koordinaterna i `js/kr/live.js` och `js/kr/eggs.js` ses över. |

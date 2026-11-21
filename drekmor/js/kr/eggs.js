@@ -43,7 +43,6 @@ export const ANOMALIES = [
   ['idle', 'Are you still there?'],
 ];
 const WORDS = ['drekmor', 'beacon', 'alarm', 'midnight', 'signal'];
-const SIREN_LEN = 10.4; // sekunder, lika lång som assets/sfx-siren.mp3
 const KONAMI = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
 const MORSE = { D: '-..', R: '.-.', E: '.', K: '-.-', M: '--', O: '---' };
 
@@ -159,7 +158,6 @@ export class Eggs {
     this.lp = ctx.createBiquadFilter(); this.lp.type = 'lowpass'; this.lp.frequency.value = 20000;
     this.duck = ctx.createGain();
     try { a.music.disconnect(); a.music.connect(this.hp).connect(this.lp).connect(this.duck).connect(a.master); this.chain = true; } catch (e) {}
-    this.loadSiren();
     if (new Date().getHours() === 0) setTimeout(() => this.ring(true), 9000); // vid midnatt ringer det direkt
   }
   duckTo(v, tc = 0.08) { if (this.duck) this.duck.gain.setTargetAtTime(v, this.audio.ctx.currentTime, tc); }
@@ -337,7 +335,8 @@ export class Eggs {
   morse() {
     const u = 0.12, seq = [];
     let t = 0;
-    for (const ch of 'DREKMOR') { for (const s of MORSE[ch]) { const d = s === '-' ? 3 * u : u; seq.push([t, t + d]); this.tone({ f: 760, dur: d, gain: 0.07 }, t); t += d + u; } t += 2 * u; }
+    // lampan blinkar DREKMOR på morse, helt tyst
+    for (const ch of 'DREKMOR') { for (const s of MORSE[ch]) { const d = s === '-' ? 3 * u : u; seq.push([t, t + d]); t += d + u; } t += 2 * u; }
     const t0 = performance.now() / 1000;
     this.fx.red = (now) => { const x = now - t0; if (x > t) return null; const lit = seq.some(([a, b]) => x >= a && x < b); return lit ? [1.6, 1.6] : [0.04, 0.04]; };
     this.fx.redUntil = performance.now() + t * 1000;
@@ -346,35 +345,14 @@ export class Eggs {
   }
 
   silentAlarm() {
-    // larmlamporna blinkar växelvis medan sirenen går; musiken tystnar under tiden
-    const D = SIREN_LEN, t0 = performance.now() / 1000;
+    // ett tyst larm: lamporna blinkar växelvis och musiken tystnar, men inget låter
+    const D = 6, t0 = performance.now() / 1000;
     this.fx.red = (now) => { const x = now - t0; if (x > D) return null; const p = (x * 2.2) % 1; return [p < 0.5 ? 2.2 : 0.1, p >= 0.5 ? 2.2 : 0.1]; };
     this.fx.redUntil = performance.now() + D * 1000;
     this.duckTo(0, 0.15);
-    clearTimeout(this.alarmT); this.alarmT = setTimeout(() => this.duckTo(this.hpOn ? 0.22 : 1, 0.6), (D - 0.6) * 1000);
-    this.siren();
+    clearTimeout(this.alarmT); this.alarmT = setTimeout(() => this.duckTo(this.hpOn ? 0.22 : 1, 0.6), (D - 0.4) * 1000);
     this.a.toast('There was a silent alarm. I realized it far too late.', 5600);
     this.log('silent');
-  }
-
-  /** Flyglarmssirenen (assets/sfx-siren.mp3). Hämtas i förväg när man går in. */
-  loadSiren() {
-    if (this.sirenP || !this.ok) return this.sirenP;
-    const ctx = this.audio.ctx;
-    this.sirenP = fetch('assets/sfx-siren.mp3').then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b)).catch(() => null);
-    return this.sirenP;
-  }
-  async siren() {
-    if (!this.ok) return;
-    try { this.sirenSrc?.stop(); } catch (e) {}
-    const buf = await this.loadSiren();
-    if (!buf) { // reserv: en syntetisk siren som tjuter upp och ner
-      for (let i = 0; i < 3; i++) this.tone({ type: 'sawtooth', f: 330, to: 880, dur: 2.6, gain: 0.05, cutoff: 1800 }, i * 3);
-      return;
-    }
-    const ctx = this.audio.ctx, src = ctx.createBufferSource(), g = ctx.createGain();
-    g.gain.value = 0.6; src.buffer = buf; src.connect(g).connect(this.audio.sfxBus); src.start(this.now());
-    this.sirenSrc = src;
   }
 
   beacon() {
